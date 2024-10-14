@@ -4,6 +4,8 @@ body {
     font-family: 'Comfortaa', sans-serif;
     color: white;
     overflow-x: hidden;
+    background: url('https://img.goodfon.com/original/1360x768/4/a2/tekstury-razmytie-siniy.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
 video#bg-video {
