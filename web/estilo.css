@@ -24,7 +24,64 @@ a {
     cursor: pointer;
 }
 
+code {
+    font-family: monospace;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background-color: #232323; 
+    border-left: 5px solid #ccc;
+    color: white;
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    display: block; 
+    padding: 10px; 
+    border-radius: 5px; 
+    overflow-x: auto; 
+}
+
+.content {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 30px;
+    max-width: 800px;
+    margin: 50px auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 9);
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(7px);
+}
+
+.contenedor-imagenes {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 2px;
+    width: "80%"; 
+}
+
+.contenedor-texto {
+    margin-bottom: 20px; 
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 2px;
+    width: "80%"; 
+}
+
+#disqus_thread {
+    margin-top: 20px;
+}
+
 blockquote {
+    margin: 20px 0;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+    border-radius: 10px;
+}
+
+
+blockquote.red {
     margin: 20px 0;
     padding: 10px 20px;
     background-color: rgba(0, 0, 0, 0.7);
@@ -45,53 +102,3 @@ blockquote {
     }
 }
 
-code {
-    font-family: monospace;
-    padding: 2px 4px;
-    border-radius: 4px;
-    background-color: #232323; 
-    border-left: 5px solid #ccc;
-    color: white;
-    white-space: pre-wrap; 
-    word-wrap: break-word; 
-    display: block; 
-    padding: 10px; 
-    border-radius: 5px; 
-    overflow-x: auto; 
-}
-
-.content {
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 800px;
-    margin: 50px auto;
-    position: relative;
-    z-index: 1;
-    backdrop-filter: blur(5px);
-}
-
-.contenedor-imagenes {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    gap: 2px;
-    width: "80%"; 
-}
-
-.contenedor-texto {
-    margin-bottom: 20px; 
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    gap: 2px;
-    width: "80%"; 
-}
-
-h1, p {
-    color: white;
-}
-
-#disqus_thread {
-    margin-top: 20px;
-}
