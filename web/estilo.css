@@ -81,7 +81,7 @@ code {
 }
 
 .contenedor-texto {
-    margin-bottom: 20px; 
+    margin-bottom: 2px; 
     display: flex;
     justify-content: space-around;
     align-items: center;
