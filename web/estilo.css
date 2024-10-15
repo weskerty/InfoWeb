@@ -74,11 +74,11 @@ code {
 
 .contenedor-imagenes {
     display: flex;
-    justify-content: space-around;
+    justify-content: center; 
     align-items: center;
-    gap: 2px;
-    width: "80%"; 
+    gap: 2px; 
 }
+
 
 .contenedor-texto {
     margin-bottom: 2px; 
