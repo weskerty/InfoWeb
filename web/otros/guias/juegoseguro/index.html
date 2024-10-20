@@ -96,7 +96,7 @@
                 hideLoadingScreen(); 
             }, 5000);
 
-            loadLocalizedContent('web/');
+            loadLocalizedContent('web/otros/guias/juegoseguro/');
 
             bgVideo.addEventListener('loadeddata', () => {
                 clearTimeout(timeoutId);  
@@ -106,7 +106,7 @@
 
         document.addEventListener('click', (event) => {
             const anchor = event.target.closest('a');
-            if (anchor && anchor.href.includes('web/')) {
+            if (anchor && anchor.href.includes('web/otros/guias/juegoseguro/')) {
                 event.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 loadLocalizedContent(anchor.href.replace('.html', ''));
