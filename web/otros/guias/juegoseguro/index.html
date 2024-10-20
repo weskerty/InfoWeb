@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAMER GALAXYꕥ</title>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="web/favicon.ico">
-    <link rel="stylesheet" href="web/estilo.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="estilo.css">
     <meta name="description" content="Tutorial de Juegos Gratuitos sin Virus">
     <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
     <meta property="og:image:width" content="1200">
@@ -17,14 +17,14 @@
         <p>⌛Cargando⏳</p>
     </div>
 
-    <!-- Video !-->
+    <!-- Video -->
     <video autoplay muted loop id="bg-video" preload="auto">
         <source src="https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428" type="video/mp4">
         Error al cargar el video
     </video>  
 
     <div class="content" id="content">
-        <p>⌛Cargando⏳</p>
+        <p>⌛Cargando contenido⏳</p>
     </div>
 
     <script>
@@ -48,7 +48,7 @@
             }
         }
 
-        // Carga Disqus comentarios
+        // Carga los comentarios de Disqus
         function loadDisqus() {
             const disqusDiv = document.createElement('div');
             disqusDiv.id = 'disqus_thread';
@@ -65,9 +65,9 @@
             document.body.appendChild(s);
         }
 
-        // idioma del navegador
-        function getLocalizedUrl(urlBase) {
-            const lang = navigator.language.slice(0, 2); 
+        // Detectar el idioma del navegador y cargar el archivo correspondiente desde la misma carpeta
+        function getLocalizedUrl() {
+            const lang = navigator.language.slice(0, 2); // Detecta el idioma (2 letras)
             const langMap = {
                 es: 'es.html',
                 pt: 'pt.html',
@@ -76,12 +76,12 @@
                 ar: 'ar.html',
                 hi: 'hi.html'
             };
-            return `${urlBase}${langMap[lang] || 'ingles.html'}`;
+            return langMap[lang] || 'ingles.html'; // Por defecto, carga 'ingles.html'
         }
 
-        function loadLocalizedContent(urlBase) {
-            const localizedUrl = getLocalizedUrl(urlBase);
-            const fallbackUrl = `${urlBase}ingles.html`;
+        function loadLocalizedContent() {
+            const localizedUrl = getLocalizedUrl(); // Ruta relativa en la misma carpeta
+            const fallbackUrl = 'ingles.html'; // Fallback a inglés
             loadContent(localizedUrl, fallbackUrl);
         }
 
@@ -89,14 +89,14 @@
             const bgVideo = document.getElementById('bg-video');
 
             const timeoutId = setTimeout(() => {
-                // Cancelar video si carga ne 5 segundos
+                // Cancelar el video si no carga en 5 segundos
                 bgVideo.pause();
                 bgVideo.src = ''; 
                 bgVideo.load();    
                 hideLoadingScreen(); 
             }, 5000);
 
-            loadLocalizedContent('web/otros/guias/juegoseguro/');
+            loadLocalizedContent(); // Cargar el contenido localizado
 
             bgVideo.addEventListener('loadeddata', () => {
                 clearTimeout(timeoutId);  
@@ -104,15 +104,17 @@
             });
         });
 
+        // Cargar contenido cuando se hace clic en un enlace
         document.addEventListener('click', (event) => {
             const anchor = event.target.closest('a');
-            if (anchor && anchor.href.includes('web/otros/guias/juegoseguro/')) {
+            if (anchor && anchor.href.includes('.html')) {
                 event.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                loadLocalizedContent(anchor.href.replace('.html', ''));
+                loadLocalizedContent();
             }
         });
 
+        // Recargar cuando se utiliza el botón de retroceso
         window.onpopstate = () => location.reload();
     </script>
 
