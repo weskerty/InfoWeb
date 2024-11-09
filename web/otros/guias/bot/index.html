@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="estilo.css">
-    <meta name="description" content="Tutorial para Actuvar tu Propio Bot">
+    <meta name="description" content="Tutorial para Activar tu Propio Bot">
     <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -80,8 +80,9 @@
         }
 
         function loadLocalizedContent() {
-            const localizedUrl = getLocalizedUrl(); // Ruta relativa en la misma carpeta
-            const fallbackUrl = 'ingles.html'; // Fallback a inglés
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const localizedUrl = `${baseUrl}${getLocalizedUrl()}`; // Ruta 
+            const fallbackUrl = `${baseUrl}ingles.html`; // Fallback dinámico
             loadContent(localizedUrl, fallbackUrl);
         }
 
@@ -89,7 +90,6 @@
             const bgVideo = document.getElementById('bg-video');
 
             const timeoutId = setTimeout(() => {
-                // Cancelar el video si no carga en 5 segundos
                 bgVideo.pause();
                 bgVideo.src = ''; 
                 bgVideo.load();    
@@ -104,7 +104,7 @@
             });
         });
 
-        // Cargar contenido cuando se hace clic en un enlace
+        // Bug?
         document.addEventListener('click', (event) => {
             const anchor = event.target.closest('a');
             if (anchor && anchor.href.includes('.html')) {
