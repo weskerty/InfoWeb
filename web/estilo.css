@@ -78,45 +78,45 @@ code {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 10px; /* Espacio entre imágenes */
     width: 100%;
-    overflow: hidden; /* Oculta contenido fuera del área visible */
+    overflow: hidden; /* Oculta las imágenes fuera del área visible */
 }
 
+/* Estilo general para los enlaces y sus imágenes */
 .contenedor-imagenes a {
     display: block;
     opacity: 0; /* Ocultos por defecto */
-    pointer-events: none; /* No interactuables por defecto */
-    animation: fadeInOut 10s linear infinite; /* Alterna visibilidad cada 10s */
+    pointer-events: none; /* No interactuables cuando están ocultos */
+    animation: fadeInOut 8s linear infinite; /* Cambia cada 8s */
 }
 
-/* Mostrar los primeros 4 enlaces durante los primeros 5 segundos */
+/* Mostrar el primer grupo (las primeras 4 imágenes) */
 .contenedor-imagenes a:nth-child(-n+4) {
     animation-delay: 0s; /* Sin retraso para el primer grupo */
 }
 
-/* Mostrar los siguientes enlaces después de 5 segundos */
+/* Mostrar el segundo grupo (las siguientes 4 imágenes) */
 .contenedor-imagenes a:nth-child(n+5) {
-    animation-delay: 5s; /* Retraso de 5 segundos */
+    animation-delay: 4s; /* Retraso de 4 segundos para aparecer después del primer grupo */
 }
 
-/* Animación para alternar visibilidad de los enlaces */
+/* Animación para alternar visibilidad */
 @keyframes fadeInOut {
     0%, 40% {
         opacity: 1; /* Visible */
-        pointer-events: auto; /* Interactuable */
+        pointer-events: auto; /* Interactuables */
     }
     50%, 100% {
-        opacity: 0; /* Invisible */
-        pointer-events: none; /* No interactuable */
+        opacity: 0; /* Ocultos */
+        pointer-events: none; /* No interactuables */
     }
 }
 
+/* Ajustes para las imágenes */
 .contenedor-imagenes img {
-    max-width: 100px; 
+    max-width: 120px; 
     height: auto;
-    margin: 0;
-    padding: 0;
     display: block;
 }
 
