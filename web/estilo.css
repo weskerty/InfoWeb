@@ -24,7 +24,8 @@ body {
 .loading-screen p {
     font-size: 2em;
     font-family: 'Comfortaa', sans-serif;
-        }
+}
+
 .hide {
     display: none;
 }
@@ -72,95 +73,61 @@ code {
     backdrop-filter: blur(7px);
 }
 
-
+/* imágenes */
 .contenedor-imagenes {
-    position: relative;
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 10px; /* Espacio entre imágenes */
+    align-items: center;     
+    gap: 5px;                
+    width: 100%;           
+}
+
+.contenedor-imagenes img {
+    max-width: 100%;        
+    height: auto;           
+    margin: 0;
+    padding: 0;
+    display: block;          
+}
+
+/*  animación imágenes */
+.contenedor-imagenes-animado {
+    display: flex;
+    justify-content: center;
+    align-items: center;     
+    gap: 5px;                
     width: 100%;
-    overflow: hidden; /* Oculta las imágenes fuera del área visible */
+    overflow: hidden; 
+    position: relative;
 }
 
-/* Estilo general para los enlaces y sus imágenes */
-.contenedor-imagenes a {
-    display: block;
-    opacity: 0; /* Ocultos por defecto */
-    pointer-events: none; /* No interactuables cuando están ocultos */
-    animation: fadeInOut 8s linear infinite; /* Cambia cada 8s */
+/* Imágenes dentro del contenedor animado */
+.contenedor-imagenes-animado img {
+    max-width: 23%; 
+    height: auto;
+    opacity: 0; /
+    pointer-events: none; /* No clicables mientras están ocultas */
+    animation: alternarGrupos 8s linear infinite; /* Cambia cada 8 segundos */
 }
 
-/* Mostrar el primer grupo (las primeras 4 imágenes) */
-.contenedor-imagenes a:nth-child(-n+4) {
-    animation-delay: 0s; /* Sin retraso para el primer grupo */
+/* Primer grupo (4 primeras imágenes) */
+.contenedor-imagenes-animado img:nth-child(-n+4) {
+    animation-delay: 0s;
 }
 
-/* Mostrar el segundo grupo (las siguientes 4 imágenes) */
-.contenedor-imagenes a:nth-child(n+5) {
-    animation-delay: 4s; /* Retraso de 4 segundos para aparecer después del primer grupo */
+/* Segundo grupo (resto de las imágenes) */
+.contenedor-imagenes-animado img:nth-child(n+5) {
+    animation-delay: 4s;
 }
 
-/* Animación para alternar visibilidad */
-@keyframes fadeInOut {
+/* Animación para alternar entre los grupos */
+@keyframes alternarGrupos {
     0%, 40% {
-        opacity: 1; /* Visible */
-        pointer-events: auto; /* Interactuables */
+        opacity: 1;
+        pointer-events: auto; /* Clicables mientras son visibles */
     }
     50%, 100% {
-        opacity: 0; /* Ocultos */
-        pointer-events: none; /* No interactuables */
+        opacity: 0;
+        pointer-events: none; /* No clicables mientras están ocultas */
     }
 }
-
-/* Ajustes para las imágenes */
-.contenedor-imagenes img {
-    max-width: 120px; 
-    height: auto;
-    display: block;
-}
-
-
-.contenedor-texto {
-    margin-bottom: 2px; 
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    gap: 2px;
-    width: "80%"; 
-}
-
-#disqus_thread {
-    margin-top: 20px;
-}
-
-blockquote {
-    margin: 20px 0;
-    padding: 10px 20px;
-    background-color: rgba(0, 0, 0, 0.4);
-    color: white;
-    border-radius: 10px;
-}
-
-
-blockquote.red {
-    margin: 20px 0;
-    padding: 10px 20px;
-    background-color: rgba(0, 0, 0, 0.7);
-    border-left: 5px solid #ccc;
-    color: white;
-    animation: backgroundColorChange 5s infinite;
-}
-
-@keyframes backgroundColorChange {
-    0% {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-    50% {
-        background-color: rgba(255, 0, 0, 0.7);
-    }
-    100% {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-}
-
