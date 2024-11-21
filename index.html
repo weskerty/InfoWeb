@@ -28,7 +28,7 @@
     </div>
 
     <script>
-        // Enlaces de videos por Mes. 0 es Enero.
+        // Configuración de videos mensuales
         const monthlyVideos = {
             0: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Enero
             1: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Febrero
@@ -60,8 +60,7 @@
                 if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
                 document.getElementById('content').innerHTML = await response.text();
                 loadDisqus();
-                // Actualizar la URL sin recargar la página - bug -
-                history.pushState({}, '', url);
+                // No actualizamos la URL aquí para mantener siempre el index.html
             } catch (error) {
                 console.error(`Error cargando contenido: ${error.message}`);
                 if (fallbackUrl) {
@@ -87,7 +86,7 @@
             s.setAttribute('data-timestamp', +new Date());
             document.body.appendChild(s);
         }
-// Idiomas por archivo 
+
         function getLocalizedUrl(urlBase) {
             const lang = navigator.language.slice(0, 2);
             const langMap = {
@@ -128,6 +127,7 @@
         // Inicialización cuando el DOM está listo
         document.addEventListener("DOMContentLoaded", () => {
             initializeVideo();
+            // Siempre cargar desde la raíz web/
             loadLocalizedContent('web/');
         });
 
@@ -137,12 +137,18 @@
             if (anchor && anchor.href.includes('web/')) {
                 event.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                loadLocalizedContent(anchor.href.replace('.html', ''));
+                // Obtener la URL completa y mantener la estructura de carpetas
+                const baseUrl = anchor.href.substring(0, anchor.href.lastIndexOf('/') + 1);
+                loadLocalizedContent(baseUrl);
             }
         });
 
         // Manejo del botón atrás
-        window.onpopstate = () => location.reload();
+        window.onpopstate = (event) => {
+            event.preventDefault();
+            // Redirigir al index.html en lugar de recargar la página actual
+            window.location.href = window.location.origin + window.location.pathname.split('web/')[0];
+        };
     </script>
 
     <!-- Widget de Discord -->
@@ -153,6 +159,6 @@
         });
     </script>
 
-    <noscript>JavaScript OFF. Se requiere JS activado.</noscript>
+    <noscript>JavaScript OFF. Se requiere JS activado para visualizar esta página. Consulta el repositorio si tienes problemas.</noscript>
 </body>
 </html>
