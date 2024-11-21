@@ -72,6 +72,7 @@ code {
     backdrop-filter: blur(7px);
 }
 
+
 .contenedor-imagenes {
     position: relative;
     display: flex;
@@ -82,38 +83,43 @@ code {
     overflow: hidden; /* Oculta contenido fuera del área visible */
 }
 
+.contenedor-imagenes a {
+    display: block;
+    opacity: 0; /* Ocultos por defecto */
+    pointer-events: none; /* No interactuables por defecto */
+    animation: fadeInOut 10s linear infinite; /* Alterna visibilidad cada 10s */
+}
+
+/* Mostrar los primeros 4 enlaces durante los primeros 5 segundos */
+.contenedor-imagenes a:nth-child(-n+4) {
+    animation-delay: 0s; /* Sin retraso para el primer grupo */
+}
+
+/* Mostrar los siguientes enlaces después de 5 segundos */
+.contenedor-imagenes a:nth-child(n+5) {
+    animation-delay: 5s; /* Retraso de 5 segundos */
+}
+
+/* Animación para alternar visibilidad de los enlaces */
+@keyframes fadeInOut {
+    0%, 40% {
+        opacity: 1; /* Visible */
+        pointer-events: auto; /* Interactuable */
+    }
+    50%, 100% {
+        opacity: 0; /* Invisible */
+        pointer-events: none; /* No interactuable */
+    }
+}
+
 .contenedor-imagenes img {
-    max-width: 100%;
+    max-width: 100px; 
     height: auto;
     margin: 0;
     padding: 0;
     display: block;
-    opacity: 0; /* Ocultas por defecto */
-    pointer-events: none; /* No interactuables por defecto */
-    animation: fadeInOut 10s linear infinite; /* Animación en bucle */
 }
 
-/* Mostrar el primer grupo de imágenes */
-.contenedor-imagenes img:nth-child(-n+4) {
-    animation-delay: 0s; /* Sin retraso */
-}
-
-/* Mostrar el segundo grupo de imágenes */
-.contenedor-imagenes img:nth-child(n+5) {
-    animation-delay: 5s; /* Aparecen después de 5 segundos */
-}
-
-/* Animación para alternar visibilidad */
-@keyframes fadeInOut {
-    0%, 40% {
-        opacity: 1; /* Visible */
-        pointer-events: auto; /* Hacer interactuables */
-    }
-    50%, 100% {
-        opacity: 0; /* Ocultas */
-        pointer-events: none; /* No interactuables */
-    }
-}
 
 .contenedor-texto {
     margin-bottom: 2px; 
