@@ -73,21 +73,47 @@ code {
 }
 
 .contenedor-imagenes {
+    position: relative;
     display: flex;
     justify-content: center;
-    align-items: center;     
-    gap: 5px;                
-    width: 100%;           
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    overflow: hidden; /* Oculta contenido fuera del área visible */
 }
 
 .contenedor-imagenes img {
-    max-width: 100%;        
-    height: auto;           
+    max-width: 100%;
+    height: auto;
     margin: 0;
     padding: 0;
-    display: block;          
+    display: block;
+    opacity: 0; /* Ocultas por defecto */
+    pointer-events: none; /* No interactuables por defecto */
+    animation: fadeInOut 10s linear infinite; /* Animación en bucle */
 }
 
+/* Mostrar el primer grupo de imágenes */
+.contenedor-imagenes img:nth-child(-n+4) {
+    animation-delay: 0s; /* Sin retraso */
+}
+
+/* Mostrar el segundo grupo de imágenes */
+.contenedor-imagenes img:nth-child(n+5) {
+    animation-delay: 5s; /* Aparecen después de 5 segundos */
+}
+
+/* Animación para alternar visibilidad */
+@keyframes fadeInOut {
+    0%, 40% {
+        opacity: 1; /* Visible */
+        pointer-events: auto; /* Hacer interactuables */
+    }
+    50%, 100% {
+        opacity: 0; /* Ocultas */
+        pointer-events: none; /* No interactuables */
+    }
+}
 
 .contenedor-texto {
     margin-bottom: 2px; 
