@@ -24,8 +24,7 @@ body {
 .loading-screen p {
     font-size: 2em;
     font-family: 'Comfortaa', sans-serif;
-}
-
+        }
 .hide {
     display: none;
 }
@@ -73,7 +72,6 @@ code {
     backdrop-filter: blur(7px);
 }
 
-/* imágenes */
 .contenedor-imagenes {
     display: flex;
     justify-content: center;
@@ -90,44 +88,99 @@ code {
     display: block;          
 }
 
-/*  animación imágenes */
+/* Contenedor principal para las imágenes animadas */
 .contenedor-imagenes-animado {
     display: flex;
     justify-content: center;
-    align-items: center;     
-    gap: 5px;                
+    align-items: center;
+    gap: 5px;
     width: 100%;
-    overflow: hidden; 
+    overflow: hidden; /* Oculta las imágenes que no están visibles */
     position: relative;
 }
 
-/* Imágenes dentro del contenedor animado */
 .contenedor-imagenes-animado img {
-    max-width: 23%; 
+    max-width: 23%; /* Ajusta el tamaño de las imágenes para 4 en fila */
     height: auto;
-    opacity: 0; /
+    opacity: 0; /* Ocultas por defecto */
     pointer-events: none; /* No clicables mientras están ocultas */
-    animation: alternarGrupos 8s linear infinite; /* Cambia cada 8 segundos */
+    position: absolute; /* Ocultas fuera del flujo normal */
+    transition: opacity 0.5s ease-in-out; /* Suavidad al aparecer/desaparecer */
 }
 
-/* Primer grupo (4 primeras imágenes) */
+/* Animación para el primer grupo */
 .contenedor-imagenes-animado img:nth-child(-n+4) {
+    animation: mostrarGrupo 8s linear infinite;
     animation-delay: 0s;
 }
 
-/* Segundo grupo (resto de las imágenes) */
-.contenedor-imagenes-animado img:nth-child(n+5) {
+/* Animación para el segundo grupo */
+.contenedor-imagenes-animado img:nth-child(n+5):nth-child(-n+8) {
+    animation: mostrarGrupo 8s linear infinite;
     animation-delay: 4s;
 }
 
-/* Animación para alternar entre los grupos */
-@keyframes alternarGrupos {
+/* Sucesivos  */
+.contenedor-imagenes-animado img:nth-child(n+9):nth-child(-n+12) {
+    animation: mostrarGrupo 8s linear infinite;
+    animation-delay: 8s;
+}
+
+/* Animación para mostrar las imágenes */
+@keyframes mostrarGrupo {
     0%, 40% {
-        opacity: 1;
-        pointer-events: auto; /* Clicables mientras son visibles */
+        opacity: 1; /* Visible */
+        pointer-events: auto; /* Clicables */
+        position: static; /* Ocupando espacio dentro del flujo normal */
     }
     50%, 100% {
-        opacity: 0;
-        pointer-events: none; /* No clicables mientras están ocultas */
+        opacity: 0; /* Ocultas */
+        pointer-events: none; /* No clicables */
+        position: absolute; /* Ocultas fuera del flujo normal */
+    }
+}
+
+
+
+.contenedor-texto {
+    margin-bottom: 2px; 
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 2px;
+    width: "80%"; 
+}
+
+#disqus_thread {
+    margin-top: 20px;
+}
+
+blockquote {
+    margin: 20px 0;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+    border-radius: 10px;
+}
+
+
+blockquote.red {
+    margin: 20px 0;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-left: 5px solid #ccc;
+    color: white;
+    animation: backgroundColorChange 5s infinite;
+}
+
+@keyframes backgroundColorChange {
+    0% {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    50% {
+        background-color: rgba(255, 0, 0, 0.7);
+    }
+    100% {
+        background-color: rgba(0, 0, 0, 0.7);
     }
 }
