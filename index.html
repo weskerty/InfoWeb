@@ -60,7 +60,6 @@
                 if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
                 document.getElementById('content').innerHTML = await response.text();
                 loadDisqus();
-                // No actualizamos la URL aquí para mantener siempre el index.html
             } catch (error) {
                 console.error(`Error cargando contenido: ${error.message}`);
                 if (fallbackUrl) {
@@ -124,11 +123,17 @@
             });
         }
 
+        // Variables para el historial
+        let currentPage = null;
+        let isFirstLoad = true;
+
         // Inicialización cuando el DOM está listo
         document.addEventListener("DOMContentLoaded", () => {
             initializeVideo();
-            // Siempre cargar desde la raíz web/
+            // Guardar la página inicial
+            currentPage = window.location.href;
             loadLocalizedContent('web/');
+            isFirstLoad = false;
         });
 
         // Manejo de clicks en enlaces
@@ -137,17 +142,26 @@
             if (anchor && anchor.href.includes('web/')) {
                 event.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                // Obtener la URL completa y mantener la estructura de carpetas
                 const baseUrl = anchor.href.substring(0, anchor.href.lastIndexOf('/') + 1);
+                // Agregar la nueva página al historial
+                if (!isFirstLoad) {
+                    history.pushState({ page: anchor.href }, '', window.location.href);
+                }
+                currentPage = anchor.href;
                 loadLocalizedContent(baseUrl);
             }
         });
 
         // Manejo del botón atrás
-        window.onpopstate = (event) => {
-            event.preventDefault();
-            // Redirigir al index.html en lugar de recargar la página actual
-            window.location.href = window.location.origin + window.location.pathname.split('web/')[0];
+        window.onpopstate = function(event) {
+            if (event.state && event.state.page) {
+                // Si hay un estado guardado, cargar esa página
+                const baseUrl = event.state.page.substring(0, event.state.page.lastIndexOf('/') + 1);
+                loadLocalizedContent(baseUrl);
+            } else {
+                // Si no hay estado, simplemente recargar la página actual
+                window.location.reload();
+            }
         };
     </script>
 
