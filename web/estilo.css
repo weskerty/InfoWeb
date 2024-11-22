@@ -131,7 +131,7 @@ code {
 .contenedor-imagenes-animado::before {
     content: '';
     display: block;
-    padding-top: 35%; /* alt */
+    padding-top: 25%; /* alt */
     grid-column: 1 / -1;
 }
 
