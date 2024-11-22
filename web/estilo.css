@@ -88,55 +88,80 @@ code {
     display: block;          
 }
 
+/* Contenedor base para imágenes */
+.contenedor-imagenes {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.contenedor-imagenes img {
+    max-width: 100%;        
+    height: auto;           
+    margin: 0;
+    padding: 0;
+    display: block;          
+}
+
 /* Contenedor principal para las imágenes animadas */
 .contenedor-imagenes-animado {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    flex-wrap: wrap;
+    gap: 20px;
     width: 100%;
-    overflow: hidden; /* Oculta las imágenes que no están visibles */
+    min-height: 200px; /* Ajusta según el tamaño de tus imágenes */
     position: relative;
 }
 
-.contenedor-imagenes-animado img {
-    max-width: 23%; /* Ajusta el tamaño de las imágenes para 4 en fila */
+/* Estilos para los enlaces */
+.contenedor-imagenes-animado a {
+    width: 22%; /* Ligeramente menor que 25% para considerar el gap */
+    opacity: 0;
+    position: absolute;
+    transform: translateY(20px);
+    transition: all 0.5s ease-in-out;
+    pointer-events: none;
+}
+
+.contenedor-imagenes-animado a img {
+    width: 100%;
     height: auto;
-    opacity: 0; /* Ocultas por defecto */
-    pointer-events: none; /* No clicables mientras están ocultas */
-    position: absolute; /* Ocultas fuera del flujo normal */
-    transition: opacity 0.5s ease-in-out; /* Suavidad al aparecer/desaparecer */
 }
 
-/* Animación para el primer grupo */
-.contenedor-imagenes-animado img:nth-child(-n+4) {
-    animation: mostrarGrupo 8s linear infinite;
-    animation-delay: 0s;
+/* Animación para el primer grupo (1-4) */
+.contenedor-imagenes-animado a:nth-child(-n+4) {
+    animation: slideGroup 15s infinite;
 }
 
-/* Animación para el segundo grupo */
-.contenedor-imagenes-animado img:nth-child(n+5):nth-child(-n+8) {
-    animation: mostrarGrupo 8s linear infinite;
-    animation-delay: 4s;
+/* Animación para el segundo grupo (5-8) */
+.contenedor-imagenes-animado a:nth-child(n+5):nth-child(-n+8) {
+    animation: slideGroup 15s infinite;
+    animation-delay: 5s;
 }
 
-/* Sucesivos  */
-.contenedor-imagenes-animado img:nth-child(n+9):nth-child(-n+12) {
-    animation: mostrarGrupo 8s linear infinite;
-    animation-delay: 8s;
+/* Animación para el tercer grupo (9-12) */
+.contenedor-imagenes-animado a:nth-child(n+9):nth-child(-n+12) {
+    animation: slideGroup 15s infinite;
+    animation-delay: 10s;
 }
 
-/* Animación para mostrar las imágenes */
-@keyframes mostrarGrupo {
-    0%, 40% {
-        opacity: 1; /* Visible */
-        pointer-events: auto; /* Clicables */
-        position: static; /* Ocupando espacio dentro del flujo normal */
+@keyframes slideGroup {
+    0%, 27% {
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
     }
-    50%, 100% {
-        opacity: 0; /* Ocultas */
-        pointer-events: none; /* No clicables */
-        position: absolute; /* Ocultas fuera del flujo normal */
+    33%, 60% {
+        opacity: 1;
+        transform: translateY(0);
+        position: relative;
+        pointer-events: auto;
+    }
+    66%, 100% {
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
     }
 }
 
