@@ -88,63 +88,50 @@ code {
     display: block;          
 }
 
-/* Contenedor base para imágenes */
-.contenedor-imagenes {
-    max-width: 100%;
-    margin: 0 auto;
-}
-
-.contenedor-imagenes img {
-    max-width: 100%;        
-    height: auto;           
-    margin: 0;
-    padding: 0;
-    display: block;          
-}
-
-/* Contenedor principal para las imágenes animadas */
 .contenedor-imagenes-animado {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     width: 100%;
-    min-height: 200px; /* Ajusta según el tamaño de tus imágenes */
+    max-width: 1200px;
+    margin: 0 auto;
     position: relative;
 }
 
-/* Estilos para los enlaces */
 .contenedor-imagenes-animado a {
-  /*  width: 22%;  */
+    grid-column: span 1;
+    width: 100%;
     opacity: 0;
-    position: absolute;
-   /* transform: translateY(20px); */
+    transform: translateY(20px);
     transition: all 0.5s ease-in-out;
     pointer-events: none;
 }
 
+/* Posicionamiento para crear capas superpuestas */
+.contenedor-imagenes-animado a {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(25% - 15px);
+}
+
+/* Posicionamiento horizontal para cada columna */
+.contenedor-imagenes-animado a:nth-child(4n + 1) { left: 0; }
+.contenedor-imagenes-animado a:nth-child(4n + 2) { left: calc(25% + 5px); }
+.contenedor-imagenes-animado a:nth-child(4n + 3) { left: calc(50% + 10px); }
+.contenedor-imagenes-animado a:nth-child(4n + 4) { left: calc(75% + 15px); }
+
 .contenedor-imagenes-animado a img {
     width: 100%;
     height: auto;
+    display: block;
 }
 
-/* Animación para el primer grupo (1-4) */
-.contenedor-imagenes-animado a:nth-child(-n+4) {
-    animation: slideGroup 15s infinite;
+.contenedor-imagenes-animado::before {
+    content: '';
+    display: block;
+    grid-column: 1 / -1;
 }
-
-/* Animación para el segundo grupo (5-8) */
-.contenedor-imagenes-animado a:nth-child(n+5):nth-child(-n+8) {
-    animation: slideGroup 15s infinite;
-    animation-delay: 5s;
-}
-
-/* Animación para el tercer grupo (9-12) */
-/* .contenedor-imagenes-animado a:nth-child(n+9):nth-child(-n+12) {
-    animation: slideGroup 15s infinite;
-    animation-delay: 10s;
-} */
 
 @keyframes slideGroup {
     0%, 27% {
@@ -155,8 +142,8 @@ code {
     33%, 60% {
         opacity: 1;
         transform: translateY(0);
-        position: relative;
         pointer-events: auto;
+        z-index: 1;
     }
     66%, 100% {
         opacity: 0;
@@ -165,6 +152,20 @@ code {
     }
 }
 
+/* Grupos de animación */
+.contenedor-imagenes-animado a:nth-child(-n+4) {
+    animation: slideGroup 15s infinite;
+}
+
+.contenedor-imagenes-animado a:nth-child(n+5):nth-child(-n+8) {
+    animation: slideGroup 15s infinite;
+    animation-delay: 5s;
+}
+
+.contenedor-imagenes-animado a:nth-child(n+9):nth-child(-n+12) {
+    animation: slideGroup 15s infinite;
+    animation-delay: 10s;
+}
 
 
 .contenedor-texto {
