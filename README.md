@@ -1,3 +1,9 @@
+video libro: https://www.pexels.com/video/a-typewriter-sitting-on-a-table-next-to-a-tree-27440759/
+
+https://github.com/user-attachments/assets/96e5b397-7504-4e59-b0a1-d58940064a4c
+
+
+
 Video Navidad:
 https://github.com/user-attachments/assets/b746d91d-55ae-4679-add6-fcf71e05dcd4
 
