@@ -5,6 +5,13 @@ video como es el bot ejemplo:
 
 https://github.com/user-attachments/assets/aac39899-d58e-4415-bfe5-ac752d79e729
 
+Uso Matterbridge
+
+
+https://github.com/user-attachments/assets/ac35a3c3-f439-4abb-a3c6-67bf2a62cd85
+
+
+
 
 
 
