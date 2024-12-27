@@ -136,18 +136,37 @@ code {
 }
 
 @keyframes slideGroup {
-    0%, 27% {
+    /* Entrada/inicio */
+    0% {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(20px); /* Comienza desde abajo */
         pointer-events: none;
     }
-    33%, 60% {
+    5% {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    /* Mantener visible */
+    5%, 27% {
         opacity: 1;
         transform: translateY(0);
         pointer-events: auto;
         z-index: 1;
     }
-    66%, 100% {
+    /* Salida */
+    30% {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    33% {
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+    }
+    /* Mantener oculto */
+    33%, 100% {
         opacity: 0;
         transform: translateY(-20px);
         pointer-events: none;
@@ -156,15 +175,18 @@ code {
 
 /* Grupos de animación */
 .contenedor-imagenes-animado a:nth-child(-n+4) {
+    opacity: 0; /* Estado inicial oculto */
     animation: slideGroup 15s infinite;
 }
 
 .contenedor-imagenes-animado a:nth-child(n+5):nth-child(-n+8) {
+    opacity: 0; 
     animation: slideGroup 15s infinite;
     animation-delay: 5s;
 }
 
 .contenedor-imagenes-animado a:nth-child(n+9):nth-child(-n+12) {
+    opacity: 0; 
     animation: slideGroup 15s infinite;
     animation-delay: 10s;
 }
