@@ -3,7 +3,11 @@ https://github.com/user-attachments/assets/96e5b397-7504-4e59-b0a1-d58940064a4c
 
 video como es el bot ejemplo:
 
-https://github.com/user-attachments/assets/aac39899-d58e-4415-bfe5-ac752d79e729
+
+
+https://github.com/user-attachments/assets/ff906379-83dd-44a8-8532-4e2aaedbbb11
+
+
 
 Uso Matterbridge
 https://github.com/user-attachments/assets/ac35a3c3-f439-4abb-a3c6-67bf2a62cd85
