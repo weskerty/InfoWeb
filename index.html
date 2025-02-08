@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>  <!-- Info que aparece en vista previa al compartir enlace -->
+<html lang="es">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HISPANIC GALAXYꕥ</title>
+    <title>HISPANIC GALAXY</title>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="web/favicon.ico">
     <link rel="stylesheet" href="web/estilo.css">
-    <meta name="description" content="La Comunidad Hispana Mas Grande de SA">
+    <meta name="description" content="La Comunidad Hispana Más Grande de SA">
     <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
 </head>
 <body>
-    <div class="loading-screen" id="loading-screen">  <!-- Vista de carga al iniciar -->
+    <div class="loading-screen" id="loading-screen">
         <p>⌛Cargando⏳</p>
     </div>
 
@@ -21,14 +21,14 @@
     <video autoplay muted loop id="bg-video" preload="auto">
         <source src="" type="video/mp4">
         Error al cargar el video
-    </video>  
+    </video>
 
     <div class="content" id="content">
         <p>⌛Cargando⏳</p>
     </div>
 
     <script>
-        // videos rotativos por mes.
+        // Videos por mes
         const monthlyVideos = {
             0: 'https://videos.pexels.com/video-files/5834608/5834608-hd_1280_720_25fps.mp4', // Enero
             1: 'https://videos.pexels.com/video-files/8279906/8279906-hd_1280_720_24fps.mp4', // Febrero
@@ -44,7 +44,7 @@
             11: 'https://github.com/user-attachments/assets/b746d91d-55ae-4679-add6-fcf71e05dcd4'  // Diciembre
         };
 
-        // Función para obtener el video según el mes actual
+        // fecha video
         function getCurrentMonthVideo() {
             const currentMonth = new Date().getMonth();
             return monthlyVideos[currentMonth];
@@ -54,7 +54,7 @@
             document.getElementById('loading-screen').classList.add('hide');
         }
 
-        async function loadContent(url, fallbackUrl = null) {
+        async function loadContent(url) {
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
@@ -62,11 +62,7 @@
                 loadDisqus();
             } catch (error) {
                 console.error(`Error cargando contenido: ${error.message}`);
-                if (fallbackUrl) {
-                    loadContent(fallbackUrl);
-                } else {
-                    document.getElementById('content').innerHTML = `<p>Error Cargando: ${error.message}</p>`;
-                }
+                document.getElementById('content').innerHTML = `<p>Error Cargando: ${error.message}</p>`;
             }
         }
 
@@ -84,25 +80,6 @@
             s.src = 'https://amigos-steam.disqus.com/embed.js';
             s.setAttribute('data-timestamp', +new Date());
             document.body.appendChild(s);
-        }
-
-        function getLocalizedUrl(urlBase) {
-            const lang = navigator.language.slice(0, 2);
-            const langMap = {
-                es: 'es.html', // Idioma por archivo. Español
-                pt: 'pt.html',
-                fr: 'fr.html',
-                ru: 'ru.html',
-                ar: 'ar.html',
-                hi: 'hi.html'
-            };
-            return `${urlBase}${langMap[lang] || 'ingles.html'}`; // Predeterminado ingles en caso de no existir archivo de idioma.
-        }
-
-        function loadLocalizedContent(urlBase) {
-            const localizedUrl = getLocalizedUrl(urlBase);
-            const fallbackUrl = `${urlBase}ingles.html`;
-            loadContent(localizedUrl, fallbackUrl);
         }
 
         function initializeVideo() {
@@ -123,17 +100,45 @@
             });
         }
 
-        // Variables para el historial
         let currentPage = null;
         let isFirstLoad = true;
 
-        // Inicialización cuando el DOM está listo
         document.addEventListener("DOMContentLoaded", () => {
             initializeVideo();
-            // Guardar la página inicial
             currentPage = window.location.href;
-            loadLocalizedContent('web/');
+            loadContent('web/es.html'); 
             isFirstLoad = false;
+
+            // Anim
+            window.addEventListener('load', function () {
+                const container = document.querySelector('.contenedor-imagenes-animado');
+                if (!container) return;
+
+                const images = container.querySelectorAll('a');
+                const totalImages = images.length;
+
+                if (totalImages === 0) return;
+
+                const percentagePerImage = 100 / totalImages;
+                const keyframes = Array.from({ length: totalImages + 1 }, (_, i) => {
+                    const percentage = i * percentagePerImage;
+                    const translation = i * -100;
+                    return `${percentage}% { transform: translateX(${translation}%); }`;
+                }).join('');
+
+                const styleSheet = document.createElement('style');
+                styleSheet.textContent = `
+                    @keyframes moveLeft {
+                        ${keyframes}
+                    }
+                `;
+                document.head.appendChild(styleSheet);
+
+                const duration = totalImages * 15; 
+                images.forEach(img => {
+                    img.style.animationDuration = `${duration}s`;
+                });
+            });
         });
 
         // Manejo de clicks en enlaces
@@ -143,23 +148,20 @@
                 event.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 const baseUrl = anchor.href.substring(0, anchor.href.lastIndexOf('/') + 1);
-                // Agregar la nueva página al historial
+
                 if (!isFirstLoad) {
                     history.pushState({ page: anchor.href }, '', window.location.href);
                 }
                 currentPage = anchor.href;
-                loadLocalizedContent(baseUrl);
+                loadContent(baseUrl + 'es.html'); 
             }
         });
 
-        // Manejo del botón atrás
-        window.onpopstate = function(event) {
+        window.onpopstate = function (event) {
             if (event.state && event.state.page) {
-                // Si hay un estado guardado, cargar esa página
                 const baseUrl = event.state.page.substring(0, event.state.page.lastIndexOf('/') + 1);
-                loadLocalizedContent(baseUrl);
+                loadContent(baseUrl + 'es.html'); 
             } else {
-                // Si no hay estado, simplemente recargar la página actual
                 window.location.reload();
             }
         };
