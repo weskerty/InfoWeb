@@ -112,13 +112,17 @@ code {
 /* carrusel */
 .contenedor-imagenes-animado {
     display: flex;
-    overflow: hidden;
-    width: 100%;
-    position: relative;
+    gap: 10px; 
+    padding: 10px 0;
+    width: 100%; 
+    height: auto; 
+    box-shadow: none !important; 
+    border: none !important; 
+    background: transparent !important; 
 }
 
 .contenedor-imagenes-animado a {
-    flex: 0 0 25%; 
+    flex: 0 0 auto; 
     position: relative;
     transform: translateX(0);
     animation: moveLeft 5s linear infinite;
@@ -126,10 +130,13 @@ code {
 }
 
 .contenedor-imagenes-animado a img {
-    width: 100%;
+    width: auto;
     height: auto;
+    max-height: 200px; 
     display: block;
+    object-fit: contain;
 }
+
 
 
 .swiper {
