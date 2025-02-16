@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HISPANIC GALAXY</title>
+    <title>HISPANIC GALAXYꕥ</title>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="web/favicon.ico">
     <link rel="stylesheet" href="web/estilo.css">
-    <meta name="description" content="La Comunidad Hispana Más Grande de SA">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.css">
+    <meta name="description" content="La Comunidad Hispana Mas Grande de SA">
     <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -17,7 +18,6 @@
         <p>⌛Cargando⏳</p>
     </div>
 
-    <!-- Video -->
     <video autoplay muted loop id="bg-video" preload="auto">
         <source src="" type="video/mp4">
         Error al cargar el video
@@ -27,59 +27,36 @@
         <p>⌛Cargando⏳</p>
     </div>
 
+    <div id="disqus-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.js"></script>
+    
     <script>
-        // Videos por mes
         const monthlyVideos = {
-            0: 'https://videos.pexels.com/video-files/5834608/5834608-hd_1280_720_25fps.mp4', // Enero
-            1: 'https://videos.pexels.com/video-files/8279906/8279906-hd_1280_720_24fps.mp4', // Febrero
-            2: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Marzo
-            3: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Abril
-            4: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Mayo
-            5: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Junio
-            6: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Julio
-            7: 'https://videos.pexels.com/video-files/6157145/6157145-hd_1366_720_25fps.mp4', // Agosto
-            8: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Septiembre
-            9: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428', // Octubre
-            10: 'https://videos.pexels.com/video-files/4957757/4957757-hd_1280_720_50fps.mp4', // Noviembre
-            11: 'https://github.com/user-attachments/assets/b746d91d-55ae-4679-add6-fcf71e05dcd4'  // Diciembre
+            0: 'https://videos.pexels.com/video-files/5834608/5834608-hd_1280_720_25fps.mp4',
+            1: 'https://videos.pexels.com/video-files/8279906/8279906-hd_1280_720_24fps.mp4',
+            2: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            3: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            4: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            5: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            6: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            7: 'https://videos.pexels.com/video-files/6157145/6157145-hd_1366_720_25fps.mp4',
+            8: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            9: 'https://github.com/user-attachments/assets/acd45c39-0dbc-48b7-8d20-3c7556688428',
+            10: 'https://videos.pexels.com/video-files/4957757/4957757-hd_1280_720_50fps.mp4',
+            11: 'https://github.com/user-attachments/assets/b746d91d-55ae-4679-add6-fcf71e05dcd4'
         };
 
-        // fecha video
         function getCurrentMonthVideo() {
             const currentMonth = new Date().getMonth();
             return monthlyVideos[currentMonth];
         }
 
         function hideLoadingScreen() {
-            document.getElementById('loading-screen').classList.add('hide');
-        }
-
-        async function loadContent(url) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
-                document.getElementById('content').innerHTML = await response.text();
-                loadDisqus();
-            } catch (error) {
-                console.error(`Error cargando contenido: ${error.message}`);
-                document.getElementById('content').innerHTML = `<p>Error Cargando: ${error.message}</p>`;
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hide');
             }
-        }
-
-        function loadDisqus() {
-            const disqusDiv = document.createElement('div');
-            disqusDiv.id = 'disqus_thread';
-            document.getElementById('content').appendChild(disqusDiv);
-
-            window.disqus_config = function () {
-                this.page.url = window.location.href;
-                this.page.identifier = document.title;
-            };
-
-            const s = document.createElement('script');
-            s.src = 'https://amigos-steam.disqus.com/embed.js';
-            s.setAttribute('data-timestamp', +new Date());
-            document.body.appendChild(s);
         }
 
         function initializeVideo() {
@@ -100,81 +77,161 @@
             });
         }
 
+        async function fetchRSS(rssContainer) {
+            const rssUrl = rssContainer.getAttribute('data-rss-url'); 
+            if (!rssUrl) return '<p>Error: No RSS</p>';
+
+            try {
+                const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+                const data = await response.json();
+                const feed = data.items.slice(0, 3).map(item => `
+                    <div class="rss-item">
+                        <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+                        <p>${item.description}</p>
+                    </div>
+                `).join("");
+                return feed;
+            } catch (error) {
+                return '<p>Error RSS</p>';
+            }
+        }
+
+        async function loadContent(url, updateHistory = true) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
+                let content = await response.text();
+
+                const contentDiv = document.getElementById('content');
+                contentDiv.innerHTML = content;
+
+                const rssContainer = contentDiv.querySelector('#rss-container');
+                if (rssContainer) {
+                    const rssFeed = await fetchRSS(rssContainer);
+                    rssContainer.innerHTML = `
+                        <div class="rss-section">
+                            <h2>Novedades:</h2>
+                            ${rssFeed}
+                        </div>
+                    `;
+                }
+
+                initializeGalleries();
+
+                if (updateHistory) {
+                    history.pushState({ url: url }, '', window.location.href);
+                }
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<p>Error Cargando: ${error.message}</p>`;
+            }
+        }
+
+        function loadDisqus() {
+            if (document.getElementById('disqus_thread')) return;
+
+            const disqusDiv = document.createElement('div');
+            disqusDiv.id = 'disqus_thread';
+            document.getElementById('disqus-container').appendChild(disqusDiv);
+
+            window.disqus_config = function () {
+                this.page.url = window.location.href;
+                this.page.identifier = document.title;
+            };
+
+            const s = document.createElement('script');
+            s.src = 'https://amigos-steam.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            document.body.appendChild(s);
+        }
+
+        function createSwiper(container, images) {
+            container.innerHTML = `
+                <div class="swiper-wrapper">
+                    ${images.map(item => `
+                        <div class="swiper-slide">
+                            <a href="${item.link}">
+                                <img src="${item.image}" alt="${item.name}" loading="lazy" />
+                            </a>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            return new Swiper(container, {
+                slidesPerView: 'auto',
+                spaceBetween: 20,
+                loop: true,
+                centeredSlides: true,
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                }
+            });
+        }
+
+        function parseInlineGalleryData(element) {
+            try {
+                const content = element.textContent.trim();
+                if (!content) return null;
+                const jsonStr = `[${content}]`;
+                return { images: JSON.parse(jsonStr) };
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function initializeGalleries() {
+            document.querySelectorAll('.contenedor-imagenes-animado').forEach(container => {
+                const inlineData = parseInlineGalleryData(container);
+                if (inlineData && inlineData.images) {
+                    container.classList.add('swiper');
+                    createSwiper(container, inlineData.images);
+                }
+            });
+        }
+
         let currentPage = null;
         let isFirstLoad = true;
 
         document.addEventListener("DOMContentLoaded", () => {
             initializeVideo();
             currentPage = window.location.href;
-            loadContent('web/es.html'); 
+            loadContent('web/es.html', false);
+            loadDisqus();
             isFirstLoad = false;
 
-            // Anim
-            window.addEventListener('load', function () {
-                const container = document.querySelector('.contenedor-imagenes-animado');
-                if (!container) return;
-
-                const images = container.querySelectorAll('a');
-                const totalImages = images.length;
-
-                if (totalImages === 0) return;
-
-                const percentagePerImage = 100 / totalImages;
-                const keyframes = Array.from({ length: totalImages + 1 }, (_, i) => {
-                    const percentage = i * percentagePerImage;
-                    const translation = i * -100;
-                    return `${percentage}% { transform: translateX(${translation}%); }`;
-                }).join('');
-
-                const styleSheet = document.createElement('style');
-                styleSheet.textContent = `
-                    @keyframes moveLeft {
-                        ${keyframes}
-                    }
-                `;
-                document.head.appendChild(styleSheet);
-
-                const duration = totalImages * 15; 
-                images.forEach(img => {
-                    img.style.animationDuration = `${duration}s`;
-                });
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.url) {
+                    loadContent(event.state.url, false);
+                } else {
+                    loadContent('web/es.html', false);
+                }
             });
         });
 
-        // Manejo de clicks en enlaces
         document.addEventListener('click', (event) => {
             const anchor = event.target.closest('a');
-            if (anchor && anchor.href.includes('web/')) {
-                event.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                const baseUrl = anchor.href.substring(0, anchor.href.lastIndexOf('/') + 1);
+            if (!anchor) return;
+            if (anchor.target === "_blank") return;
+            if (!anchor.href.includes('web/')) return;
 
-                if (!isFirstLoad) {
-                    history.pushState({ page: anchor.href }, '', window.location.href);
-                }
-                currentPage = anchor.href;
-                loadContent(baseUrl + 'es.html'); 
-            }
+            event.preventDefault();
+            const href = anchor.href;
+            const isSpecificFile = href.endsWith('.html');
+            const baseUrl = href.substring(0, href.lastIndexOf('/') + 1);
+            const targetUrl = isSpecificFile ? href : baseUrl + 'es.html';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            loadContent(targetUrl);
         });
-
-        window.onpopstate = function (event) {
-            if (event.state && event.state.page) {
-                const baseUrl = event.state.page.substring(0, event.state.page.lastIndexOf('/') + 1);
-                loadContent(baseUrl + 'es.html'); 
-            } else {
-                window.location.reload();
-            }
-        };
     </script>
 
-    <!-- Widget de Discord -->
-    <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
+    <script src='https://cdn.jsdelivr.net/npm/@widgetbot/crate@3' async defer>
         new Crate({
             server: '1295581997967868005',
             channel: '1295818306871230645'
-        });
+        })
     </script>
-
     <noscript>JavaScript OFF. Se requiere JS activado</noscript>
 </body>
 </html>
