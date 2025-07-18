@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Comfortaa', sans-serif;
+    font-family: 'Press Start 2P', cursive;
     color: white;
     overflow-x: hidden;
     background: url('https://img.goodfon.com/original/1360x768/4/a2/tekstury-razmytie-siniy.jpg') no-repeat center center fixed;
@@ -23,8 +23,9 @@ body {
 
 .loading-screen p {
     font-size: 2em;
-    font-family: 'Comfortaa', sans-serif;
-        }
+    font-family: 'Press Start 2P', cursive;
+}
+
 .hide {
     display: none;
 }
