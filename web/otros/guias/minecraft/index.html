@@ -1,1 +1,132 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Galaxyꕥ</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="estilo.css">
+    <meta name="description" content="Unete a Minecraft">
+    <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+</head>
+<body>
+    <div class="loading-screen" id="loading-screen">
+        <p>⌛Cargando⏳</p>
+    </div>
+
+    <!-- Video -->
+    <video autoplay muted loop id="bg-video" preload="auto">
+        <source src="https://github.com/user-attachments/assets/330277fb-be36-46c2-910b-6b8c1aabe942" type="video/mp4">
+        Error al cargar el video
+    </video>  
+
+    <div class="content" id="content">
+        <p>⌛Cargando contenido⏳</p>
+    </div>
+
+    <script>
+        function hideLoadingScreen() {
+            document.getElementById('loading-screen').classList.add('hide');
+        }
+
+        async function loadContent(url, fallbackUrl = null) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error fetching ${url}: ${response.statusText}`);
+                document.getElementById('content').innerHTML = await response.text();
+                loadDisqus(); 
+            } catch (error) {
+                console.error(`Error cargando contenido: ${error.message}`);
+                if (fallbackUrl) {
+                    loadContent(fallbackUrl); 
+                } else {
+                    document.getElementById('content').innerHTML = `<p>Error Cargando: ${error.message}</p>`;
+                }
+            }
+        }
+
+        // Carga los comentarios de Disqus
+        function loadDisqus() {
+            const disqusDiv = document.createElement('div');
+            disqusDiv.id = 'disqus_thread';
+            document.getElementById('content').appendChild(disqusDiv);
+
+            const disqus_config = function () {
+                this.page.url = window.location.href;
+                this.page.identifier = document.title;
+            };
+
+            const s = document.createElement('script');
+            s.src = 'https://amigos-steam.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            document.body.appendChild(s);
+        }
+
+        // Detectar el idioma del navegador y cargar el archivo correspondiente desde la misma carpeta
+        function getLocalizedUrl() {
+            const lang = navigator.language.slice(0, 2); // Detecta el idioma (2 letras)
+            const langMap = {
+                es: 'es.html',
+                pt: 'pt.html',
+                fr: 'fr.html',
+                ru: 'ru.html',
+                ar: 'ar.html',
+                hi: 'hi.html'
+            };
+            return langMap[lang] || 'ingles.html'; // Por defecto, carga 'ingles.html'
+        }
+
+        function loadLocalizedContent() {
+            const localizedUrl = getLocalizedUrl(); // Ruta relativa en la misma carpeta
+            const fallbackUrl = 'ingles.html'; // Fallback a inglés
+            loadContent(localizedUrl, fallbackUrl);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const bgVideo = document.getElementById('bg-video');
+
+            const timeoutId = setTimeout(() => {
+                // Cancelar el video si no carga en 5 segundos
+                bgVideo.pause();
+                bgVideo.src = ''; 
+                bgVideo.load();    
+                hideLoadingScreen(); 
+            }, 5000);
+
+            loadLocalizedContent(); // Cargar el contenido localizado
+
+            bgVideo.addEventListener('loadeddata', () => {
+                clearTimeout(timeoutId);  
+                hideLoadingScreen();      
+            });
+        });
+
+        // Cargar contenido cuando se hace clic en un enlace
+        document.addEventListener('click', (event) => {
+            const anchor = event.target.closest('a');
+            if (anchor && anchor.href.includes('.html')) {
+                event.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                loadLocalizedContent();
+            }
+        });
+
+        // Recargar cuando se utiliza el botón de retroceso
+        window.onpopstate = () => location.reload();
+    </script>
+
+    <!-- Widget de Discord -->
+    <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
+        new Crate({
+            server: '1295581997967868005',
+            channel: '1295818306871230645'
+        });
+    </script>
+
+    <noscript>JavaScript OFF. Se requiere JS activado para visualizar esta página. Consulta el repositorio si tienes problemas.</noscript>
+</body>
+</html>
