@@ -47,6 +47,10 @@
             11: 'https://github.com/user-attachments/assets/b746d91d-55ae-4679-add6-fcf71e05dcd4'
         };
 
+        function isMobile() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
         function getCurrentMonthVideo() {
             const currentMonth = new Date().getMonth();
             return monthlyVideos[currentMonth];
@@ -59,23 +63,28 @@
             }
         }
 
-        function initializeVideo() {
-            const bgVideo = document.getElementById('bg-video');
-            bgVideo.querySelector('source').src = getCurrentMonthVideo();
-            bgVideo.load();
+function initializeVideo() {
+    if (isMobile()) {
+        hideLoadingScreen();
+        return;
+    }
+    
+    const bgVideo = document.getElementById('bg-video');
+    bgVideo.querySelector('source').src = getCurrentMonthVideo();
+    bgVideo.load();
 
-            const timeoutId = setTimeout(() => {
-                bgVideo.pause();
-                bgVideo.src = '';
-                bgVideo.load();
-                hideLoadingScreen();
-            }, 5000);
+    const timeoutId = setTimeout(() => {
+        bgVideo.pause();
+        bgVideo.src = '';
+        bgVideo.load();
+        hideLoadingScreen();
+    }, 5000);
 
-            bgVideo.addEventListener('loadeddata', () => {
-                clearTimeout(timeoutId);
-                hideLoadingScreen();
-            });
-        }
+    bgVideo.addEventListener('loadeddata', () => {
+        clearTimeout(timeoutId);
+        hideLoadingScreen();
+    });
+}
 
         async function fetchRSS(rssContainer) {
             const rssUrl = rssContainer.getAttribute('data-rss-url'); 
