@@ -89,9 +89,36 @@
  
 </br>
 
-<blockquote
-<h3>😻 Comparte para ser mas Amigos cada Dia 😻</h3>
+
+<blockquote id="compartir-bloque">
+  <h3>
+    <a href="https://wa.me/?text=Te%20Unes%3F%20%F0%9F%90%B1%20chat.whatsapp.com%2FHXdpk6CpmSRDqHUOTLXp20" 
+       id="compartir-enlace"
+       style="text-decoration: none; color: inherit;">
+      😻 Comparte para ser más Amigos cada Día 😻
+    </a>
+  </h3>
 </blockquote>
+
+<script>
+  if (navigator.share) {
+    const enlace = document.getElementById('compartir-enlace');
+
+    enlace.removeAttribute('href');
+    enlace.style.cursor = 'pointer';
+
+    enlace.addEventListener('click', (e) => {
+      e.preventDefault(); 
+      navigator.share({
+        title: '😻 Compartir',
+        text: '😻 Comparte para ser más Amigos cada Día 😻',
+        url: window.location.href,
+      })
+      .then(() => console.log('Compartido exitosamente'))
+      .catch((error) => console.log('No se pudo compartir:', error));
+    });
+  }
+</script>
 
 <h2>💡 Guias </h2>
 <a href="web/otros/guias/juegoseguro/">JuegosPC</a> · <a href="https://weskerty.github.io/LinuxOneClick/">InstalarLinux</a> · <a href="web/otros/guias/bot/"> Agrega tu Grupo </a> · <a href="https://weskerty.github.io/test/minecraft/"> Server Miencraft </a>    
