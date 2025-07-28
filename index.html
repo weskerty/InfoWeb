@@ -105,6 +105,34 @@ function initializeVideo() {
             }
         }
 
+        // Ejecutar Scripts
+        function executeScripts(container) {
+            const scripts = container.querySelectorAll('script');
+            
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                
+                
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                
+                
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    
+                    newScript.textContent = oldScript.textContent;
+                }
+                
+                
+                oldScript.remove();
+                
+                
+                document.head.appendChild(newScript);
+            });
+        }
+
         async function loadContent(url, updateHistory = true) {
             try {
                 const response = await fetch(url);
@@ -113,6 +141,9 @@ function initializeVideo() {
 
                 const contentDiv = document.getElementById('content');
                 contentDiv.innerHTML = content;
+
+                // Ejecutar Scripts
+                executeScripts(contentDiv);
 
                 const rssContainer = contentDiv.querySelector('#rss-container');
                 if (rssContainer) {
