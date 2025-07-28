@@ -92,9 +92,6 @@
 
 <blockquote id="compartir-bloque">
   <h3>
-    <a href="#" 
-       id="compartir-enlace"
-       style="text-decoration: none; color: inherit;">
       😻 Comparte para ser más Amigos cada Día 😻
     </a>
   </h3>
@@ -104,13 +101,18 @@
   if (navigator.share) {
     const enlace = document.getElementById('compartir-enlace');
 
+    enlace.removeAttribute('href');
+    enlace.style.cursor = 'pointer';
+
     enlace.addEventListener('click', (e) => {
       e.preventDefault(); 
       navigator.share({
         title: '😻 Compartir',
         text: '😻 Comparte para ser más Amigos cada Día 😻',
         url: window.location.href,
-      });
+      })
+      .then(() => console.log('Compartido exitosamente'))
+      .catch((error) => console.log('No se pudo compartir:', error));
     });
   }
 </script>
