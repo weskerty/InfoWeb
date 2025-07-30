@@ -84,26 +84,23 @@
         }
 
         // Ejecutar Scripts
-        function executeScripts(container) {
-            const scripts = container.querySelectorAll('script');
-            
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                
-                Array.from(oldScript.attributes).forEach(attr => {
-                    newScript.setAttribute(attr.name, attr.value);
-                });
-                
-                if (oldScript.src) {
-                    newScript.src = oldScript.src;
-                } else {
-                    newScript.textContent = oldScript.textContent;
-                }
-                
-                oldScript.remove();
-                document.head.appendChild(newScript);
-            });
+function executeScripts(container) {
+    const scripts = container.querySelectorAll('script');
+
+    scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        for (const attr of oldScript.attributes) {
+            newScript.setAttribute(attr.name, attr.value);
         }
+        if (oldScript.src) {
+            newScript.src = oldScript.src;
+        } else {
+            newScript.textContent = oldScript.textContent;
+        }
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
+
 
         async function loadContent(url, updateHistory = true) {
             try {
