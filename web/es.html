@@ -123,12 +123,12 @@
 <a href="web/otros/guias/juegoseguro/">JuegosPC</a> · <a href="https://weskerty.github.io/LinuxOneClick/">InstalarLinux</a> · <a href="web/otros/guias/bot/"> Agrega tu Grupo </a> · <a href="https://weskerty.github.io/test/minecraft/"> Server Miencraft </a>    
 	</br>
 
-<div id="rss-container">Cargando Novedades...</div>
+<div id="rss-container"></div>
 
 <script>
 async function loadRSS() {
     try {
-        const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://URL');
+        const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://silpy.congreso.gov.py/web/FeedRss?opcionRSS=2');
         const data = await response.json();
         
         const rssHTML = data.items.slice(0, 3).map(item => `
