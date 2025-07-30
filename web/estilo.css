@@ -145,13 +145,14 @@ code {
     transition: all 0.3s ease; 
     overflow: hidden; 
     border-radius: 16px; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  */
 }
 
 .swiper-slide a {
     display: block;
     width: 100%;
-    height: 300px; 
+    height: auto; 
+    min-height: 200px; 
     border-radius: 16px;
     overflow: hidden;
     position: relative;
@@ -159,10 +160,11 @@ code {
 
 .swiper-slide img {
     width: 100%;
-    height: 100%; 
-    object-fit: cover; 
+    height: auto; 
+    max-height: 300px; 
+    object-fit: contain; 
     border-radius: 16px;
-    transition: all 0.3s ease; 
+    transition: all 0.3s ease;
 }
 
 
@@ -172,15 +174,17 @@ code {
 }
 
 .swiper-slide-active a {
-    transform: scale(1.1); 
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); 
-    height: 350px; 
+    transform: scale(1.1);
+    /* box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); */
+    height: auto; 
+    max-height: 400px; 
 }
 
 .swiper-slide-active img {
     width: 100%;
-    height: 100%;
-    object-fit: cover; 
+    height: auto; 
+    max-height: 400px; 
+    object-fit: contain;
 }
 
 
@@ -208,7 +212,7 @@ code {
     object-fit: cover;
     border-radius: 16px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
     transform: scale(0.9);
     opacity: 0.7;
     transform-origin: center center;
@@ -219,7 +223,7 @@ code {
 .grid-gallery img:hover {
     transform: scale(1.1);
     opacity: 1;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    /* box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); */
     z-index: 2;
 }
 
@@ -255,7 +259,7 @@ code {
 .rss-section {
     margin: 30px 0;
     padding: 20px;
-    /* background-color: rgba(0, 0, 0, 0.7); */
+    background-color: rgba(0, 0, 0, 0.7); 
     border-radius: 15px;
 }
 
@@ -327,7 +331,7 @@ code {
     padding: 20px;
     background-color: rgba(0, 0, 0, 0.6);
     border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
     backdrop-filter: blur(7px);
 }
 
