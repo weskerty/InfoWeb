@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="web/favicon.ico">
     <link rel="stylesheet" href="web/estilo.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.css">
     <meta name="description" content="La Comunidad Hispana Mas Grande de SA">
     <meta property="og:image" content="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20with%20Face.png">
     <meta property="og:image:width" content="1200">
@@ -28,8 +27,6 @@
     </div>
 
     <div id="disqus-container"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.js"></script>
     
     <script>
         const monthlyVideos = {
@@ -48,8 +45,8 @@
         };
 
         function isMobile() {
-    return window.matchMedia("(max-width: 768px)").matches;
-}
+            return window.matchMedia("(max-width: 768px)").matches;
+        }
 
         function getCurrentMonthVideo() {
             const currentMonth = new Date().getMonth();
@@ -63,28 +60,28 @@
             }
         }
 
-function initializeVideo() {
-    if (isMobile()) {
-        hideLoadingScreen();
-        return;
-    }
-    
-    const bgVideo = document.getElementById('bg-video');
-    bgVideo.querySelector('source').src = getCurrentMonthVideo();
-    bgVideo.load();
+        function initializeVideo() {
+            if (isMobile()) {
+                hideLoadingScreen();
+                return;
+            }
+            
+            const bgVideo = document.getElementById('bg-video');
+            bgVideo.querySelector('source').src = getCurrentMonthVideo();
+            bgVideo.load();
 
-    const timeoutId = setTimeout(() => {
-        bgVideo.pause();
-        bgVideo.src = '';
-        bgVideo.load();
-        hideLoadingScreen();
-    }, 5000);
+            const timeoutId = setTimeout(() => {
+                bgVideo.pause();
+                bgVideo.src = '';
+                bgVideo.load();
+                hideLoadingScreen();
+            }, 5000);
 
-    bgVideo.addEventListener('loadeddata', () => {
-        clearTimeout(timeoutId);
-        hideLoadingScreen();
-    });
-}
+            bgVideo.addEventListener('loadeddata', () => {
+                clearTimeout(timeoutId);
+                hideLoadingScreen();
+            });
+        }
 
         async function fetchRSS(rssContainer) {
             const rssUrl = rssContainer.getAttribute('data-rss-url'); 
@@ -112,23 +109,17 @@ function initializeVideo() {
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 
-                
                 Array.from(oldScript.attributes).forEach(attr => {
                     newScript.setAttribute(attr.name, attr.value);
                 });
                 
-                
                 if (oldScript.src) {
                     newScript.src = oldScript.src;
                 } else {
-                    
                     newScript.textContent = oldScript.textContent;
                 }
                 
-                
                 oldScript.remove();
-                
-                
                 document.head.appendChild(newScript);
             });
         }
@@ -156,8 +147,6 @@ function initializeVideo() {
                     `;
                 }
 
-                initializeGalleries();
-
                 if (updateHistory) {
                     history.pushState({ url: url }, '', window.location.href);
                 }
@@ -182,52 +171,6 @@ function initializeVideo() {
             s.src = 'https://amigos-steam.disqus.com/embed.js';
             s.setAttribute('data-timestamp', +new Date());
             document.body.appendChild(s);
-        }
-
-        function createSwiper(container, images) {
-            container.innerHTML = `
-                <div class="swiper-wrapper">
-                    ${images.map(item => `
-                        <div class="swiper-slide">
-                            <a href="${item.link}">
-                                <img src="${item.image}" alt="${item.name}" loading="lazy" />
-                            </a>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-
-            return new Swiper(container, {
-                slidesPerView: 'auto',
-                spaceBetween: 20,
-                loop: true,
-                centeredSlides: true,
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false,
-                }
-            });
-        }
-
-        function parseInlineGalleryData(element) {
-            try {
-                const content = element.textContent.trim();
-                if (!content) return null;
-                const jsonStr = `[${content}]`;
-                return { images: JSON.parse(jsonStr) };
-            } catch (error) {
-                return null;
-            }
-        }
-
-        function initializeGalleries() {
-            document.querySelectorAll('.contenedor-imagenes-animado').forEach(container => {
-                const inlineData = parseInlineGalleryData(container);
-                if (inlineData && inlineData.images) {
-                    container.classList.add('swiper');
-                    createSwiper(container, inlineData.images);
-                }
-            });
         }
 
         let currentPage = null;
