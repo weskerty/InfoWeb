@@ -96,12 +96,21 @@
                 
                 if (oldScript.src) {
                     newScript.src = oldScript.src;
+                    
+                    oldScript.remove();
+                    document.head.appendChild(newScript);
                 } else {
+                    
                     newScript.textContent = oldScript.textContent;
+                    oldScript.remove();
+                    
+                   
+                    try {
+                        eval(newScript.textContent);
+                    } catch (error) {
+                        console.error('Error ejecutando script:', error);
+                    }
                 }
-                
-                oldScript.remove();
-                document.head.appendChild(newScript);
             });
         }
 
