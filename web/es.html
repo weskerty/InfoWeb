@@ -126,13 +126,6 @@
 <h2>Agradecimientos</h2>
 <a href="https://www.pexels.com/video/bridge-above-bay-10042245/">Video</a> · <a href="https://github.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis">Emojis</a> · <a href="https://github.com/alexandresanlim/Badges4-README.md-Profile/blob/master/README.md">Badges</a>
 
-
-
-
-
-
-
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.js"></script>
 <script>
@@ -181,6 +174,34 @@ function initializeGalleries() {
         }
     });
 }
+
+
+initializeGalleries();
+</script>
+
+</div>
+
+function parseInlineGalleryData(element) {
+    try {
+        const content = element.textContent.trim();
+        if (!content) return null;
+        const jsonStr = `[${content}]`;
+        return { images: JSON.parse(jsonStr) };
+    } catch (error) {
+        return null;
+    }
+}
+
+function initializeGalleries() {
+    document.querySelectorAll('.contenedor-imagenes-animado').forEach(container => {
+        const inlineData = parseInlineGalleryData(container);
+        if (inlineData && inlineData.images) {
+            container.classList.add('swiper');
+            createSwiper(container, inlineData.images);
+        }
+    });
+}
+
 
 initializeGalleries();
 </script>
