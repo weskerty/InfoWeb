@@ -161,22 +161,43 @@ function parseInlineGalleryData(element) {
         const jsonStr = `[${content}]`;
         return { images: JSON.parse(jsonStr) };
     } catch (error) {
+        console.error('Error parsing gallery data:', error);
         return null;
     }
 }
 
 function initializeGalleries() {
-    document.querySelectorAll('.contenedor-imagenes-animado').forEach(container => {
+    if (typeof Swiper === 'undefined') {
+        console.error('Swiper no está disponible');
+        return;
+    }
+
+    const galleries = document.querySelectorAll('.contenedor-imagenes-animado');
+    console.log('Galerías encontradas:', galleries.length);
+    
+    galleries.forEach((container, index) => {
         const inlineData = parseInlineGalleryData(container);
+        console.log(`Galería ${index}:`, inlineData);
+        
         if (inlineData && inlineData.images) {
             container.classList.add('swiper');
             createSwiper(container, inlineData.images);
+            console.log(`Swiper inicializado para galería ${index}`);
         }
     });
 }
 
+function waitForSwiper() {
+    if (typeof Swiper !== 'undefined') {
+        console.log('Swiper cargado, inicializando galerías...');
+        initializeGalleries();
+    } else {
+        console.log('Esperando a que Swiper se cargue...');
+        setTimeout(waitForSwiper, 100);
+    }
+}
 
-initializeGalleries();
+waitForSwiper();
 </script>
 
 </div>
