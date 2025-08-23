@@ -17,10 +17,9 @@
         <p>⌛Cargando⏳</p>
     </div>
 
-    <video autoplay muted loop id="bg-video" preload="auto">
-        <source src="" type="video/mp4">
-        Error al cargar el video
-    </video>
+<video autoplay muted loop id="bg-video" preload="auto" poster="https://img.goodfon.com/original/1360x768/4/a2/tekstury-razmytie-siniy.jpg">
+    <source src="" type="video/mp4">
+</video>
 
     <div class="content" id="content">
         <p>⌛Cargando⏳</p>
@@ -61,16 +60,10 @@
         }
 
         function initializeVideo() {
-            if (isMobile()) {
-    document.getElementById('bg-video').remove();
-
-    const img = new Image();
-    img.src = "web/fondo.jpg";
-    img.onload = () => hideLoadingScreen(); 
-    img.onerror = () => hideLoadingScreen(); 
-
-    return;
-}
+           if (isMobile()) {
+                hideLoadingScreen();
+                return;
+            }
 
             
             const bgVideo = document.getElementById('bg-video');
