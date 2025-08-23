@@ -62,10 +62,16 @@
 
         function initializeVideo() {
             if (isMobile()) {
-    document.getElementById('bg-video').remove(); 
-    hideLoadingScreen();
+    document.getElementById('bg-video').remove();
+
+    const img = new Image();
+    img.src = "web/fondo.jpg";
+    img.onload = () => hideLoadingScreen(); 
+    img.onerror = () => hideLoadingScreen(); 
+
     return;
 }
+
             
             const bgVideo = document.getElementById('bg-video');
             bgVideo.querySelector('source').src = getCurrentMonthVideo();
