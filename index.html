@@ -61,9 +61,10 @@
 
         function initializeVideo() {
            if (isMobile()) {
-                hideLoadingScreen();
-                return;
-            }
+    document.getElementById('bg-video').remove(); 
+    hideLoadingScreen();
+    return;
+}
 
             
             const bgVideo = document.getElementById('bg-video');
