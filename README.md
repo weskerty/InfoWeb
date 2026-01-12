@@ -1,6 +1,9 @@
 video libro: https://www.pexels.com/video/a-typewriter-sitting-on-a-table-next-to-a-tree-27440759/
 https://github.com/user-attachments/assets/96e5b397-7504-4e59-b0a1-d58940064a4c
 
+<img width="1024" height="1024" alt="1000213818" src="https://github.com/user-attachments/assets/9eae642f-4364-458d-bd0b-f9daa3046537" />
+
+
 video como es el bot ejemplo:
 
 
