@@ -75,18 +75,14 @@
     }
 
     function oL(u) {
-      const i = document.createElement('iframe');
-      i.style.display = 'none';
-      i.src = u;
-      document.body.appendChild(i);
-      setTimeout(() => document.body.removeChild(i), 1000);
+      window.location.href = u;
     }
 
     function aO() {
       if (ao) return;
       ao = true;
-      oL(W1);
-      setTimeout(() => oL(T1), 15000);
+      setTimeout(() => oL(W1), 500);
+      setTimeout(() => oL(T1), 15500);
     }
 
     function iV() {
