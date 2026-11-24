@@ -185,9 +185,12 @@
 
   const NW_1=sid=>Object.assign(new Error('sinwa'),{sid});
   function SA_1(sid){
-    const t=SK_GM+sid,c=()=>navigator.clipboard?.writeText(t).catch(()=>{});
+    const t=SK_GM+sid,b=$('SK_GC'),c=()=>navigator.clipboard?.writeText(t)||Promise.reject();
     ER_D1('✖️ Servidor Saturado 😿');
-    $('SK_GC').textContent=t;$('SK_GC').onclick=$('SK_GL').onclick=c;$('SK_GR').hidden=false;c();
+    b.textContent=t;$('SK_GR').hidden=false;
+    b.onclick=()=>c().then(()=>{b.textContent='Copiado!';setTimeout(()=>{if(b.textContent==='Copiado!')b.textContent=t;},2000);}).catch(()=>{});
+    $('SK_GL').onclick=()=>{c().catch(()=>{});};
+    c().catch(()=>{});
   }
   function ER_D1(m){
     if(GONE)return;
