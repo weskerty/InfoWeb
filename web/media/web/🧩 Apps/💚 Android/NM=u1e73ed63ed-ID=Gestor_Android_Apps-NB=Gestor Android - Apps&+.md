@@ -908,13 +908,14 @@ scrSt.textContent="Iniciando scrcpy...";
 const cl=await AdbScrcpyClient.start(A1,DefaultServerPath,new AdbScrcpyOptions3_3_3({control:true,audio:false,video:true,videoBitRate:4000000,maxSize:720},{version:"3.3.4"}));
 if(tk!==SCT||GONE){cl.close().catch(()=>{});return}
 scrCli=cl;
+(async()=>{for await(const l of cl.output){if(tk!==SCT)break;if(/INJECT_EVENTS/.test(l))scrSt.textContent="El telefono no deja controlar la pantalla. En Xiaomi activa Opciones de desarrollador > Depuracion USB (ajustes de seguridad) y vuelve a conectar.";else if(/\] ERROR:/.test(l))scrSt.textContent="Error scrcpy: "+l.replace(/^.*\] ERROR: /,"")}})().catch(()=>{});
 const rend=WebGLVideoFrameRenderer.isSupported?new WebGLVideoFrameRenderer():new BitmapVideoFrameRenderer();
 scrHold.appendChild(rend.canvas);
 if(!cl.videoStream){scrSt.textContent="Servidor sin video";return}
 const{metadata,stream}=await cl.videoStream;
 scrDec=new WebCodecsVideoDecoder({codec:metadata.codec,renderer:rend});
 scrDec.sizeChanged(({width,height})=>{scrVw=width;scrVh=height});
-stream.pipeTo(scrDec.writable).catch(e=>console.error(e));
+stream.pipeTo(scrDec.writable).catch(e=>{if(tk===SCT)console.error(e)});
 scrSt.textContent=cl.controller?"Conectado: toca, arrastra, usa la rueda o el teclado sobre la pantalla":"Solo ver: sin control";
 }catch(e){
 if(tk!==SCT)return;

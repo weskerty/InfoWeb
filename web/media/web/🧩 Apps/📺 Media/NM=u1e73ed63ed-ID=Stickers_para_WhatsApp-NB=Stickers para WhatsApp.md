@@ -128,6 +128,7 @@
 <script>
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
+  const SK_GM='MISTICKER=';
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
   const MAX_SZ=20*1024*1024,DIM=256,TARGET=900*1024,AU_MX=1024*1024,AU_S=10;
@@ -184,7 +185,7 @@
 
   const NW_1=sid=>Object.assign(new Error('sinwa'),{sid});
   function SA_1(sid){
-    const t='99MISTICKER='+sid,c=()=>navigator.clipboard?.writeText(t).catch(()=>{});
+    const t=SK_GM+sid,c=()=>navigator.clipboard?.writeText(t).catch(()=>{});
     ER_D1('✖️ Servidor Saturado 😿');
     $('SK_GC').textContent=t;$('SK_GC').onclick=$('SK_GL').onclick=c;$('SK_GR').hidden=false;c();
   }
