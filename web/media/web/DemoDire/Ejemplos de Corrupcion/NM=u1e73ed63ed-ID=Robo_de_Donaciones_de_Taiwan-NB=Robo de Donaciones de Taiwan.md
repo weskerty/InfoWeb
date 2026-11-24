@@ -1,0 +1,1 @@
+<meta http-equiv="refresh" content="0; https://www.ultimahora.com/donacion-de-taiwan-escandalo-sobre-supuestos-audios-salpica-a-senadores">

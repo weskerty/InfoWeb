@@ -1,0 +1,1 @@
+<meta http-equiv="refresh" content="0; https://www.abc.com.py/politica/2025/09/16/despidos-destapan-escandalo-de-sobres-con-miles-de-us-en-mburuvicha-roga/">

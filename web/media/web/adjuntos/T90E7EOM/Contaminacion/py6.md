@@ -1,0 +1,1 @@
+<meta http-equiv="refresh" content="0; url=https://www.asuncion.gov.py/servicios-urbanos/equipo-mbusu-de-la-direccion-de-servicios-urbanos-prosigue-con-la-limpieza-de-arroyos-y-cauces-hidricos-de-asuncion">
