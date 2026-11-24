@@ -111,6 +111,9 @@ function SB_mkItem(p){
 }
 
 let SB_gfP=null;
+let SB_tsP=null;
+const SB_TS=()=>(window.TS1?Promise.resolve():SB_tsP||(SB_tsP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{SB_tsP=null;no()};document.head.appendChild(s)}))).then(()=>window.TS1()).catch(()=>null);
+const SB_VE='Error verificacion, recarga la pagina';
 const SB_GF=()=>window.GridFit?Promise.resolve(window.GridFit):SB_gfP||(SB_gfP=new Promise(r=>{const s=document.createElement('script');s.src='web/js/lib/GridFit.js';s.onload=s.onerror=()=>r(window.GridFit);document.head.appendChild(s)}));
 async function SB_fetchPage(off){
   if(SB_ac)SB_ac.abort();
@@ -173,10 +176,12 @@ async function SB_sendCmt(){
   const c=SB_clean(inp.value).slice(0,500);
   if(!c)return;
   try{
-    const r=await fetch(`${SB_API}?c=1`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:SB_cur.id,txt:c})});
+    const ts=await SB_TS();
+    const r=ts&&await fetch(`${SB_API}?c=1`,{method:'POST',headers:{'content-type':'application/json','x-ts':ts},body:JSON.stringify({id:SB_cur.id,txt:c})});
+    if(!r||r.status===403){SB_showLimit(document.querySelector('.SB_MFT'),0,SB_VE);return;}
     if(r.status===429){
       const d=await r.json().catch(()=>({}));
-      SB_showLimit(document.getElementById('SB_MFT'),d.retryAfter);
+      SB_showLimit(document.querySelector('.SB_MFT'),d.retryAfter);
       return;
     }
     if(!r.ok)return;
@@ -206,10 +211,12 @@ async function SB_publish(){
   const btn=document.getElementById('SB_PSD');
   btn.disabled=true;
   try{
-    const r=await fetch(SB_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({txt:c})});
+    const ts=await SB_TS();
+    const r=ts&&await fetch(SB_API,{method:'POST',headers:{'content-type':'application/json','x-ts':ts},body:JSON.stringify({txt:c})});
+    if(!r||r.status===403){SB_showLimit(document.querySelector('.SB_FBR'),0,SB_VE);btn.disabled=false;return;}
     if(r.status===429){
       const d=await r.json().catch(()=>({}));
-      SB_showLimit(document.getElementById('SB_FBR'),d.retryAfter);
+      SB_showLimit(document.querySelector('.SB_FBR'),d.retryAfter);
       btn.disabled=false;return;
     }
     if(!r.ok){btn.disabled=false;return;}
@@ -221,10 +228,10 @@ async function SB_publish(){
   btn.disabled=false;
 }
 
-function SB_showLimit(container,retryAfter){
+function SB_showLimit(container,retryAfter,tx){
   let el=container.querySelector('.SB_LIMIT');
   if(!el){el=document.createElement('div');el.className='SB_LIMIT';container.parentElement.insertBefore(el,container);}
-  el.textContent=retryAfter?`Limite alcanzado, espera ${SB_fmtWait(retryAfter)}`:'Limite alcanzado, intenta mas tarde';
+  el.textContent=tx||(retryAfter?`Limite alcanzado, espera ${SB_fmtWait(retryAfter)}`:'Limite alcanzado, intenta mas tarde');
   clearTimeout(el._t);
   el._t=setTimeout(()=>el.remove(),8000);
 }

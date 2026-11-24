@@ -6,18 +6,17 @@
 .SK_SB{display:flex;gap:8px;margin:0 0 12px}
 .SK_SB input{flex:1;min-width:0}
 .SK_TX{color:var(--RD_MF);font-size:.9rem;margin:0 0 12px}
-.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--SK_I));gap:8px;justify-content:center;margin-bottom:8px;min-height:40px}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--SK_I));grid-auto-flow:dense;gap:8px;justify-content:center;margin-bottom:8px;min-height:40px}
 .sk-it{width:var(--SK_I);height:var(--SK_I);padding:0;border-radius:14px;overflow:hidden;cursor:pointer;position:relative;background:var(--RD_M);border:2px solid var(--RD_L);box-sizing:border-box;transition:border-color .15s}
 .sk-it img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
 .sk-it[aria-pressed=true]{border-color:var(--ok)}
 .sk-it[aria-pressed=true]::after{content:'✅';position:absolute;top:4px;right:6px;font-size:1.1em}
 @media(hover:hover){.sk-it:hover{border-color:var(--RD_BHB)}}
-.sk-ad{grid-column:1/-1;display:flex;justify-content:center;overflow:hidden}
+.sk-ad{grid-column:1/-1;justify-self:center;border:0;color-scheme:light}
 .sk-msg{color:var(--RD_MF);font-size:.9em;padding:20px 0;margin:0;grid-column:1/-1}
 .sk-searching{display:flex;flex-direction:column;align-items:center;gap:8px;padding:32px 0;grid-column:1/-1;color:var(--RD_MF)}
-.SK1 .SK_KL{margin:10px 0 0;font-size:.8rem}
-.SK_KL a{display:inline-flex;align-items:center;gap:6px;color:var(--RD_MF);text-decoration:none}
-@media(hover:hover){.SK_KL a:hover{text-decoration:underline}}
+.SK1 .SK_KL{margin:10px 0 0}
+.SK_KL a{display:inline-flex}
 .SK1 .SK_NT{margin:4px 0 0;color:var(--RD_MF);font-size:.72rem;opacity:.8}
 .SK_PL{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px}
 .sc-fr{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--RD_M);border:1px solid var(--RD_L)}
@@ -74,7 +73,7 @@
 <button type="button" data-t="t" aria-pressed="false">✈️ Telegram</button>
 </div>
 <section id="SK_B">
-<form class="SK_SB" id="SK_SF"><input id="sk-q" type="search" placeholder="Buscar stickers, GIF, memes..." aria-label="Buscar stickers" enterkeyhint="search"><button id="SK_SBB" aria-label="Buscar">🔍</button></form>
+<form class="SK_SB" id="SK_SF"><input id="sk-q" type="search" placeholder="Buscar en KLIPY" aria-label="Buscar stickers" enterkeyhint="search"><button id="SK_SBB" aria-label="Buscar">🔍</button></form>
 <div class="BS1" id="SK_FT">
 <button type="button" data-f="" aria-pressed="true">Todos</button>
 <button type="button" data-f="sticker" aria-pressed="false">Stickers</button>
@@ -84,8 +83,8 @@
 </div>
 <div id="sk-grid" class="sk-grid"></div>
 <div id="sk-pg" class="PG1"></div>
-<p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/ICON-Klipy.avif" width="22" height="22" alt="">Busqueda de KLIPY</a></p>
-<p class="SK_NT">Por temas de rendimiento solo se aceptan numeros paraguayos.</p>
+<p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/KLIPY.svg" width="120" height="20" alt="Powered by KLIPY"></a></p>
+<p class="SK_NT">Los stickers pueden tardar hasta 30 minutos en llegar. No repitas el pedido: los repetidos se ignoran.</p>
 </section>
 <section id="SK_P" hidden>
 <p class="SK_TX">Subi fotos, GIF o videos (se usan los primeros 10s) o elegi stickers en Buscar. En cada uno: ✂️ recortar, 🖼️ sumar una imagen, 🎵 ponerle musica.</p>
@@ -110,7 +109,7 @@
 <div id="SK_EO" hidden>
 <div class="sc-ov-wrap" id="sc-ov-wrap"><canvas id="sc-ov-c" width="256" height="256"></canvas></div>
 <div class="sc-ov-szrow"><button type="button" id="ov-sm" aria-label="Achicar">−</button><span id="ov-sz-lbl">64px</span><button type="button" id="ov-lg" aria-label="Agrandar">+</button></div>
-<form class="SK_SB" id="sc-ov-f"><input id="sc-ov-q" type="search" placeholder="Buscar imagen en Klipy..." aria-label="Buscar imagen"><button aria-label="Buscar">🔍</button><button type="button" id="sc-ov-up" aria-label="Subir imagen">📁</button></form>
+<form class="SK_SB" id="sc-ov-f"><input id="sc-ov-q" type="search" placeholder="Buscar en KLIPY" aria-label="Buscar imagen"><button aria-label="Buscar">🔍</button><button type="button" id="sc-ov-up" aria-label="Subir imagen">📁</button></form>
 <input type="file" id="sc-ov-fi" accept="image/*" hidden>
 <div class="sc-ov-res" id="sc-ov-res"></div>
 </div>
@@ -128,7 +127,7 @@
 
 <script>
 (function(){
-  const ADS=false,MU=true;
+  const ADS=false,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
   const SK_WA='595985170023',SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
   const MAX_SZ=20*1024*1024,DIM=256,TARGET=900*1024,AU_MX=1024*1024,AU_S=10;
@@ -138,8 +137,8 @@
   const $=id=>document.getElementById(id);
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
-  let FFP=null,PUP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
-  let R=[],RF=[],FT='',pg=0,P=[];
+  let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
+  let R=[],RF=[],PS=[],FT='',pg=0,P=[];
   let ovNS=64,ovSel=-1;
   const HM=new Map();
 
@@ -174,7 +173,7 @@
           _gfPending=false;
           if(!gEl.clientWidth)return;
           const n=gf.itemsPerPage(gEl,ITEM,ITEM,GAP,140);
-          if(n!==PG){PG=n;if(RF.length)renderPage(0);}
+          if(n!==PG){PG=n;if(RF.length){PS_1();renderPage(0);}}
         });
       };
       scheduleGF();
@@ -193,12 +192,28 @@
   ERD.querySelector('[data-x]').onclick=()=>ERD.close();
   function setProg(p,l){pBar.style.width=p+'%';if(l!=null)pLbl.textContent=l;}
   function getCID(){try{let id=localStorage.getItem('sk_cid');if(!id){id=crypto.randomUUID();localStorage.setItem('sk_cid',id);}return id;}catch{return 'anon';}}
+  function KN_1(it){
+    if(it.type==='ad')return it.content?{type:'ad',content:it.content,width:it.width,height:it.height}:null;
+    const f=it.file,url=f&&(typeof f.webp==='string'?f.webp:f.sm?.webp?.url);
+    return url?{url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||''}:null;
+  }
+  async function KS_1(q){
+    if(KY)try{
+      const p=new URLSearchParams({page:1,per_page:50,customer_id:getCID(),locale:'PY',content_filter:'off','ad-min-width':50,'ad-max-width':Math.min(400,innerWidth-32),'ad-min-height':50,'ad-max-height':250,'ad-device-w':screen.width,'ad-device-h':screen.height,'ad-pxratio':devicePixelRatio,'ad-language':'ES'});
+      if(q)p.set('q',q);
+      const rs=await Promise.all(['stickers','gifs','static-memes','clips'].map(e=>fetch(`https://api.klipy.com/api/v1/${KY}/${e}/${q?'search':'trending'}?${p}`).then(r=>r.json())));
+      const data=[];
+      for(const r of rs){if(!r.result)throw 0;for(const it of r.data?.data||[]){const n=KN_1(it);if(n)data.push(n);}}
+      return {data};
+    }catch{}
+    const p=new URLSearchParams({cid:getCID()});if(q)p.set('q',q);
+    const r=await fetch('/api/stickers?'+p);if(!r.ok)throw new Error(r.status);return r.json();
+  }
   function BT_1(t,l,c){const b=document.createElement('button');b.type='button';if(c)b.className=c;b.textContent=t;b.setAttribute('aria-label',l);b.title=l;return b;}
   function LD_1(t){const d=document.createElement('div');d.className='sk-searching';const i=document.createElement('img');i.className='wait-anim';i.src=WA;i.alt='';const s=document.createElement('span');s.textContent=t;d.append(i,s);return d;}
   function MS_1(t){const p=document.createElement('p');p.className='sk-msg';p.textContent=t;return p;}
   function IMG_U1(u){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('img'));i.src=u;});}
   async function IMG_L1(b){const u=URL.createObjectURL(b);try{return await IMG_U1(u);}finally{URL.revokeObjectURL(u);}}
-  function PU_1(){return PUP??=window.DOMPurify?Promise.resolve():new Promise(ok=>{const a=u=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>u.startsWith('http')?ok():a('https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js');document.head.appendChild(s);};a('web/js/lib/DOMPurify/purify.min.js');});}
   const TG_IP=q=>/(?:t\.me\/addstickers\/|addstickers\/)/.test(q);
   const TG_PN=q=>{const m=q.match(/(?:t\.me\/addstickers\/|addstickers\/)([^/?#\s]+)/);return m?m[1]:q;};
 
@@ -256,19 +271,16 @@
     const btn=$('SK_SBB');btn.disabled=true;
     gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';
     try{
-      const params=new URLSearchParams({cid:getCID()});if(q)params.set('q',q);
-      const r=await fetch('/api/stickers?'+params);
-      if(!r.ok)throw new Error(r.status);
-      const j=await r.json();
+      const j=await KS_1(q);
       R=(j.data||[]).filter(x=>x.type==='ad'?ADS&&x.content:x.url);lastQ=q;
-      if(R.some(x=>x.type==='ad'))await PU_1();
       FL_1();
     }catch(e){gEl.textContent='';gEl.append(MS_1('Error Klipy '+e.message));}
     finally{setTimeout(()=>{SB=0;btn.disabled=false;},1500);}
   }
 
+  function PS_1(){PS=[[]];let c=0;for(const it of RF){if(it.type!=='ad'){if(c===PG){PS.push([]);c=0;}c++;}PS.at(-1).push(it);}}
   function FL_1(){
-    RF=FT?R.filter(x=>x.type===FT):R;pg=0;
+    RF=FT?R.filter(x=>x.type===FT):R;pg=0;PS_1();
     if(RF.length)renderPage(0);else{gEl.textContent='';pgEl.textContent='';gEl.append(MS_1('Sin resultados'));}
   }
   $('SK_FT').onclick=e=>{
@@ -294,16 +306,15 @@
   }
 
   function AD_1(it){
-    if(!window.DOMPurify)return;
-    const d=document.createElement('div');d.className='sk-ad';
-    d.innerHTML=DOMPurify.sanitize(it.content,{ADD_TAGS:['iframe'],ADD_ATTR:['allow','allowfullscreen','frameborder','target']});
-    if([...d.querySelectorAll('*')].some(el=>el.style.display!=='none'&&el.style.opacity!=='0'&&el.style.visibility!=='hidden'))gEl.append(d);
+    const f=document.createElement('iframe');f.className='sk-ad';f.title='Anuncio';f.scrolling='no';
+    f.sandbox='allow-scripts allow-popups allow-popups-to-escape-sandbox';
+    f.width=it.width;f.height=it.height;f.srcdoc=it.content;gEl.append(f);
   }
 
   function renderPage(p,sw){
     const dir=p>pg?1:p<pg?-1:0;
     pg=p;gEl.textContent='';
-    RF.slice(p*PG,p*PG+PG).forEach(it=>it.type==='ad'?AD_1(it):gEl.append(CD_1(it)));
+    PS[p].forEach(it=>it.type==='ad'?AD_1(it):gEl.append(CD_1(it)));
     renderPg();
     if(sw)return;
     if(SW)SW.pre();
@@ -314,9 +325,9 @@
 
   function renderPg(){
     if(!_GF){loadGF().then(g=>{if(g)renderPg()});return}
-    if(!SW){SW=_GF.SW1(gEl,{n:()=>Math.ceil(RF.length/PG),p:()=>pg,ok:()=>!$('SK_B').hidden,go:i=>renderPage(i,1),
-      fill:(el,i)=>RF.slice(i*PG,i*PG+PG).forEach(it=>{if(it.type!=='ad')el.append(CD_1(it,1));else{const d=document.createElement('div');d.className='sk-it';el.append(d);}})});SW.pre()}
-    _GF.PN1(pgEl,pg,Math.ceil(RF.length/PG),renderPage);
+    if(!SW){SW=_GF.SW1(gEl,{n:()=>PS.length,p:()=>pg,ok:()=>!$('SK_B').hidden,go:i=>renderPage(i,1),
+      fill:(el,i)=>PS[i].forEach(it=>{if(it.type!=='ad')el.append(CD_1(it,1));else{const d=document.createElement('div');d.className='sk-ad';d.style.cssText=`width:${it.width}px;height:${it.height}px`;el.append(d);}})});SW.pre()}
+    _GF.PN1(pgEl,pg,PS.length,renderPage);
   }
 
   gEl.onclick=e=>{
@@ -835,9 +846,7 @@
     const res=$('sc-ov-res');
     res.textContent='';res.append(MS_1('Buscando...'));
     try{
-      const r=await fetch('/api/stickers?'+new URLSearchParams({q,cid:getCID()}));
-      if(!r.ok)throw 0;
-      const j=await r.json();
+      const j=await KS_1(q);
       res.textContent='';
       (j.data||[]).filter(x=>x.type!=='ad'&&x.url).slice(0,16).forEach(item=>{
         const b=document.createElement('button');b.type='button';b.className='ov-it';b.setAttribute('aria-label',item.title||'Imagen');
