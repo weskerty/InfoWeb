@@ -128,7 +128,7 @@
 <script>
 (function(){
   const ADS=false,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
-  const SK_WA='595985170023',SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
+  const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
   const MAX_SZ=20*1024*1024,DIM=256,TARGET=900*1024,AU_MX=1024*1024,AU_S=10;
   const MAXFR=150,VID_MAX=10,VID_FPS=15,THM=512;
@@ -251,17 +251,17 @@
       if(GONE)break;
       let j=null;
       try{const r=await fetch('/api/stickers?sid='+sid,{cache:'no-store'});if(r.status===404)throw new Error('404');if(r.ok)j=await r.json();}catch(e){if(e.message==='404')throw e;}
-      if(j){if(j.e)throw new Error('servidor');if(j.ok)return;tx(j.w|0);}
+      if(j){if(j.e)throw new Error('servidor');if(j.ok){if(j.wa)return j.wa;throw new Error('sinwa');}tx(j.w|0);}
     }
     throw new Error('salida');
   }
   let TSP=null;
   const TL_1=()=>window.TS1?Promise.resolve():TSP||(TSP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{TSP=null;no(new Error('verificacion'))};document.head.appendChild(s)}));
   const TK_1=()=>TL_1().then(()=>window.TS1()).catch(()=>{throw new Error('verificacion')});
-  const ER_1=e=>e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'||e.message==='verificacion'?'Error verificacion, recarga la pagina':null;
+  const ER_1=e=>e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'||e.message==='verificacion'?'Error verificacion, recarga la pagina':null;
 
-  function OK_1(sid,host){
-    WB.href='https://wa.me/'+SK_WA+'?text='+encodeURIComponent('STICKERS='+sid);
+  function OK_1(sid,wa,host){
+    WB.href='https://wa.me/'+wa+'?text='+encodeURIComponent('STICKERS='+sid);
     host.append(OK);OK.hidden=false;TR_R();SN_1();
   }
   $('SK_NW').onclick=()=>{OK.hidden=true;TR_R();TB_1('b');};
@@ -734,11 +734,12 @@
       setProg(85,'Subiendo...');
       const res=await fetch('/api/stickers',{method:'POST',headers:{'x-ts':await TK_1()},body:form});
       if(!res.ok)throw new Error(res.status);
-      const {sid,w}=await res.json();
+      let {sid,w,wa}=await res.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
+      if(!w&&!wa)throw new Error('sinwa');
       items.forEach(FR_1);P=[];UP_1();
-      if(w){PD_C();try{await WT_1(sid,w,$('SK_WT'));}finally{$('SK_WT').hidden=true;TR_R();}}
-      OK_1(sid,TR);
+      if(w){PD_C();try{wa=await WT_1(sid,w,$('SK_WT'));}finally{$('SK_WT').hidden=true;TR_R();}}
+      OK_1(sid,wa,TR);
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin musica');
     }catch(e){ER_D1(ER_1(e)||'Error Stickers '+e.message);}
@@ -755,9 +756,10 @@
     try{
       const r=await fetch('/api/stickers',{method:'POST',headers:{'Content-Type':'application/json','x-ts':await TK_1()},body:JSON.stringify({pack})});
       if(!r.ok)throw new Error(r.status);
-      const {sid,w}=await r.json();
+      let {sid,w,wa}=await r.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
-      if(w){W.hidden=true;await WT_1(sid,w,L);}
+      if(!w&&!wa)throw new Error('sinwa');
+      if(w){W.hidden=true;wa=await WT_1(sid,w,L);}
       else await new Promise((ok,no)=>{const t0=Date.now(),iv=setInterval(()=>{
         if(GONE){clearInterval(iv);no(new Error('salida'));return;}
         const e=(Date.now()-t0)/1000;
@@ -765,7 +767,7 @@
         L.textContent='Preparando el pack... '+Math.ceil(TG_W-e)+'s';B.style.width=Math.round(100*e/TG_W)+'%';
       },500);});
       L.textContent='';W.hidden=true;
-      OK_1(sid,$('SK_TS'));
+      OK_1(sid,wa,$('SK_TS'));
     }catch(e){L.textContent='';W.hidden=true;ER_D1(ER_1(e)||'Error Telegram '+e.message);}
     finally{TG_B=0;}
   }
