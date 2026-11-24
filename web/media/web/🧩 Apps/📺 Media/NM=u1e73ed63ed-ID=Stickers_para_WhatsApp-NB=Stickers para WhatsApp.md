@@ -206,18 +206,20 @@
   function KN_1(it){
     if(it.type==='ad')return it.content?{type:'ad',content:it.content,width:it.width,height:it.height}:null;
     const f=it.file,url=f&&(typeof f.webp==='string'?f.webp:f.sm?.webp?.url);
-    return url?{url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||''}:null;
+    return url?{url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||'',s:it.slug}:null;
   }
-  async function KS_1(q){
+  const KT={sticker:'stickers',gif:'gifs',static_meme:'static-memes',clip:'clips'};
+  function KH_1(l){if(KY)l.forEach(it=>{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});});}
+  async function KS_1(q,ad){
     if(KY)try{
-      const p=new URLSearchParams({page:1,per_page:50,customer_id:getCID(),locale:'PY',content_filter:'off','ad-min-width':50,'ad-max-width':Math.min(400,innerWidth-32),'ad-min-height':50,'ad-max-height':250,'ad-device-w':screen.width,'ad-device-h':screen.height,'ad-pxratio':devicePixelRatio,'ad-language':'ES'});
+      const p=new URLSearchParams({page:1,per_page:50,customer_id:getCID(),locale:'PY',content_filter:'off'}),a=ad?'&'+new URLSearchParams({'ad-min-width':50,'ad-max-width':Math.min(400,innerWidth-32),'ad-min-height':50,'ad-max-height':250,'ad-device-w':screen.width,'ad-device-h':screen.height,'ad-pxratio':devicePixelRatio,'ad-language':'ES'}):'';
       if(q)p.set('q',q);
-      const rs=await Promise.all(['stickers','gifs','static-memes','clips'].map(e=>fetch(`https://api.klipy.com/api/v1/${KY}/${e}/${q?'search':'trending'}?${p}`).then(r=>r.json())));
+      const rs=await Promise.all(['stickers','gifs','static-memes','clips'].map(e=>fetch(`https://api.klipy.com/api/v1/${KY}/${e}/${q?'search':'trending'}?${p}${e==='stickers'?a:''}`).then(r=>r.json())));
       const data=[];
       for(const r of rs){if(!r.result)throw 0;for(const it of r.data?.data||[]){const n=KN_1(it);if(n)data.push(n);}}
       return {data};
     }catch{}
-    const p=new URLSearchParams({cid:getCID()});if(q)p.set('q',q);
+    const p=new URLSearchParams({cid:getCID()});if(q)p.set('q',q);if(!ad)p.set('ad','0');
     const r=await fetch('/api/stickers?'+p);if(!r.ok)throw new Error(r.status);return r.json();
   }
   function BT_1(t,l,c){const b=document.createElement('button');b.type='button';if(c)b.className=c;b.textContent=t;b.setAttribute('aria-label',l);b.title=l;return b;}
@@ -282,16 +284,18 @@
     const btn=$('SK_SBB');btn.disabled=true;
     gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';
     try{
-      const j=await KS_1(q);
+      const j=await KS_1(q,ADS);
       R=(j.data||[]).filter(x=>x.type==='ad'?ADS&&x.content:x.url);lastQ=q;
       FL_1();
     }catch(e){gEl.textContent='';gEl.append(MS_1('Error Klipy '+e.message));}
     finally{setTimeout(()=>{SB=0;btn.disabled=false;},1500);}
   }
 
-  function PS_1(){PS=[[]];let c=0;for(const it of RF){if(it.type!=='ad'){if(c===PG){PS.push([]);c=0;}c++;}PS.at(-1).push(it);}}
+  function PS_1(){PS=[];RF.filter(x=>x.type!=='ad').forEach((x,i)=>{if(i%PG===0)PS.push([]);PS.at(-1).push(x);});if(!PS.length)PS.push([]);RF.filter(x=>x.type==='ad').forEach((x,i)=>PS[i]?.splice(1,0,x));}
   function FL_1(){
-    RF=FT?R.filter(x=>x.type===FT):R;pg=0;PS_1();
+    RF=FT?R.filter(x=>x.type===FT||x.type==='ad'):R;
+    if(!RF.some(x=>x.type!=='ad'))RF=[];
+    pg=0;PS_1();
     if(RF.length)renderPage(0);else{gEl.textContent='';pgEl.textContent='';gEl.append(MS_1('Sin resultados'));}
   }
   $('SK_FT').onclick=e=>{
@@ -307,7 +311,7 @@
   };
 
   function CD_1(it,v){
-    const b=document.createElement('button');b.type='button';b.className='sk-it';b._u=it.url;
+    const b=document.createElement('button');b.type='button';b.className='sk-it';b._u=it.url;b._k=it;
     b.setAttribute('aria-pressed',!!PK_F(it.url));
     if(it.title)b.title=it.title;
     const m=document.createElement('img');m.alt=it.title||'Sticker';m.decoding='async';
@@ -346,7 +350,7 @@
     const it=PK_F(b._u);
     if(it){PK_RM(it);b.setAttribute('aria-pressed','false');return;}
     if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');return;}
-    PK_AD({u:b._u,pv:b._u});b.setAttribute('aria-pressed','true');
+    PK_AD({u:b._u,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');
   };
 
   function PL_R(){
@@ -747,6 +751,7 @@
       if(!res.ok)throw new Error(res.status);
       let {sid,w,wa}=await res.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
+      KH_1(items);
       if(!w&&!wa)throw NW_1(sid);
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{wa=await WT_1(sid,w,$('SK_WT'));}finally{$('SK_WT').hidden=true;TR_R();}}
