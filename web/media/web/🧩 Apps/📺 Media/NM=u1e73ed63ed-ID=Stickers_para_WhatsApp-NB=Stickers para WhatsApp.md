@@ -37,6 +37,8 @@
 #wa-btn::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
 #SK_WT{margin:0}
 #SK_EP{white-space:pre-line}
+.SK_GB{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:10px 0 14px}
+.SK_GB a{min-width:48px;padding:10px 0}
 .SK_DG{width:min(440px,calc(100vw - 32px));text-align:center}
 .SK_PD[open]{display:flex;flex-direction:column;align-items:center;gap:12px}
 .SK_DG>button[data-x]{margin-bottom:6px}
@@ -102,7 +104,7 @@
 <div id="SK_TP" class="SK_TP"><button type="button" id="SK_TV" class="SK_TI"></button><button type="button" id="sk-cf" class="RD_B1 GL_C">Enviar ➤</button></div>
 <div id="SK_OK" class="SK_OK" hidden><span>✅ Listo</span><a id="wa-btn" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a><button type="button" id="SK_NW" class="RD_B1">Armar otro Pack</button></div>
 </div>
-<dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p><p id="SK_GR" hidden>Unete a <a id="SK_GL" href="https://chat.whatsapp.com/FWhj6p2ohfHDNH5l8WDjNT?s=cl&amp;p=i&amp;iam=2" target="_blank" rel="noopener">➡️ este Grupo ⬅️</a> y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
+<dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p><p id="SK_GR" hidden>Entra a cualquier Grupo:<span id="SK_GB" class="SK_GB"></span>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -129,6 +131,7 @@
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
   const SK_GM='MISTICKER=';
+  const SK_GL='https://chat.whatsapp.com/FWhj6p2ohfHDNH5l8WDjNT?s=cl&p=i&iam=2,https://chat.whatsapp.com/Cu03HSOfmepAHymErF01vR?s=cl&p=a&iam=2,https://chat.whatsapp.com/KxyXROdmN5XIyQlSeRXDMj?s=cl&p=a&iam=2,https://chat.whatsapp.com/LQiFk4YWaqB2TNbiIRQ7Bd?s=cl&p=a&iam=2,https://chat.whatsapp.com/DmZKbqR4ZfmJr3AdeiJYn7?s=cl&p=a&iam=2,https://chat.whatsapp.com/BwjTeYxnp3KHkx6HFQeLJK?s=cl&p=a&iam=2';
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
   const MAX_SZ=20*1024*1024,DIM=256,TARGET=900*1024,AU_MX=1024*1024,AU_S=10;
@@ -151,6 +154,7 @@
   const ED_S={c:$('SK_EC'),o:$('SK_EO'),m:$('SK_EM')};
   $('SK1').style.setProperty('--SK_I',ITEM+'px');
   $('sc-ck').src=WA;
+  $('SK_GB').append(...SK_GL.split(',').map((u,i)=>Object.assign(document.createElement('a'),{href:u.trim(),target:'_blank',rel:'noopener',className:'RD_B1',textContent:i+1,ariaLabel:'Grupo '+(i+1)})));
 
   let _GF=window.GridFit||null,_GFp=null,SW=null,PG=PG_FALLBACK,_gfRo=null,_gfPending=false;
   function loadGF(){
@@ -189,7 +193,7 @@
     ER_D1('✖️ Servidor Saturado 😿');
     b.textContent=t;$('SK_GR').hidden=false;
     b.onclick=()=>c().then(()=>{b.textContent='Copiado!';setTimeout(()=>{if(b.textContent==='Copiado!')b.textContent=t;},2000);}).catch(()=>{});
-    $('SK_GL').onclick=()=>{c().catch(()=>{});};
+    $('SK_GB').onclick=()=>{c().catch(()=>{});};
     c().catch(()=>{});
   }
   function ER_D1(m){
