@@ -242,11 +242,13 @@ document.addEventListener('contentUnload',()=>{BF_W?.terminate();BF_W=null;for(c
 })();
 (async()=>{
   try{
-    const d=await fetch('/_share_pending').then(r=>r.json());
-    const b=(d?.blobs||[]).filter(x=>/^image\//.test(x.type));
+    const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+    if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+    const b=(await r.json()).files.filter(x=>/^image\//.test(x.type));
     if(!b.length)return;
-    await fetch('/_share_clear',{method:'POST'});
-    BF_F(b.map(x=>new File([new Uint8Array(x.data)],x.name||'foto.jpg',{type:x.type})));
+    const f=await Promise.all(b.map(async x=>new File([await(await caches.match(x.key,C)).blob()],x.name||'foto.jpg',{type:x.type})));
+    await caches.delete('share-pending');
+    BF_F(f);
   }catch{}
 })();
 })();

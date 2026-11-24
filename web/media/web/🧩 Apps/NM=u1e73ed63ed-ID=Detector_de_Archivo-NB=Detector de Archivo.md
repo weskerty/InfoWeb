@@ -100,10 +100,13 @@ dz.ondragleave=()=>dz.classList.remove('on');
 dz.ondrop=e=>{e.preventDefault();dz.classList.remove('on');DA_F(e.dataTransfer.files)};
 (async()=>{
   try{
-    const d=await fetch('/_share_pending').then(r=>r.json());
-    if(!d?.blobs?.length)return;
-    await fetch('/_share_clear',{method:'POST'});
-    DA_F(d.blobs.map(b=>new File([new Uint8Array(b.data)],b.name||'archivo',{type:b.type||''})));
+    const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+    if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+    const d=await r.json();
+    if(!d.files.length)return;
+    const f=await Promise.all(d.files.map(async b=>new File([await(await caches.match(b.key,C)).blob()],b.name||'archivo',{type:b.type||''})));
+    await caches.delete('share-pending');
+    DA_F(f);
   }catch{}
 })();
 })();

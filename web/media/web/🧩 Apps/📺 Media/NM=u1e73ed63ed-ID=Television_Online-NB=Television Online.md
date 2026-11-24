@@ -157,9 +157,9 @@ let chAll=[],shareURL=null;
 async function shareGet(){
   if(shareURL)return;
   try{
-    const r=await fetch('/_share_pending');
+    const r=await caches.match('/__share_data',{cacheName:'share-pending'});
+    if(!r||Date.now()>+r.headers.get('X-Expires'))return;
     const d=await r.json();
-    if(!d)return;
     const v=String(d.url||d.text||'').trim();
     if(!v||(!okURL(v)&&!isMag(v)))return;
     shareURL=v;
@@ -168,7 +168,7 @@ async function shareGet(){
   }catch(e){}
 }
 async function shareClear(){
-  try{await fetch('/_share_clear',{method:'POST'});}catch(e){}
+  try{await caches.delete('share-pending');}catch(e){}
 }
 async function shareSend(){
   if(!shareURL||!linked||isHost)return;

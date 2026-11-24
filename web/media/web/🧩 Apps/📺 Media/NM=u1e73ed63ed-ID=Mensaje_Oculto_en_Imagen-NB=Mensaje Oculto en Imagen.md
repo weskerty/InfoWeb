@@ -191,17 +191,18 @@ MO_SM();
 document.addEventListener('contentUnload',()=>{MO_U.forEach(u=>URL.revokeObjectURL(u));MO_U=[]},{once:true});
 (async()=>{
   try{
-    const d=await fetch('/_share_pending').then(r=>r.json());if(!d)return;
-    const b=d.blobs?.[0],tx=[d.text,d.url].filter(Boolean).join(' ');
+    const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+    if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+    const d=await r.json(),b=d.files[0],tx=[d.text,d.url].filter(Boolean).join(' ');
     if(b){
-      await fetch('/_share_clear',{method:'POST'});
-      const f=new File([new Uint8Array(b.data)],b.name||'archivo',{type:b.type||''});
+      const f=new File([await(await caches.match(b.key,C)).blob()],b.name||'archivo',{type:b.type||''});
+      await caches.delete('share-pending');
       MO_TAB(1);MO_SR(f);
       if(await MO_RV()===false){
         const o=$('mo-rr'),u=MO_EL('button',0,'🙈 Usarlo para ocultar un mensaje');
         u.onclick=()=>{document.querySelector(`input[name=mo-md][value=${/^image\//.test(f.type)?'i':'f'}]`).checked=true;MO_SM();MO_SP(f);MO_TAB(0)};o.append(u);
       }
-    }else if(/[​‌‍﻿⁠⁡]/.test(tx)){await fetch('/_share_clear',{method:'POST'});MO_TAB(1);$('mo-rt').value=tx;MO_RV()}
+    }else if(/[​‌‍﻿⁠⁡]/.test(tx)){await caches.delete('share-pending');MO_TAB(1);$('mo-rt').value=tx;MO_RV()}
   }catch{}
 })();
 })();

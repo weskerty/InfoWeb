@@ -105,11 +105,13 @@ $('tn-rc').onclick=async e=>{
 document.addEventListener('contentUnload',()=>{if(TN_R){TN_R.onstop=null;TN_R.stop();TN_R=null}TN_X();TN_W?.terminate();TN_W=null},{once:true});
 (async()=>{
   try{
-    const d=await fetch('/_share_pending').then(r=>r.json());
-    const b=(d?.blobs||[]).filter(x=>/^(audio|video)\//.test(x.type)||/\.(ogg|opus|oga|m4a|mp3|wav|aac|amr|webm|mp4)$/i.test(x.name||''));
+    const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+    if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+    const b=(await r.json()).files.filter(x=>/^(audio|video)\//.test(x.type)||/\.(ogg|opus|oga|m4a|mp3|wav|aac|amr|webm|mp4)$/i.test(x.name||''));
     if(!b.length)return;
-    await fetch('/_share_clear',{method:'POST'});
-    TN_F(b.map(x=>new File([new Uint8Array(x.data)],x.name||'audio',{type:x.type||''})));
+    const f=await Promise.all(b.map(async x=>new File([await(await caches.match(x.key,C)).blob()],x.name||'audio',{type:x.type||''})));
+    await caches.delete('share-pending');
+    TN_F(f);
   }catch{}
 })();
 })();

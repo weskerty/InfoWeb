@@ -1522,15 +1522,12 @@ async function addFileMsg(from,dd){
 
 let pendingShare=null;
 
-function fileFromShareBlob(b){
-  return new File([new Uint8Array(b.data)],b.name,{type:b.type||'application/octet-stream'});
-}
-
 async function checkPendingShare(){
   try{
-    const r=await fetch('/_share_pending');
-    const d=await r.json();
-    const has=d&&((d.blobs&&d.blobs.length)||d.text||d.url);
+    const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+    const d=r&&Date.now()<=+r.headers.get('X-Expires')?await r.json():null,b=d?.files[0];
+    if(b)d.f=new File([await(await caches.match(b.key,C)).blob()],b.name,{type:b.type||'application/octet-stream'});
+    const has=d&&(d.f||d.text||d.url);
     pendingShare=has?d:null;
     $('cw-share-banner').style.display=has?'':'none';
     if(has)maybeShowSharePrompt();
@@ -1541,12 +1538,12 @@ async function clearPendingShare(){
   pendingShare=null;
   $('cw-share-banner').style.display='none';
   $('cw-share-prompt').style.display='none';
-  try{await fetch('/_share_clear',{method:'POST'});}catch(e){}
+  try{await caches.delete('share-pending');}catch(e){}
 }
 
 function shareLabel(){
   if(!pendingShare)return'';
-  const f=(pendingShare.blobs||[])[0];
+  const f=pendingShare.f;
   return f?f.name:(pendingShare.text||pendingShare.url||'contenido compartido');
 }
 
@@ -1558,8 +1555,8 @@ function maybeShowSharePrompt(){
 
 $('cw-share-send').onclick=async()=>{
   if(!pendingShare)return;
-  const f=(pendingShare.blobs||[])[0];
-  if(f)sendFileP2P(fileFromShareBlob(f));
+  const f=pendingShare.f;
+  if(f)sendFileP2P(f);
   else if(pendingShare.text||pendingShare.url){
     $('cw-mi').value=[pendingShare.text,pendingShare.url].filter(Boolean).join(' ');
     sendMsg();

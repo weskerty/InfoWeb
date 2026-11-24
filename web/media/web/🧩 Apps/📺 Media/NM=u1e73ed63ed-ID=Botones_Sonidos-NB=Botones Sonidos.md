@@ -215,7 +215,6 @@ async function shr(){
       if(await take(b,n))q.push({b:b,n:n});
     }
     if(!q.length)return;
-    await fetch('/_share_clear',{method:'POST'}).catch(()=>{});
     await caches.delete('share-pending').catch(()=>{});
     QQ=QQ.concat(q);nxt();
   }catch(e){}

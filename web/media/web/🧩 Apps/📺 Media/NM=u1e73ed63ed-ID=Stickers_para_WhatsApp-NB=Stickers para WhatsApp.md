@@ -302,7 +302,7 @@
   $('SK_SF').onsubmit=e=>{
     e.preventDefault();
     const q=qEl.value.trim();
-    if(TG_IP(q)){TB_1('t');$('SK_TQ').value=q;TG_1(q);return;}
+    if(TG_IP(q)){TB_1('t');$('SK_TQ').value=q;SN_P();TG_1(q);return;}
     if(q!==lastQ)doFetch(q);
   };
 
@@ -896,22 +896,18 @@
 
   TL_1().then(()=>window.TS0()).catch(()=>{});
 
+  doFetch('');
   (async()=>{
     try{
-      const r=await fetch('/_share_pending');
-      const d=await r.json();
-      if(!d||(!d.blobs?.length&&!d.url&&!d.text)){doFetch('');return;}
-      await fetch('/_share_clear',{method:'POST'});
-      if(d.blobs?.length){
-        doFetch('');
-        await addFiles(d.blobs.map(b=>new File([new Uint8Array(b.data)],b.name,{type:b.type})));
-      }else{
-        const q=(d.url||d.text).trim();
-        doFetch('');
-        if(TG_IP(q)){TB_1('t');$('SK_TQ').value=q;TG_1(q);}
-        else ER_D1('Enlace no compatible');
-      }
-    }catch{doFetch('');}
+      const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+      if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+      const d=await r.json(),b=d.files.filter(x=>/^(image|video)\//.test(x.type)),q=(d.url||d.text).trim();
+      if(!b.length&&!TG_IP(q))return;
+      const fs=await Promise.all(b.map(async x=>new File([await(await caches.match(x.key,C)).blob()],x.name,{type:x.type})));
+      await caches.delete('share-pending');
+      if(fs.length)return addFiles(fs);
+      TB_1('t');$('SK_TQ').value=q;TG_1(q);
+    }catch{}
   })();
 })();
 </script>

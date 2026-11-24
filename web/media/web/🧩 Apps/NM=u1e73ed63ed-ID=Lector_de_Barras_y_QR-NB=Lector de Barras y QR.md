@@ -845,18 +845,18 @@
 
   (async()=>{
     try{
-      const d=await fetch('/_share_pending').then(r=>r.json());
-      if(!d)return;
-      const b=d.blobs&&d.blobs[0];
-      if(b&&b.type&&b.type.startsWith('image/')){
-        await fetch('/_share_clear',{method:'POST'});
-        QG_PD=new File([new Uint8Array(b.data)],b.name||'imagen.png',{type:b.type});
+      const C={cacheName:'share-pending'},r=await caches.match('/__share_data',C);
+      if(!r||Date.now()>+r.headers.get('X-Expires'))return;
+      const d=await r.json(),b=d.files[0];
+      if(b&&b.type.startsWith('image/')){
+        QG_PD=new File([await(await caches.match(b.key,C)).blob()],b.name||'imagen.png',{type:b.type});
+        await caches.delete('share-pending');
         QS_ST('Imagen recibida: leer o crear','act');
         return;
       }
       const t=((d.url||'')+' '+(d.text||'')).trim();
       if(!t)return;
-      await fetch('/_share_clear',{method:'POST'});
+      await caches.delete('share-pending');
       await QG_ON();
       $('qg-t').value=t;
       QG_U1();
