@@ -102,7 +102,7 @@
 <div id="SK_TP" class="SK_TP"><button type="button" id="SK_TV" class="SK_TI"></button><button type="button" id="sk-cf" class="RD_B1 GL_C">Enviar ➤</button></div>
 <div id="SK_OK" class="SK_OK" hidden><span>✅ Listo</span><a id="wa-btn" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a><button type="button" id="SK_NW" class="RD_B1">Armar otro Pack</button></div>
 </div>
-<dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
+<dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p><p id="SK_GR" hidden>Unete a <a id="SK_GL" href="https://chat.whatsapp.com/FWhj6p2ohfHDNH5l8WDjNT?s=cl&amp;p=i&amp;iam=2" target="_blank" rel="noopener">➡️ este Grupo ⬅️</a> y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -182,8 +182,15 @@
     });
   }
 
+  const SW=sid=>Object.assign(new Error('sinwa'),{sid});
+  function SA_1(sid){
+    const t='99MISTICKER='+sid,c=()=>navigator.clipboard?.writeText(t).catch(()=>{});
+    ER_D1('✖️ Servidor Saturado 😿');
+    $('SK_GC').textContent=t;$('SK_GC').onclick=$('SK_GL').onclick=c;$('SK_GR').hidden=false;c();
+  }
   function ER_D1(m){
     if(GONE)return;
+    if(!ERD.open)$('SK_GR').hidden=true;
     const p=$('SK_EP'),l=ERD.open?p.textContent.split('\n'):[];
     if(!l.includes(m))l.push(m);
     p.textContent=l.join('\n');
@@ -251,14 +258,14 @@
       if(GONE)break;
       let j=null;
       try{const r=await fetch('/api/stickers?sid='+sid,{cache:'no-store'});if(r.status===404)throw new Error('404');if(r.ok)j=await r.json();}catch(e){if(e.message==='404')throw e;}
-      if(j){if(j.e)throw new Error('servidor');if(j.ok){if(j.wa)return j.wa;throw new Error('sinwa');}tx(j.w|0);}
+      if(j){if(j.e)throw new Error('servidor');if(j.ok){if(j.wa)return j.wa;throw SW(sid);}tx(j.w|0);}
     }
     throw new Error('salida');
   }
   let TSP=null;
   const TL_1=()=>window.TS1?Promise.resolve():TSP||(TSP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{TSP=null;no(new Error('verificacion'))};document.head.appendChild(s)}));
   const TK_1=()=>TL_1().then(()=>window.TS1()).catch(()=>{throw new Error('verificacion')});
-  const ER_1=e=>e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'||e.message==='verificacion'?'Error verificacion, recarga la pagina':null;
+  const ER_1=e=>e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'||e.message==='verificacion'?'Error verificacion, recarga la pagina':null;
 
   function OK_1(sid,wa,host){
     WB.href='https://wa.me/'+wa+'?text='+encodeURIComponent('STICKERS='+sid);
@@ -736,13 +743,13 @@
       if(!res.ok)throw new Error(res.status);
       let {sid,w,wa}=await res.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
-      if(!w&&!wa)throw new Error('sinwa');
+      if(!w&&!wa)throw SW(sid);
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{wa=await WT_1(sid,w,$('SK_WT'));}finally{$('SK_WT').hidden=true;TR_R();}}
       OK_1(sid,wa,TR);
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin musica');
-    }catch(e){ER_D1(ER_1(e)||'Error Stickers '+e.message);}
+    }catch(e){e.sid?SA_1(e.sid):ER_D1(ER_1(e)||'Error Stickers '+e.message);}
     finally{PD_C();}
   };
 
@@ -758,7 +765,6 @@
       if(!r.ok)throw new Error(r.status);
       let {sid,w,wa}=await r.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
-      if(!w&&!wa)throw new Error('sinwa');
       if(w){W.hidden=true;wa=await WT_1(sid,w,L);}
       else await new Promise((ok,no)=>{const t0=Date.now(),iv=setInterval(()=>{
         if(GONE){clearInterval(iv);no(new Error('salida'));return;}
@@ -767,8 +773,9 @@
         L.textContent='Preparando el pack... '+Math.ceil(TG_W-e)+'s';B.style.width=Math.round(100*e/TG_W)+'%';
       },500);});
       L.textContent='';W.hidden=true;
+      if(!wa)throw SW(sid);
       OK_1(sid,wa,$('SK_TS'));
-    }catch(e){L.textContent='';W.hidden=true;ER_D1(ER_1(e)||'Error Telegram '+e.message);}
+    }catch(e){L.textContent='';W.hidden=true;e.sid?SA_1(e.sid):ER_D1(ER_1(e)||'Error Telegram '+e.message);}
     finally{TG_B=0;}
   }
   $('SK_TF').onsubmit=e=>{e.preventDefault();SN_P();TG_1($('SK_TQ').value);};
