@@ -182,7 +182,7 @@
     });
   }
 
-  const SW=sid=>Object.assign(new Error('sinwa'),{sid});
+  const NW_1=sid=>Object.assign(new Error('sinwa'),{sid});
   function SA_1(sid){
     const t='99MISTICKER='+sid,c=()=>navigator.clipboard?.writeText(t).catch(()=>{});
     ER_D1('✖️ Servidor Saturado 😿');
@@ -258,7 +258,7 @@
       if(GONE)break;
       let j=null;
       try{const r=await fetch('/api/stickers?sid='+sid,{cache:'no-store'});if(r.status===404)throw new Error('404');if(r.ok)j=await r.json();}catch(e){if(e.message==='404')throw e;}
-      if(j){if(j.e)throw new Error('servidor');if(j.ok){if(j.wa)return j.wa;throw SW(sid);}tx(j.w|0);}
+      if(j){if(j.e)throw new Error('servidor');if(j.ok){if(j.wa)return j.wa;throw NW_1(sid);}tx(j.w|0);}
     }
     throw new Error('salida');
   }
@@ -743,7 +743,7 @@
       if(!res.ok)throw new Error(res.status);
       let {sid,w,wa}=await res.json();
       if(!SD_RX.test(sid||''))throw new Error('sid');
-      if(!w&&!wa)throw SW(sid);
+      if(!w&&!wa)throw NW_1(sid);
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{wa=await WT_1(sid,w,$('SK_WT'));}finally{$('SK_WT').hidden=true;TR_R();}}
       OK_1(sid,wa,TR);
@@ -773,7 +773,7 @@
         L.textContent='Preparando el pack... '+Math.ceil(TG_W-e)+'s';B.style.width=Math.round(100*e/TG_W)+'%';
       },500);});
       L.textContent='';W.hidden=true;
-      if(!wa)throw SW(sid);
+      if(!wa)throw NW_1(sid);
       OK_1(sid,wa,$('SK_TS'));
     }catch(e){L.textContent='';W.hidden=true;e.sid?SA_1(e.sid):ER_D1(ER_1(e)||'Error Telegram '+e.message);}
     finally{TG_B=0;}

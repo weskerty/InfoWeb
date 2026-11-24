@@ -240,21 +240,7 @@ if(stAC)stAC.abort();
 document.body.style.overflow="";
 },{once:true});
 try{
-const[
-{AdbDaemonTransport,Adb,adbGeneratePublicKey},
-{AdbDaemonWebUsbDeviceManager},
-{default:AdbWebCredentialStore},
-{DefaultServerPath,AndroidMotionEventAction,AndroidMotionEventButton,AndroidKeyEventAction,ScrcpyPointerId,clamp},
-{AdbScrcpyClient,AdbScrcpyOptions3_3_3},
-{WebCodecsVideoDecoder,WebGLVideoFrameRenderer,BitmapVideoFrameRenderer}
-]=await Promise.all([
-import("https://cdn.jsdelivr.net/npm/@yume-chan/adb@2.6.4/+esm"),
-import("https://cdn.jsdelivr.net/npm/@yume-chan/adb-daemon-webusb@2.3.2/+esm"),
-import("https://cdn.jsdelivr.net/npm/@yume-chan/adb-credential-web@2.1.0/+esm"),
-import("https://cdn.jsdelivr.net/npm/@yume-chan/scrcpy@2.3.0/+esm"),
-import("https://cdn.jsdelivr.net/npm/@yume-chan/adb-scrcpy@2.3.2/+esm"),
-import("https://cdn.jsdelivr.net/npm/@yume-chan/scrcpy-decoder-webcodecs@2.5.3/+esm")
-]);
+const{AdbDaemonTransport,Adb,adbGeneratePublicKey,AdbDaemonWebUsbDeviceManager,AdbWebCredentialStore,DefaultServerPath,AndroidMotionEventAction,AndroidMotionEventButton,AndroidKeyEventAction,ScrcpyPointerId,clamp,AdbScrcpyClient,AdbScrcpyOptions3_3_3,WebCodecsVideoDecoder,WebGLVideoFrameRenderer,BitmapVideoFrameRenderer}=await import("/web/js/lib/Tango/tango.mjs");
 if(GONE)return;
 
 const U1="https://raw.githubusercontent.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/main/resources/assets/uad_lists.json";
