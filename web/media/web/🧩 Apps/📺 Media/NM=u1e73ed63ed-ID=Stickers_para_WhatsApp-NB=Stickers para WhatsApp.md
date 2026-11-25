@@ -18,20 +18,21 @@
 .SK1 .SK_KL{margin:10px 0 0}
 .SK_KL a{display:inline-flex}
 .SK1 .SK_NT{margin:4px 0 0;color:var(--RD_MF);font-size:.72rem;opacity:.8}
-.SK_PL{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px}
-.sc-fr{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--RD_M);border:1px solid var(--RD_L)}
-.sc-fr>img{width:100%;height:100%;object-fit:fill;display:block}
+.SK_PL{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:14px}
+.sc-fr{position:relative;display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--RD_M);border:1px solid var(--RD_L)}
+.SK_FI{position:relative;flex:none;width:96px;height:96px;border-radius:10px;overflow:hidden}
+.SK_FI>img{width:100%;height:100%;object-fit:fill;display:block}
 .sc-rm{position:absolute;top:4px;right:4px;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:rgba(0,0,0,.65);color:var(--RD_F);cursor:pointer;line-height:1}
 .SK_BG{position:absolute;top:4px;left:6px;font-size:1.1em}
-.SK_TO{position:absolute;left:0;right:0;bottom:0;display:flex}
-.SK_TO button{flex:1;padding:6px 0;border:0;border-radius:0;background:rgba(0,0,0,.65);color:var(--RD_F);font-size:1rem;cursor:pointer;line-height:1.2}
-.SK_TO button[aria-pressed=true]{box-shadow:inset 0 -3px var(--ok)}
+.SK_TO{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;margin-right:30px}
+.SK_TO button{justify-content:flex-start;padding:6px 12px}
 .SK_TR{position:sticky;bottom:8px;z-index:5;width:fit-content;max-width:100%;box-sizing:border-box;margin:16px auto 0;padding:10px;border:1px solid var(--RD_L);border-radius:16px;background:var(--RD_DG);box-shadow:0 8px 30px rgba(0,0,0,.4)}
 @media(orientation:portrait){body.NB_V .SK_TR{bottom:84px}}
 .SK_TP{display:flex;align-items:center;gap:10px}
 .SK_TI{flex:0 1 auto;min-width:0;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--RD_F);cursor:pointer;overflow:hidden;font:inherit}
 .SK_TI img{width:40px;height:40px;border-radius:8px;object-fit:fill;flex:none}
 .SK_TI b{flex:none;margin:0 4px}
+.SK_TE{flex:none;padding:8px 12px;border:1px solid var(--RD_BB);border-radius:10px;background:var(--RD_BT);white-space:nowrap}
 #SK_GW{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px}
 #SK_GW::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
 #SK_WT{margin:0}
@@ -87,7 +88,7 @@
 <p class="SK_NT">Los stickers pueden tardar hasta 30 minutos en llegar. No repitas el pedido: los repetidos se ignoran.</p>
 </section>
 <section id="SK_P" hidden>
-<p class="SK_TX">Subi fotos, GIF o videos (se usan los primeros 10s) o elegi stickers en Buscar. En cada uno: ✂️ recortar, 🖼️ sumar una imagen, 🎵 ponerle musica.</p>
+<p class="SK_TX">Subi fotos, GIF o videos (se usan los primeros 10s) o elegi stickers en Buscar.</p>
 <button type="button" id="SK_AD" class="RD_B1">📤 Agregar fotos, GIF o videos</button>
 <input type="file" id="sc-in" accept="image/*,video/*" multiple hidden>
 <div id="SK_PL" class="SK_PL"></div>
@@ -114,11 +115,11 @@
 <div class="sc-ov-res" id="sc-ov-res"></div>
 </div>
 <div id="SK_EM" hidden>
-<div class="BS1" id="SK_MO"><button type="button" id="SK_M0" aria-pressed="true">Sin musica</button><button type="button" id="SK_MV" aria-pressed="false">🎬 Sonido del video</button><button type="button" id="SK_MB" aria-pressed="false">📁 Elegir audio</button></div>
+<div class="BS1" id="SK_MO"><button type="button" id="SK_M0" aria-pressed="true">Sin sonido</button><button type="button" id="SK_MV" aria-pressed="false">🎬 Sonido del video</button><button type="button" id="SK_MB" aria-pressed="false">📁 Elegir audio</button><button type="button" id="SK_MR" aria-pressed="false">🎤 Grabar</button></div>
 <input type="file" id="SK_MF" accept="audio/*,video/*" hidden>
 <div id="SK_MC" hidden><p id="SK_ML" class="SK_TX"></p><input type="range" id="SK_MS" min="0" max="0" step="0.5" value="0" aria-label="Desde"><button type="button" id="SK_MP">▶️ Escuchar</button></div>
 <audio id="SK_AU" preload="metadata" hidden></audio>
-<p class="SK_TX">Hasta 10s de sonido. Los stickers con musica son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
+<p class="SK_TX">Hasta 10s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
 </div>
 <div class="SK_DF"><button type="button" id="SK_DC">Cancelar</button><button type="button" id="SK_DK">✅ Listo</button></div>
 </dialog>
@@ -224,6 +225,7 @@
     document.querySelectorAll('#SK_TB button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));
     $('SK_B').hidden=t!=='b';$('SK_P').hidden=t!=='p';$('SK_T').hidden=t!=='t';
     if(t==='p')PL_R();
+    TR_R();
   }
   $('SK_TB').onclick=e=>{const b=e.target.closest('button');if(b)TB_1(b.dataset.t);};
 
@@ -238,8 +240,10 @@
     TR.hidden=!P.length&&$('SK_WT').hidden;
     const v=$('SK_TV');v.textContent='';
     const b=document.createElement('b');b.textContent=P.length+'/'+SK_MX;v.append(b);
-    P.slice(innerWidth<480?-2:-4).forEach(it=>{const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';v.append(m);});
-    v.setAttribute('aria-label','Ver tu pack: '+P.length+' stickers');
+    const e=$('SK_P').hidden,n=innerWidth<480;
+    (e&&n?[]:P.slice(n?-2:-4)).forEach(it=>{const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';v.append(m);});
+    if(e){const s=document.createElement('span');s.className='SK_TE';s.textContent='✏️ Editar';v.append(s);}
+    v.setAttribute('aria-label',(e?'Editar tu pack: ':'Ver tu pack: ')+P.length+' stickers');
   }
   $('SK_TV').onclick=()=>TB_1('p');
 
@@ -367,12 +371,13 @@
     if(!P.length){L.append(MS_1('Tu pack esta vacio'));return;}
     P.forEach(it=>{
       const d=document.createElement('div');d.className='sc-fr';
-      const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';d.append(m);
-      if(it.isVid){const s=document.createElement('span');s.className='SK_BG';s.textContent='🎬';d.append(s);}
+      const f=document.createElement('div');f.className='SK_FI';d.append(f);
+      const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';f.append(m);
+      if(it.isVid){const s=document.createElement('span');s.className='SK_BG';s.textContent='🎬';f.append(s);}
       const x=BT_1('✕','Quitar','sc-rm');x.onclick=()=>PK_RM(it);d.append(x);
       const t=document.createElement('div');t.className='SK_TO';
-      [['c','✂️','Recortar',!!it.crop],['o','🖼️','Sumar imagen',it.ov.length>0],['m','🎵','Musica',!!it.au]].filter(x=>MU||x[0]!=='m').forEach(([md,ic,lb,on])=>{
-        const b=BT_1(ic,lb);b.setAttribute('aria-pressed',on);b.onclick=()=>ED_O(it,md);t.append(b);
+      [['c','✂️','Recortar',!!it.crop],['o','🖼️','Imagen',it.ov.length>0],['m','🎵','Sonido',!!it.au]].filter(x=>MU||x[0]!=='m').forEach(([md,ic,lb,on])=>{
+        const b=BT_1(ic+' '+lb+(on?' ✅':''),lb);b.setAttribute('aria-pressed',on);b.onclick=()=>ED_O(it,md);t.append(b);
       });
       d.append(t);L.append(d);
     });
@@ -517,25 +522,25 @@
     }catch{}
   }
 
-  function MU_X(){AU.pause();if(AU.src.startsWith('blob:'))URL.revokeObjectURL(AU.src);AU.removeAttribute('src');}
-  function MU_O(it){EA=it.au?{...it.au}:{f:null,s:0,d:AU_S};$('SK_MV').hidden=!it.isVid;MU_L();}
+  function MU_X(){RC_X();AU.pause();if(AU.src.startsWith('blob:'))URL.revokeObjectURL(AU.src);AU.removeAttribute('src');}
+  function MU_O(it){EA=it.au?{...it.au}:{f:null,s:0,d:AU_S};$('SK_MV').hidden=!it.isVid;$('SK_MR').hidden=!window.MediaRecorder||!navigator.mediaDevices?.getUserMedia;MU_L();}
   const MU_V=()=>!!EA.f&&EA.f===ED?.it.file;
   const TM_1=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
   function MU_L(){
     const v=MU_V();
-    $('SK_M0').setAttribute('aria-pressed',!EA.f);$('SK_MV').setAttribute('aria-pressed',v);$('SK_MB').setAttribute('aria-pressed',!!EA.f&&!v);
+    $('SK_M0').setAttribute('aria-pressed',!EA.f);$('SK_MV').setAttribute('aria-pressed',v);$('SK_MB').setAttribute('aria-pressed',!!EA.f&&!v&&!EA.f.r);$('SK_MR').setAttribute('aria-pressed',!!EA.f?.r);
     MU_X();$('SK_MC').hidden=!EA.f;$('SK_MP').textContent='▶️ Escuchar';
     if(!EA.f)return;
     const S=$('SK_MS');S.hidden=v;
     AU.onloadedmetadata=()=>{
-      EA.du=isFinite(AU.duration)?AU.duration:AU_S;
+      EA.du=isFinite(AU.duration)?AU.duration:EA.f?.du||AU_S;
       S.max=Math.max(0,EA.du-1);
       EA.s=v?0:Math.min(EA.s||0,+S.max);S.value=EA.s;MU_T();
     };
     AU.onerror=()=>{if(!AU.getAttribute('src'))return;ER_D1('Audio no compatible');EA.f=null;MU_L();};
     AU.src=URL.createObjectURL(EA.f);
   }
-  function MU_T(){EA.d=Math.max(1,Math.min(AU_S,(EA.du||AU_S)-EA.s));$('SK_ML').textContent=(MU_V()?'Sonido del video':EA.f.name)+' · desde '+TM_1(EA.s)+' · '+Math.round(EA.d)+'s';}
+  function MU_T(){EA.d=Math.max(1,Math.min(AU_S,(EA.du||AU_S)-EA.s));$('SK_ML').textContent=(MU_V()?'Sonido del video':EA.f.r?'🎤 Grabacion':EA.f.name)+' · desde '+TM_1(EA.s)+' · '+Math.round(EA.d)+'s';}
   $('SK_MS').oninput=e=>{EA.s=+e.target.value;MU_T();if(!AU.paused)AU.currentTime=EA.s;};
   $('SK_MP').onclick=()=>{if(!EA.f)return;if(AU.paused){AU.currentTime=EA.s;AU.play().then(()=>{$('SK_MP').textContent='⏸️ Pausa';}).catch(()=>{});}else AU.pause();};
   AU.onpause=()=>{$('SK_MP').textContent='▶️ Escuchar';};
@@ -544,6 +549,20 @@
   $('SK_MV').onclick=()=>{if(!ED)return;EA.f=ED.it.file;EA.s=0;MU_L();};
   $('SK_MB').onclick=()=>$('SK_MF').click();
   $('SK_MF').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!ED)return;EA.f=f;EA.s=0;MU_L();};
+  let RC=null;
+  function RC_X(k){const r=RC;if(!r)return;RC=null;r.k=k;clearInterval(r.t);if(r.m.state!=='inactive')r.m.stop();r.s.getTracks().forEach(x=>x.stop());$('SK_MR').textContent='🎤 Grabar';}
+  $('SK_MR').onclick=async()=>{
+    if(RC)return RC_X(1);
+    if(!ED)return;
+    let s;try{s=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){ER_D1(e.name==='NotFoundError'?'Sin microfono':'Microfono bloqueado');return;}
+    if(!ED||GONE||RC){s.getTracks().forEach(x=>x.stop());return;}
+    MU_X();$('SK_MC').hidden=true;
+    const m=new MediaRecorder(s),ch=[],t0=Date.now(),r={m,s};
+    const T=()=>{const e=(Date.now()-t0)/1000;if(e>=AU_S)return RC_X(1);$('SK_MR').textContent='⏹️ Grabando '+Math.ceil(AU_S-e)+'s';};
+    m.ondataavailable=e=>{if(e.data.size)ch.push(e.data);};
+    m.onstop=()=>{if(!r.k||!ED||GONE||!ch.length)return;const ty=m.mimeType||ch[0].type,f=new File(ch,'Grabacion.'+(/mp4/.test(ty)?'m4a':'webm'),{type:ty});f.r=1;f.du=Math.min(AU_S,(Date.now()-t0)/1000);EA.f=f;EA.s=0;MU_L();};
+    RC=r;r.t=setInterval(T,250);m.start();T();
+  };
 
   function FF_L1(){
     if(GONE)return Promise.reject(new Error('salida'));
@@ -771,7 +790,7 @@
       if(w){PD_C();try{jr=RS_1(await WT_1(sid,w,$('SK_WT')));}finally{$('SK_WT').hidden=true;TR_R();}}
       OK_1(jr);
       if(nF)ER_D1(nF+' no se pudieron convertir');
-      if(nA)ER_D1(nA+' sin musica');
+      if(nA)ER_D1(nA+' sin sonido');
     }catch(e){ER_D1(ER_1(e)||'Error Stickers '+e.message);}
     finally{PD_C();}
   };
