@@ -428,7 +428,7 @@
     TB_1('p');
   }
   $('SK_AD').onclick=()=>inEl.click();
-  const DP_1=l=>{const fs=[...(l||[])].filter(f=>/^(image|video)\//.test(f.type));if(fs.length&&!GONE&&!DG.open&&!PD.open)addFiles(fs);return fs.length;};
+  const DP_1=l=>{const fs=[...(l||[])].filter(f=>/^(image|video)\//.test(f.type));if(!fs.length||GONE||DG.open||PD.open)return 0;addFiles(fs);return 1;};
   const DP_P=e=>{if(DP_1(e.clipboardData?.files))e.preventDefault();};
   const DP_O=e=>{if([...(e.dataTransfer?.types||[])].includes('Files'))e.preventDefault();};
   const DP_D=e=>{if(!e.dataTransfer?.files.length)return;e.preventDefault();DP_1(e.dataTransfer.files);};
