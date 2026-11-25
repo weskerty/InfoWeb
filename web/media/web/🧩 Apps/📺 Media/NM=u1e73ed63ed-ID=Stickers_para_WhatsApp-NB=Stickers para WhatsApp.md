@@ -33,13 +33,11 @@
 .SK_TI img{width:40px;height:40px;border-radius:8px;object-fit:fill;flex:none}
 .SK_TI b{flex:none;margin:0 4px}
 .SK_OK{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
-#wa-btn{display:inline-flex;align-items:center;gap:8px}
-#wa-btn::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
+#wa-btn,#SK_GW{display:inline-flex;align-items:center;gap:8px}
+#SK_GW{margin-bottom:10px}
+#wa-btn::before,#SK_GW::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
 #SK_WT{margin:0}
 #SK_EP{white-space:pre-line}
-.SK_GB{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:10px 0 14px}
-.SK_GB a{min-width:48px;padding:10px 0}
-#SK_GR{flex-basis:100%;margin:0;text-align:center}
 .SK_DG{width:min(440px,calc(100vw - 32px));text-align:center}
 .SK_PD[open]{display:flex;flex-direction:column;align-items:center;gap:12px}
 .SK_DG>button[data-x]{margin-bottom:6px}
@@ -103,9 +101,10 @@
 <div id="SK_TR" class="SK_TR" hidden>
 <p id="SK_WT" class="SK_TX" role="status" hidden></p>
 <div id="SK_TP" class="SK_TP"><button type="button" id="SK_TV" class="SK_TI"></button><button type="button" id="sk-cf" class="RD_B1 GL_C">Enviar ➤</button></div>
-<div id="SK_OK" class="SK_OK" hidden><span>✅ Listo</span><a id="wa-btn" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a><p id="SK_GR" hidden><span id="SK_GT"></span><span id="SK_GB" class="SK_GB"></span>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p><button type="button" id="SK_NW" class="RD_B1">Armar otro Pack</button></div>
+<div id="SK_OK" class="SK_OK" hidden><span>✅ Listo</span><a id="wa-btn" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a><button type="button" id="SK_NW" class="RD_B1">Armar otro Pack</button></div>
 </div>
 <dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
+<dialog id="SK_GD" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p>✅ Listo</p><a id="SK_GW" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Entrar al Grupo</a><p>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -145,7 +144,7 @@
   let ovNS=64,ovSel=-1;
   const HM=new Map();
 
-  const gEl=$('sk-grid'),pgEl=$('sk-pg'),ERD=$('SK_ER'),qEl=$('sk-q'),inEl=$('sc-in');
+  const gEl=$('sk-grid'),pgEl=$('sk-pg'),ERD=$('SK_ER'),GD=$('SK_GD'),qEl=$('sk-q'),inEl=$('sc-in');
   const DG=$('SK_DG'),PD=$('SK_PD'),pBar=$('sc-pbar'),pLbl=$('sc-prog-lbl'),cropImg=$('sc-crop-img');
   const TR=$('SK_TR'),OK=$('SK_OK'),WB=$('wa-btn'),AU=$('SK_AU');
   const SN_U='web/recursos/notificaciones/cat.mp3';
@@ -193,6 +192,7 @@
     if(!ERD.open)ERD.showModal();
   }
   ERD.querySelector('[data-x]').onclick=()=>ERD.close();
+  GD.querySelector('[data-x]').onclick=()=>GD.close();
   function setProg(p,l){pBar.style.width=p+'%';if(l!=null)pLbl.textContent=l;}
   function getCID(){try{let id=localStorage.getItem('sk_cid');if(!id){id=crypto.randomUUID();localStorage.setItem('sk_cid',id);}return id;}catch{return 'anon';}}
   function KN_1(it){
@@ -267,18 +267,18 @@
   const RS_1=j=>{const g=(Array.isArray(j.g)?j.g:[]).filter(u=>/^https:\/\/chat\.whatsapp\.com\/\S+$/.test(u));if(!j.wa&&!g.length)throw new Error('sinwa');return {wa:j.wa,g,m:String(j.m||'')};};
 
   function OK_1(sid,r,host){
-    WB.hidden=!r.wa;$('SK_GR').hidden=!!r.wa;
-    if(r.wa)WB.href='https://wa.me/'+r.wa+'?text='+encodeURIComponent('STICKERS='+sid);
-    else{
-      const b=$('SK_GC'),c=()=>navigator.clipboard?.writeText(r.m)||Promise.reject();
-      $('SK_GT').textContent=r.g.length>1?'Entra a cualquier Grupo:':'Entra al Grupo:';
-      $('SK_GB').replaceChildren(...r.g.map((u,i)=>Object.assign(document.createElement('a'),{href:u,target:'_blank',rel:'noopener',className:'RD_B1',textContent:i+1,ariaLabel:'Grupo '+(i+1)})));
-      b.textContent=r.m;
-      b.onclick=()=>c().then(()=>{b.textContent='Copiado!';setTimeout(()=>{if(b.textContent==='Copiado!')b.textContent=r.m;},2000);}).catch(()=>{});
-      $('SK_GB').onclick=()=>{c().catch(()=>{});};
-      c().catch(()=>{});
-    }
-    host.append(OK);OK.hidden=false;TR_R();SN_1();
+    if(GONE)return;
+    SN_1();
+    if(r.wa){WB.href='https://wa.me/'+r.wa+'?text='+encodeURIComponent('STICKERS='+sid);host.append(OK);OK.hidden=false;TR_R();return;}
+    const b=$('SK_GC'),w=$('SK_GW'),c=()=>navigator.clipboard?.writeText(r.m)||Promise.reject();
+    const GJ=()=>{try{const a=JSON.parse(localStorage.getItem('SK_GJ'));return Array.isArray(a)?a:[];}catch{return [];}};
+    const u=GJ().find(x=>r.g.includes(x))||r.g[Math.random()*r.g.length|0];
+    w.href=u;
+    w.onclick=()=>{c().catch(()=>{});try{localStorage.setItem('SK_GJ',JSON.stringify([u,...GJ().filter(x=>x!==u)].slice(0,5)));}catch{}};
+    b.textContent=r.m;
+    b.onclick=()=>c().then(()=>{b.textContent='Copiado!';setTimeout(()=>{if(b.textContent==='Copiado!')b.textContent=r.m;},2000);}).catch(()=>{});
+    if(!GD.open)GD.showModal();
+    c().catch(()=>{});
   }
   $('SK_NW').onclick=()=>{OK.hidden=true;TR_R();TB_1('b');};
 
