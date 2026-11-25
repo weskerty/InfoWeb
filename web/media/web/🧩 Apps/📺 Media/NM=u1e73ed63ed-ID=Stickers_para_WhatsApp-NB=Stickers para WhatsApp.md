@@ -32,10 +32,8 @@
 .SK_TI{flex:0 1 auto;min-width:0;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--RD_F);cursor:pointer;overflow:hidden;font:inherit}
 .SK_TI img{width:40px;height:40px;border-radius:8px;object-fit:fill;flex:none}
 .SK_TI b{flex:none;margin:0 4px}
-.SK_OK{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
-#wa-btn,#SK_GW{display:inline-flex;align-items:center;gap:8px}
-#SK_GW{margin-bottom:10px}
-#wa-btn::before,#SK_GW::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
+#SK_GW{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px}
+#SK_GW::before{content:'';width:18px;height:18px;flex-shrink:0;background:var(--LK_C);-webkit-mask:var(--LK_I) center/contain no-repeat;mask:var(--LK_I) center/contain no-repeat}
 #SK_WT{margin:0}
 #SK_EP{white-space:pre-line}
 .SK_DG{width:min(440px,calc(100vw - 32px));text-align:center}
@@ -101,7 +99,6 @@
 <div id="SK_TR" class="SK_TR" hidden>
 <p id="SK_WT" class="SK_TX" role="status" hidden></p>
 <div id="SK_TP" class="SK_TP"><button type="button" id="SK_TV" class="SK_TI"></button><button type="button" id="sk-cf" class="RD_B1 GL_C">Enviar ➤</button></div>
-<div id="SK_OK" class="SK_OK" hidden><span>✅ Listo</span><a id="wa-btn" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a><button type="button" id="SK_NW" class="RD_B1">Armar otro Pack</button></div>
 </div>
 <dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
 <dialog id="SK_GD" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p>✅ Listo</p><a id="SK_GW" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Entrar al Grupo</a><p>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
@@ -146,7 +143,7 @@
 
   const gEl=$('sk-grid'),pgEl=$('sk-pg'),ERD=$('SK_ER'),GD=$('SK_GD'),qEl=$('sk-q'),inEl=$('sc-in');
   const DG=$('SK_DG'),PD=$('SK_PD'),pBar=$('sc-pbar'),pLbl=$('sc-prog-lbl'),cropImg=$('sc-crop-img');
-  const TR=$('SK_TR'),OK=$('SK_OK'),WB=$('wa-btn'),AU=$('SK_AU');
+  const TR=$('SK_TR'),AU=$('SK_AU');
   const SN_U='web/recursos/notificaciones/cat.mp3';
   let SN_A=null;
   const ED_S={c:$('SK_EC'),o:$('SK_EO'),m:$('SK_EM')};
@@ -231,14 +228,13 @@
 
   const PK_F=u=>P.find(x=>x.u===u);
   function FR_1(it){for(const k of ['pv','pc'])if(it[k]?.startsWith('blob:'))URL.revokeObjectURL(it[k]);it.ov.forEach(o=>{if(o.src?.startsWith('blob:'))URL.revokeObjectURL(o.src);});}
-  function PK_AD(it){OK.hidden=true;it.ov=it.ov||[];P.push(it);UP_1();}
+  function PK_AD(it){it.ov=it.ov||[];P.push(it);UP_1();}
   function PK_RM(it){const i=P.indexOf(it);if(i<0)return;FR_1(it);P.splice(i,1);UP_1();}
   function UP_1(){$('SK_PN').textContent=P.length;TR_R();if(!$('SK_P').hidden)PL_R();gEl.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));}
 
   function TR_R(){
-    const ok=!OK.hidden&&TR.contains(OK);
-    $('SK_TP').hidden=ok||!P.length;
-    TR.hidden=!ok&&!P.length&&$('SK_WT').hidden;
+    $('SK_TP').hidden=!P.length;
+    TR.hidden=!P.length&&$('SK_WT').hidden;
     const v=$('SK_TV');v.textContent='';
     const b=document.createElement('b');b.textContent=P.length+'/'+SK_MX;v.append(b);
     P.slice(innerWidth<480?-2:-4).forEach(it=>{const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';v.append(m);});
@@ -264,12 +260,11 @@
   const TL_1=()=>window.TS1?Promise.resolve():TSP||(TSP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{TSP=null;no(new Error('verificacion'))};document.head.appendChild(s)}));
   const TK_1=()=>TL_1().then(()=>window.TS1()).catch(()=>{throw new Error('verificacion')});
   const ER_1=e=>e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'||e.message==='verificacion'?'Error verificacion, recarga la pagina':null;
-  const RS_1=j=>{const g=(Array.isArray(j.g)?j.g:[]).filter(u=>/^https:\/\/chat\.whatsapp\.com\/\S+$/.test(u));if(!j.wa&&!g.length)throw new Error('sinwa');return {wa:j.wa,g,m:String(j.m||'')};};
+  const RS_1=j=>{const g=(Array.isArray(j.g)?j.g:[]).filter(u=>/^https:\/\/chat\.whatsapp\.com\/\S+$/.test(u));if(!g.length)throw new Error('sinwa');return {g,m:String(j.m||'')};};
 
-  function OK_1(sid,r,host){
+  function OK_1(r){
     if(GONE)return;
     SN_1();
-    if(r.wa){WB.href='https://wa.me/'+r.wa+'?text='+encodeURIComponent('STICKERS='+sid);host.append(OK);OK.hidden=false;TR_R();return;}
     const b=$('SK_GC'),w=$('SK_GW'),c=()=>navigator.clipboard?.writeText(r.m)||Promise.reject();
     const GJ=()=>{try{const a=JSON.parse(localStorage.getItem('SK_GJ'));return Array.isArray(a)?a:[];}catch{return [];}};
     const u=GJ().find(x=>r.g.includes(x))||r.g[Math.random()*r.g.length|0];
@@ -280,7 +275,6 @@
     if(!GD.open)GD.showModal();
     c().catch(()=>{});
   }
-  $('SK_NW').onclick=()=>{OK.hidden=true;TR_R();TB_1('b');};
 
   async function doFetch(q){
     if(SB)return;SB=1;
@@ -758,7 +752,7 @@
       if(!w)jr=RS_1(jr);
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{jr=RS_1(await WT_1(sid,w,$('SK_WT')));}finally{$('SK_WT').hidden=true;TR_R();}}
-      OK_1(sid,jr,TR);
+      OK_1(jr);
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin musica');
     }catch(e){ER_D1(ER_1(e)||'Error Stickers '+e.message);}
@@ -769,7 +763,7 @@
     const pack=TG_PN(q.trim());
     if(TG_B)return;
     if(!/^[A-Za-z0-9_]{1,64}$/.test(pack)){ER_D1('Enlace de Telegram no valido');return;}
-    TG_B=1;OK.hidden=true;TR_R();
+    TG_B=1;
     const L=$('SK_TL'),W=$('SK_TW'),B=$('SK_TBR');
     W.hidden=false;B.style.width='0%';L.textContent='Pidiendo el pack...';
     try{
@@ -785,7 +779,7 @@
         L.textContent='Preparando el pack... '+Math.ceil(TG_W-e)+'s';B.style.width=Math.round(100*e/TG_W)+'%';
       },500);});
       L.textContent='';W.hidden=true;
-      OK_1(sid,RS_1(jr),$('SK_TS'));
+      OK_1(RS_1(jr));
     }catch(e){L.textContent='';W.hidden=true;ER_D1(ER_1(e)||'Error Telegram '+e.message);}
     finally{TG_B=0;}
   }
