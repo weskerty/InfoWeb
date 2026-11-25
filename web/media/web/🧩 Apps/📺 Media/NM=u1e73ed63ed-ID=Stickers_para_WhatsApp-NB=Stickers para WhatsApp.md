@@ -41,6 +41,7 @@
 .SK_DG>button[data-x]{margin-bottom:6px}
 #SK_EC,#SK_EO,#SK_EM,.SK_DF,#SK_EP{clear:both}
 .SK_NB{display:inline-block;min-width:22px;padding:0 6px;border-radius:11px;background:var(--RD_M);font-size:.8rem;line-height:22px}
+.SK_VL{position:fixed;z-index:10000;margin:0;border-radius:14px;object-fit:fill;pointer-events:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .SK_DF{display:flex;gap:10px;justify-content:center;margin-top:14px}
 .SK_PD{width:min(320px,calc(100vw - 32px));text-align:center}
 .sc-crop-wrap{max-width:100%;max-height:55vh;overflow:hidden}
@@ -347,8 +348,19 @@
     const it=PK_F(b._u);
     if(it){PK_RM(it);b.setAttribute('aria-pressed','false');return;}
     if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');return;}
-    PK_AD({u:b._u,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');
+    PK_AD({u:b._u,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');VL_1(b);
   };
+
+  function VL_1(b){
+    const n=$('SK_PN'),r=n.getBoundingClientRect(),h=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    const t=h&&n.parentNode.contains(h)?n:$('SK_TV').lastElementChild||$('SK_TV'),z=t.getBoundingClientRect(),m=b.querySelector('img');
+    const bp=()=>t.animate([{transform:'none'},{transform:'scale(1.4)'},{transform:'none'}],{duration:350,easing:'ease-out'});
+    if(!m||document.body.classList.contains('low-perf')||matchMedia('(prefers-reduced-motion: reduce)').matches)return bp();
+    const s=m.getBoundingClientRect(),c=m.cloneNode();c.className='SK_VL';c.alt='';
+    Object.assign(c.style,{left:s.left+'px',top:s.top+'px',width:s.width+'px',height:s.height+'px'});document.body.append(c);
+    const dx=z.left+z.width/2-s.left-s.width/2,dy=z.top+z.height/2-s.top-s.height/2,k=Math.max(.15,Math.min(1,z.width/s.width));
+    c.animate([{transform:'none'},{transform:`translate(${dx/2}px,${dy/2-80}px) scale(.8) rotate(-10deg)`,offset:.45},{transform:`translate(${dx}px,${dy}px) scale(${k}) rotate(8deg)`,opacity:.5}],{duration:650,easing:'ease-in-out'}).finished.then(()=>{c.remove();bp();},()=>c.remove());
+  }
 
   function PL_R(){
     const L=$('SK_PL');L.textContent='';
@@ -410,12 +422,17 @@
       if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');break;}
       const v=f.type.startsWith('video/');
       if(!v&&!f.type.startsWith('image/')){ER_D1('Archivo no compatible');continue;}
-      if(f.size>MAX_SZ){ER_D1('Maximo 20MB por archivo');continue;}
+      if(!v&&f.size>MAX_SZ){ER_D1('Maximo 20MB por imagen');continue;}
       try{PK_AD(await MK_F(f));}catch{ER_D1(v?'Video no compatible':'Imagen no compatible');}
     }
     TB_1('p');
   }
   $('SK_AD').onclick=()=>inEl.click();
+  const DP_1=l=>{const fs=[...(l||[])].filter(f=>/^(image|video)\//.test(f.type));if(fs.length&&!GONE&&!DG.open&&!PD.open)addFiles(fs);return fs.length;};
+  const DP_P=e=>{if(DP_1(e.clipboardData?.files))e.preventDefault();};
+  const DP_O=e=>{if([...(e.dataTransfer?.types||[])].includes('Files'))e.preventDefault();};
+  const DP_D=e=>{if(!e.dataTransfer?.files.length)return;e.preventDefault();DP_1(e.dataTransfer.files);};
+  document.addEventListener('paste',DP_P);document.addEventListener('dragover',DP_O);document.addEventListener('drop',DP_D);
   inEl.onchange=e=>{const fs=[...e.target.files];inEl.value='';if(fs.length)addFiles(fs);};
 
   function loadCropperJS(){
@@ -526,7 +543,7 @@
   $('SK_M0').onclick=()=>{EA.f=null;MU_L();};
   $('SK_MV').onclick=()=>{if(!ED)return;EA.f=ED.it.file;EA.s=0;MU_L();};
   $('SK_MB').onclick=()=>$('SK_MF').click();
-  $('SK_MF').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!ED)return;if(f.size>50*1024*1024){ER_D1('Maximo 50MB');return;}EA.f=f;EA.s=0;MU_L();};
+  $('SK_MF').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!ED)return;EA.f=f;EA.s=0;MU_L();};
 
   function FF_L1(){
     if(GONE)return Promise.reject(new Error('salida'));
@@ -887,6 +904,7 @@
   if(cont)cont.addEventListener('contentUnload',()=>{
     GONE=true;
     document.removeEventListener('contentState',CS_1);HM.clear();
+    document.removeEventListener('paste',DP_P);document.removeEventListener('dragover',DP_O);document.removeEventListener('drop',DP_D);
     ED_X();
     PD_C();
     P.forEach(FR_1);P=[];
