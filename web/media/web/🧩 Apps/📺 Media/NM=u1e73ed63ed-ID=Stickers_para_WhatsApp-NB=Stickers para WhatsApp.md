@@ -608,6 +608,7 @@
     try{
       dec=new ImageDecoder({data:await b.arrayBuffer(),type:ty==='gif'?'image/gif':'image/webp'});
       await dec.tracks.ready;
+      await dec.completed;
     }catch{return null;}
     const tr=dec.tracks.selectedTrack;
     if(!tr||!tr.frameCount||tr.frameCount<2){try{dec.close();}catch{}return null;}
@@ -776,7 +777,7 @@
     let base=null,ovs=[];
     try{
       if(it.isVid)base=await VD_F2(it);
-      else if(it.isAnim)base=await AN_D1(it.file,it.isAnim);
+      else if(it.isAnim){base=await AN_D1(it.file,it.isAnim);if(!base){it.fx=1;lg?.('d');}}
       ovs=await OV_P1(it.ov);
       if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base)base={img:await IMG_L1(it.file)};
@@ -885,7 +886,7 @@
     SN_P();
     const items=[...P];
     PD_O('Procesando...');
-    let nA=0,nF=0;
+    let nA=0,nF=0,nX=0;
     if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app Che😻Agana para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
     if(!await DS_1()){PD_C();SA_1();return;}
     try{
@@ -894,8 +895,10 @@
       for(let i=0;i<items.length;i++){
         const it=items[i],n=N3(i+1),b0=Math.round(i/items.length*80),b1=Math.round((i+1)/items.length*80);
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
-        if(!it.file&&!ID_OK){urls.push([i+1,it.u]);continue;}
+        if(!ID_OK&&it.u&&(!it.file||it.isAnim&&!it.crop&&!it.ov.length)){urls.push([i+1,it.u]);if(ab[i])form.append('files',ab[i],n+'.ogg');continue;}
+        delete it.fx;
         try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb),PB,s=>dg.push(n+s));form.append('files',it.o,n+'.webp');}catch(e){nF++;dg.push(n+'x:'+DG_1(e));continue;}
+        if(it.fx)nX++;
         if(ab[i])form.append('files',ab[i],n+'.ogg');
       }
       if(GONE)return;
@@ -914,6 +917,7 @@
       OK_1(jr);
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin sonido');
+      if(nX)ER_D1(nX+' salieron fijos');
     }catch(e){if(e.message==='sinwa')SA_1();else ER_D1(ER_1(e)||'Error Stickers '+e.message);}
     finally{PD_C();}
   };
