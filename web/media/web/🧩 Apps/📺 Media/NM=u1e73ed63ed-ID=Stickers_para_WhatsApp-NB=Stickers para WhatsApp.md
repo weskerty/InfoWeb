@@ -732,12 +732,20 @@
     return VD_F1(it.file,VID_FPS);
   }
 
+  async function PW_1(b,pf){
+    const ff=await FF_L1();let o=null;
+    try{
+      await ff.writeFile('p.png',new Uint8Array(await b.arrayBuffer()));
+      for(const q of [90,75,60,45,30]){await ff.exec(['-i','p.png','-c:v','libwebp','-quality',String(q),'-y','p.webp']);o=await ff.readFile('p.webp');if(o.byteLength<=pf.st)break;}
+    }finally{for(const n of ['p.png','p.webp'])await ff.deleteFile(n).catch(()=>{});}
+    return o.byteLength<=pf.st||pf.s?new Blob([o],{type:'image/webp'}):null;
+  }
   async function ST_E1(it,ovs,pf){
     const img=it.isVid?await IMG_U1(it.pv):await IMG_L1(it.file);
     const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
     const x=c.getContext('2d');DR_B1(x,img,it.crop);DR_O1(x,ovs,0);
     let b=null;
-    for(const q of [.9,.75,.6,.45,.3]){b=await new Promise(r=>c.toBlob(r,'image/webp',q));if(!b)throw new Error('webp');if(b.size<=pf.st)return b;}
+    for(const q of [.9,.75,.6,.45,.3]){b=await new Promise(r=>c.toBlob(r,'image/webp',q));if(!b)throw new Error('webp');if(b.type!=='image/webp')return WS_OK?await PW_1(b,pf):pf.s?b:null;if(b.size<=pf.st)return b;}
     return pf.s?b:null;
   }
 
@@ -777,6 +785,7 @@
   }
 
   let ZP_T=null;
+  const DS_1=()=>fetch('/api/stickers?d=1',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>j.d!==false).catch(()=>true);
   const MP_L=()=>window.MUP1?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/MediaUP.js';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('MediaUP'));};document.head.appendChild(s);});
   async function WI_1(b){
     const d=new Uint8Array(await b.slice(0,30).arrayBuffer()),s=String.fromCharCode(...d.slice(12,16));
@@ -856,7 +865,7 @@
     const items=[...P];
     PD_O('Procesando...');
     let nA=0,nF=0;
-    if(MA){try{await AP_1(items,0);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
+    if(MA||!await DS_1()){try{await AP_1(items,MA?0:1);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
     try{
       const form=new FormData(),urls=[];
       for(let i=0;i<items.length;i++){
@@ -893,6 +902,7 @@
     const L=$('SK_TL'),W=$('SK_TW'),B=$('SK_TBR');
     W.hidden=false;B.style.width='0%';L.textContent='Pidiendo el pack...';
     try{
+      if(!await DS_1())throw new Error('sinwa');
       const r=await fetch('/api/stickers',{method:'POST',headers:{'Content-Type':'application/json','x-ts':await TK_1()},body:JSON.stringify({pack})});
       if(!r.ok)throw new Error(r.status);
       let jr=await r.json();const {sid,w}=jr;
