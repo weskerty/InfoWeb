@@ -147,7 +147,7 @@
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
   let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
-  const MA=window.__AN1==='app';
+  const MA=window.__AN1==='app'||window.__AN1==='webview';
   let R=[],RF=[],PS=[],FT='',pg=0,P=[];
   let ovNS=64,ovSel=-1;
   const HM=new Map();
@@ -830,16 +830,30 @@
     if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
     const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
     if(z.length<3){if(sa)ER_D1(ER_1(new Error('sinwa')));ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
+    const zb=await ZP_1(z);
+    if(window.__CS){WV_1(zb,items.length-z.length);return;}
     setProg(90,'Subiendo...');
     await MP_L();
-    const u=await window.MUP1(await ZP_1(z),'stickers.zip');
+    const u=await window.MUP1(zb,'stickers.zip');
     if(GONE)return;
     AP_2(u,items.length-z.length,sa,items.filter(it=>it.fx).length);
+  }
+  async function WV_1(zb,om){
+    const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(zb);});
+    if(GONE)return;
+    const t=$('SK_AT');
+    $('SK_AC').hidden=true;APD.querySelector('.SK_DF').hidden=true;$('SK_AM').hidden=true;
+    $('SK_AX').hidden=!om;$('SK_AX').textContent=om+' no entran en el pack';
+    t.textContent='📲 Agregando a WhatsApp...';
+    if(!APD.open)APD.showModal();
+    window.__CS.onmessage=e=>{const d=String(e.data||'');t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error CheStickers '+d.slice(4):t.textContent;};
+    window.__CS.postMessage('Z:'+b64);
   }
   function AP_2(u,om,sa,fx){
     SN_1();
     $('SK_AT').textContent=sa?'😿 Servidor saturado. Podes agregarlo a WhatsApp con la app CheStickers (sin sonido): instalala y pega este codigo.':'✅ Pack listo para CheStickers (sin sonido). Si no se abre solo, pega este codigo en la app.';
     const c=$('SK_AC'),cp=()=>navigator.clipboard?.writeText(u)||Promise.reject();
+    c.hidden=false;APD.querySelector('.SK_DF').hidden=false;
     c.textContent=u;
     c.onclick=()=>cp().then(()=>{c.textContent='Copiado!';setTimeout(()=>{if(c.textContent==='Copiado!')c.textContent=u;},2000);}).catch(()=>{});
     $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack de la app':'',fx?'Tu navegador no convierte animados: salieron fijos. Para animados abri en Chrome':''].filter(Boolean).join('\n');
