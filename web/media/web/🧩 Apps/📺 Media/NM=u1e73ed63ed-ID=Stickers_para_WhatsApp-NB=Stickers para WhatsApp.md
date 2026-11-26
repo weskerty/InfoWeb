@@ -94,7 +94,7 @@
 <div id="sk-grid" class="sk-grid"></div>
 <div id="sk-pg" class="PG1"></div>
 <p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/KLIPY.svg" width="120" height="20" alt="Powered by KLIPY"></a></p>
-<p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
+<p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
 <section id="SK_P" hidden>
 <p class="SK_TX">Subi fotos, GIF o videos (se usan los primeros 10s) o elegi stickers en Buscar.</p>
@@ -113,7 +113,7 @@
 </div>
 <dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
 <dialog id="SK_GD" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p>✅ Listo</p><a id="SK_GW" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Entrar al Grupo</a><p>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
-<dialog id="SK_AP" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_AT"></p><p id="SK_AX" class="SK_TX" hidden></p><p id="SK_AM" hidden>Primero instala la app CheStickers</p><div class="SK_DF"><a id="SK_AL" class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a><button type="button" id="SK_AO" class="RD_B1 GL_C">📲 Abrir la app</button></div></dialog>
+<dialog id="SK_AP" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_AT"></p><p id="SK_AX" class="SK_TX" hidden></p><p id="SK_AM" hidden>Primero instala la app Che😻Agana</p><div class="SK_DF"><a id="SK_AL" class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a><button type="button" id="SK_AO" class="RD_B1 GL_C">📲 Abrir la app</button></div></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -842,7 +842,7 @@
     if(GONE)return;
     if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
     const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
-    if(z.length<3){ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
+    if(z.length<3){ER_D1('La app Che😻Agana necesita al menos 3 stickers compatibles');return;}
     WV_1(await ZP_1(z),items.length-z.length,items.filter(it=>it.fx).length);
   }
   async function WV_1(zb,om,fx){
@@ -853,12 +853,12 @@
     $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack':'',fx?'Tu navegador no convierte animados: salieron fijos':''].filter(Boolean).join('\n');
     t.textContent='📲 Agregando a WhatsApp...';
     if(!APD.open)APD.showModal();
-    window.__CS.onmessage=e=>{const d=String(e.data||'');if(d==='R:ok')setTimeout(()=>{if(APD.open&&t.textContent.startsWith('✅'))APD.close();},2000);t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error CheStickers '+d.slice(4):t.textContent;};
+    window.__CS.onmessage=e=>{const d=String(e.data||'');if(d==='R:ok')setTimeout(()=>{if(APD.open&&t.textContent.startsWith('✅'))APD.close();},2000);t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error Che😻Agana '+d.slice(4):t.textContent;};
     window.__CS.postMessage('Z:'+b64);
   }
   function SA_1(m){
     if(GONE)return;
-    $('SK_AT').textContent=m||'😿 Servidor saturado. Usa la app CheStickers para cargar los stickers a WhatsApp (sin sonido).';
+    $('SK_AT').textContent=m||'😿 Servidor saturado. Usa la app Che😻Agana para cargar los stickers a WhatsApp (sin sonido).';
     $('SK_AX').hidden=true;$('SK_AM').hidden=true;APD.querySelector('.SK_DF').hidden=false;$('SK_AL').classList.remove('SK_LT');
     $('SK_AO').onclick=AI_1;
     if(!APD.open)APD.showModal();
@@ -866,7 +866,7 @@
   function AI_1(){
     let f=0;const h=()=>{f=1;};
     window.addEventListener('blur',h,{once:true});document.addEventListener('visibilitychange',h,{once:true});
-    location.href='chestickers://open';
+    location.href='cheagana://open';
     setTimeout(()=>{window.removeEventListener('blur',h);document.removeEventListener('visibilitychange',h);if(f||GONE)return;$('SK_AM').hidden=false;const a=$('SK_AL');a.classList.remove('SK_LT');void a.offsetWidth;a.classList.add('SK_LT');},2000);
   }
   function PD_O(l){setProg(0,l);if(!PD.open)PD.showModal();document.body.style.overflow='hidden';}
@@ -879,7 +879,7 @@
     const items=[...P];
     PD_O('Procesando...');
     let nA=0,nF=0;
-    if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app CheStickers para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
+    if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app Che😻Agana para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
     if(!await DS_1()){PD_C();SA_1();return;}
     try{
       const form=new FormData(),urls=[];
