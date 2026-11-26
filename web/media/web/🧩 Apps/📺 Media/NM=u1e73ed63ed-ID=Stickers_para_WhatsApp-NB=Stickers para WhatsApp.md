@@ -672,6 +672,7 @@
         names.push(nm);
         if(onp)onp((i+1)/n);
       }
+      AN_F1(base);
       let out=null;
       const L=[[fps,50],[fps,30],[Math.min(fps,12),22],[Math.min(fps,10),10],[Math.min(fps,10),1]].filter((x,j,a)=>!j||x[0]!==a[j-1][0]||x[1]!==a[j-1][1]);
       const st=[...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
@@ -768,7 +769,7 @@
     it.fx=1;
     return await ST_E1(it,ovs,pf);
   }
-  async function EX_1(it,onp,pf=PB){
+  async function EX_1(it,onp,pf=PB,lg){
     await KF_1(it);
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length)return it.file;
     if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{ov.forEach(o=>AN_F1(o.an));}}
@@ -780,7 +781,7 @@
       if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base)base={img:await IMG_L1(it.file)};
       const fps=base.fps||ovs.find(o=>o.an)?.an.fps||VID_FPS;
-      try{return await WB_E1(it,base,ovs,fps,onp,pf);}catch(e){if(GONE||!(it.isAnim||it.isVid))throw e;return await FX_1(it,ovs,pf);}
+      try{return await WB_E1(it,base,ovs,fps,onp,pf);}catch(e){if(GONE||!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e));return await FX_1(it,ovs,pf);}
     }finally{
       AN_F1(base);
       ovs.forEach(o=>AN_F1(o.an));
@@ -789,14 +790,20 @@
 
   function AU_1(a){
     return FM_1(a.f,async(ff,p)=>{
+      let lm='';const lh=({message})=>{if(message!=='Aborted()')lm=message;};ff.on('log',lh);
       try{
         const r=await ff.exec(['-ss',String(a.s),'-t',String(a.d),'-i',p,'-vn','-map_metadata','-1','-ac','1','-ar','48000','-c:a','libopus','-b:a','48k','-f','ogg','-y','a.ogg']);
         const o=r===0?await ff.readFile('a.ogg'):null;
-        if(!o?.byteLength||o.byteLength>AU_MX)throw new Error('audio');
+        if(!o?.byteLength||o.byteLength>AU_MX)throw new Error('audio '+r+' '+lm);
         return new Blob([o],{type:'audio/ogg'});
-      }finally{await ff.deleteFile('a.ogg').catch(()=>{});}
+      }finally{ff.off('log',lh);await ff.deleteFile('a.ogg').catch(()=>{});}
     });
   }
+  async function AU_2(a,lg){
+    for(let k=1;k<3;k++){try{return await AU_1(a);}catch(e){if(GONE||/any stream/.test(e?.message))return null;lg('a'+k+':'+DG_1(e));FF_R1();}}
+    return null;
+  }
+  const DG_1=e=>String(e?.message||e).replace(/\s+/g,' ').slice(0,90)+(document.hidden?' [oculta]':'');
 
   let ZP_T=null;
   const DS_1=()=>fetch('/api/stickers?d=1',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>j.d!==false).catch(()=>true);
@@ -882,17 +889,19 @@
     if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app Che😻Agana para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
     if(!await DS_1()){PD_C();SA_1();return;}
     try{
-      const form=new FormData(),urls=[];
+      const form=new FormData(),urls=[],dg=[],ab=[];
+      if(MU)for(let i=0;i<items.length;i++){const it=items[i];if(it.au&&(it.file||ID_OK)){ab[i]=await AU_2(it.au,s=>dg.push(N3(i+1)+s));if(!ab[i]&&!it.au.v)nA++;}}
       for(let i=0;i<items.length;i++){
         const it=items[i],n=N3(i+1),b0=Math.round(i/items.length*80),b1=Math.round((i+1)/items.length*80);
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
         if(!it.file&&!ID_OK){urls.push([i+1,it.u]);continue;}
-        try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
-        if(MU&&it.au){try{form.append('files',await AU_1(it.au),n+'.ogg');}catch{if(!it.au.v)nA++;}}
+        try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb),PB,s=>dg.push(n+s));form.append('files',it.o,n+'.webp');}catch(e){nF++;dg.push(n+'x:'+DG_1(e));continue;}
+        if(ab[i])form.append('files',ab[i],n+'.ogg');
       }
       if(GONE)return;
       if(nF===items.length)throw new Error('conversion');
       if(urls.length)form.append('urls',JSON.stringify(urls));
+      if(dg.length)form.append('dg',(navigator.deviceMemory||'?')+'GB '+(navigator.hardwareConcurrency||'?')+'n '+dg.join(' | '));
       setProg(85,'Subiendo...');
       const res=await fetch('/api/stickers',{method:'POST',headers:{'x-ts':await TK_1()},body:form});
       if(!res.ok)throw new Error(res.status);
