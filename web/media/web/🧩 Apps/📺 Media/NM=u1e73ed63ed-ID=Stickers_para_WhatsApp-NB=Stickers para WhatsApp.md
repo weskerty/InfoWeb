@@ -663,11 +663,11 @@
         ctx.clearRect(0,0,DIM,DIM);
         DR_B1(ctx,base.fr?base.fr[(i*k)%nb]:base.img,it.crop);
         DR_O1(ctx,ovs,i*k);
-        if(op){const d=ctx.getImageData(0,0,DIM,DIM).data;for(let k=3;k<d.length;k+=4)if(d[k]<255){op=false;break;}}
+        const d=ctx.getImageData(0,0,DIM,DIM).data;
+        if(op)for(let q=3;q<d.length;q+=4)if(d[q]<255){op=false;break;}
         try{lctx.clearRect(0,0,DIM,DIM);lctx.drawImage(c,0,0,DIM,DIM);}catch{}
-        const bl=await new Promise(r=>c.toBlob(r,'image/png'));
-        const nm='i'+String(i).padStart(4,'0')+'.png';
-        await ff.writeFile(nm,new Uint8Array(await bl.arrayBuffer()));
+        const nm='i'+String(i).padStart(4,'0')+'.raw';
+        await ff.writeFile(nm,new Uint8Array(d.buffer));
         names.push(nm);
         if(onp)onp((i+1)/n);
       }
@@ -677,7 +677,7 @@
       for(let j=0;j<st.length;j++){
         const [f,q,z]=st[j];
         if(onp)onp(1,'comprimiendo '+(j+1));
-        await ff.exec(['-framerate',String(fps),'-i','i%04d.png','-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
+        await ff.exec(['-f','image2','-framerate',String(fps),'-pixel_format','rgba','-video_size',DIM+'x'+DIM,'-c:v','rawvideo','-i','i%04d.raw','-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
         out=await ff.readFile('o.webp');
         if(out.byteLength<=pf.t)break;
         if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
