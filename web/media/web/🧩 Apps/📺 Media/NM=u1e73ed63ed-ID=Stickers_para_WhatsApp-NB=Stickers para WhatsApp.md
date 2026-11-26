@@ -46,6 +46,7 @@
 .SK_DF{display:flex;gap:10px;justify-content:center;margin-top:14px}
 #SK_AP .SK_DF{flex-wrap:wrap}
 #SK_AC{word-break:break-all;margin:6px 0}
+#SK_AX{white-space:pre-line}
 @keyframes SK_LT{50%{transform:scale(1.15)}}
 .SK_LT{animation:SK_LT .5s ease-in-out 6}
 .SK_PD{width:min(320px,calc(100vw - 32px));text-align:center}
@@ -140,6 +141,7 @@
   const PB={t:TARGET,st:TARGET,s:1},PA={t:LA,st:LS,s:0};
   const MAXFR=150,VID_MAX=10,VID_FPS=15,THM=512;
   const ID_OK=typeof ImageDecoder!=='undefined';
+  const WS_OK=(()=>{try{return new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0]))instanceof WebAssembly.Module;}catch{return false;}})();
   const SD_RX=/^[a-f0-9]{12}$/;
   const $=id=>document.getElementById(id);
   const N3=n=>String(n).padStart(3,'0');
@@ -731,7 +733,7 @@
   }
 
   async function ST_E1(it,ovs,pf){
-    const img=await IMG_L1(it.file);
+    const img=it.isVid?await IMG_U1(it.pv):await IMG_L1(it.file);
     const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
     const x=c.getContext('2d');DR_B1(x,img,it.crop);DR_O1(x,ovs,0);
     let b=null;
@@ -739,9 +741,15 @@
     return pf.s?b:null;
   }
 
+  async function FX_1(it,ovs,pf){
+    if(pf.s&&it.isWebp&&it.file.size<=pf.t&&!it.crop&&!it.ov.length)return it.file;
+    it.fx=1;
+    return await ST_E1(it,ovs,pf);
+  }
   async function EX_1(it,onp,pf=PB){
     await KF_1(it);
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length)return it.file;
+    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{ov.forEach(o=>AN_F1(o.an));}}
     let base=null,ovs=[];
     try{
       if(it.isVid)base=await VD_F2(it);
@@ -750,7 +758,7 @@
       if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base)base={img:await IMG_L1(it.file)};
       const fps=base.fps||ovs.find(o=>o.an)?.an.fps||VID_FPS;
-      return await WB_E1(it,base,ovs,fps,onp,pf);
+      try{return await WB_E1(it,base,ovs,fps,onp,pf);}catch(e){if(GONE||!(it.isAnim||it.isVid))throw e;return await FX_1(it,ovs,pf);}
     }finally{
       AN_F1(base);
       ovs.forEach(o=>AN_F1(o.an));
@@ -802,6 +810,7 @@
   }
   async function AP_1(items,sa){
     const o=[];
+    items.forEach(it=>{delete it.fx;});
     for(let i=0;i<items.length;i++){
       const it=items[i];setProg(Math.round(i/items.length*80),'Preparando para la app '+(i+1)+'/'+items.length);
       let b=it.o,k=b?await WI_1(b):null;
@@ -809,22 +818,22 @@
       if(b&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS))o.push({b,a:k.a});
     }
     if(GONE)return;
-    if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b);x.a=true;}
+    if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
     const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
     if(z.length<3){if(sa)ER_D1(ER_1(new Error('sinwa')));ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
     setProg(90,'Subiendo...');
     await MP_L();
     const u=await window.MUP1(await ZP_1(z),'stickers.zip');
     if(GONE)return;
-    AP_2(u,items.length-z.length,sa);
+    AP_2(u,items.length-z.length,sa,items.filter(it=>it.fx).length);
   }
-  function AP_2(u,om,sa){
+  function AP_2(u,om,sa,fx){
     SN_1();
     $('SK_AT').textContent=sa?'😿 Servidor saturado. Podes agregarlo a WhatsApp con la app CheStickers (sin sonido): instalala y pega este codigo.':'✅ Pack listo para CheStickers (sin sonido). Si no se abre solo, pega este codigo en la app.';
     const c=$('SK_AC'),cp=()=>navigator.clipboard?.writeText(u)||Promise.reject();
     c.textContent=u;
     c.onclick=()=>cp().then(()=>{c.textContent='Copiado!';setTimeout(()=>{if(c.textContent==='Copiado!')c.textContent=u;},2000);}).catch(()=>{});
-    $('SK_AX').hidden=!om;$('SK_AX').textContent=om+' no entran en el pack de la app';
+    $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack de la app':'',fx?'Tu navegador no convierte animados: salieron fijos. Para animados abri en Chrome':''].filter(Boolean).join('\n');
     $('SK_AM').hidden=true;$('SK_AL').classList.remove('SK_LT');
     $('SK_AO').onclick=()=>AI_1(u);
     if(!APD.open)APD.showModal();
