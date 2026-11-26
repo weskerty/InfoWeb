@@ -22,6 +22,10 @@
 .sc-fr{position:relative;display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--RD_M);border:1px solid var(--RD_L)}
 .SK_FI{position:relative;flex:none;width:96px;height:96px;border-radius:10px;overflow:hidden}
 .SK_FI>img{width:100%;height:100%;object-fit:fill;display:block}
+.SK_CW{position:relative;display:block;overflow:hidden;flex:none}
+.SK_CW>img{position:absolute;max-width:none;object-fit:fill}
+.SK_FI>.SK_CW{width:100%;height:100%}
+.SK_TI .SK_CW{width:40px;height:40px;border-radius:8px}
 .sc-rm{position:absolute;top:4px;right:4px;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:rgba(0,0,0,.65);color:var(--RD_F);cursor:pointer;line-height:1}
 .SK_BG{position:absolute;top:4px;left:6px;font-size:1.1em}
 .SK_TO{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;margin-right:30px}
@@ -246,13 +250,18 @@
   function PK_RM(it){const i=P.indexOf(it);if(i<0)return;FR_1(it);P.splice(i,1);UP_1();}
   function UP_1(){$('SK_PN').textContent=P.length;TR_R();if(!$('SK_P').hidden)PL_R();gEl.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));}
 
+  function TH_1(it){
+    const m=document.createElement('img'),c=it.crop;m.alt='';
+    if(c&&it.isAnim&&!it.ov.length&&!it.pc){m.src=it.pv;Object.assign(m.style,{width:c.sw/c.w*100+'%',height:c.sh/c.h*100+'%',left:-c.x/c.w*100+'%',top:-c.y/c.h*100+'%'});const w=document.createElement('span');w.className='SK_CW';w.append(m);return w;}
+    m.src=it.pc||it.pv;return m;
+  }
   function TR_R(){
     $('SK_TP').hidden=!P.length;
     TR.hidden=!P.length&&$('SK_WT').hidden;
     const v=$('SK_TV');v.textContent='';
     const b=document.createElement('b');b.textContent=P.length+'/'+SK_MX;v.append(b);
     const e=$('SK_P').hidden,n=innerWidth<480;
-    (e&&n?[]:P.slice(n?-2:-4)).forEach(it=>{const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';v.append(m);});
+    (e&&n?[]:P.slice(n?-2:-4)).forEach(it=>v.append(TH_1(it)));
     if(e){const s=document.createElement('span');s.className='SK_TE';s.textContent='✏️ Editar';v.append(s);}
     v.setAttribute('aria-label',(e?'Editar tu pack: ':'Ver tu pack: ')+P.length+' stickers');
   }
@@ -383,7 +392,7 @@
     P.forEach(it=>{
       const d=document.createElement('div');d.className='sc-fr';
       const f=document.createElement('div');f.className='SK_FI';d.append(f);
-      const m=document.createElement('img');m.src=it.pc||it.pv;m.alt='';f.append(m);
+      f.append(TH_1(it));
       if(it.isVid){const s=document.createElement('span');s.className='SK_BG';s.textContent='🎬';f.append(s);}
       const x=BT_1('✕','Quitar','sc-rm');x.onclick=()=>PK_RM(it);d.append(x);
       const t=document.createElement('div');t.className='SK_TO';
@@ -524,6 +533,7 @@
   async function PV_1(it){
     if(it.pc){URL.revokeObjectURL(it.pc);it.pc=null;}
     if(!it.crop&&!it.ov.length)return;
+    if(it.isAnim&&!it.ov.length)return;
     try{
       const img=await IMG_U1(it.pv);
       const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
@@ -644,14 +654,15 @@
     ckEl.style.display='none';lv.style.display='block';
     const nb=base.fr?base.fr.length:1;
     const no=ovs.reduce((m,o)=>Math.max(m,o.an?o.an.fr.length:1),1);
-    const n=Math.min(MAXFR,Math.max(nb,no));
+    const k=fps>15?Math.ceil(fps/15):1;fps=fps/k;
+    const n=Math.min(MAXFR,Math.ceil(Math.max(nb,no)/k));
     const names=[];
     let op=true;
     try{
       for(let i=0;i<n;i++){
         ctx.clearRect(0,0,DIM,DIM);
-        DR_B1(ctx,base.fr?base.fr[i%nb]:base.img,it.crop);
-        DR_O1(ctx,ovs,i);
+        DR_B1(ctx,base.fr?base.fr[(i*k)%nb]:base.img,it.crop);
+        DR_O1(ctx,ovs,i*k);
         if(op){const d=ctx.getImageData(0,0,DIM,DIM).data;for(let k=3;k<d.length;k+=4)if(d[k]<255){op=false;break;}}
         try{lctx.clearRect(0,0,DIM,DIM);lctx.drawImage(c,0,0,DIM,DIM);}catch{}
         const bl=await new Promise(r=>c.toBlob(r,'image/png'));
@@ -661,12 +672,15 @@
         if(onp)onp((i+1)/n);
       }
       let out=null;
-      const L=[[fps,50],[fps,36],[12,36],[12,22],[10,22],[10,8],[10,1]].filter(x=>x[0]<=fps);
+      const L=[[fps,50],[fps,30],[Math.min(fps,12),22],[Math.min(fps,10),10],[Math.min(fps,10),1]].filter((x,j,a)=>!j||x[0]!==a[j-1][0]||x[1]!==a[j-1][1]);
       const st=[...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
-      for(const [f,q,z] of st){
+      for(let j=0;j<st.length;j++){
+        const [f,q,z]=st[j];
+        if(onp)onp(1,'comprimiendo '+(j+1));
         await ff.exec(['-framerate',String(fps),'-i','i%04d.png','-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
         out=await ff.readFile('o.webp');
         if(out.byteLength<=pf.t)break;
+        if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
       }
       await ff.deleteFile('o.webp').catch(()=>{});
       return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
@@ -821,9 +835,9 @@
     const o=[];
     items.forEach(it=>{delete it.fx;});
     for(let i=0;i<items.length;i++){
-      const it=items[i];setProg(Math.round(i/items.length*80),'Preparando para la app '+(i+1)+'/'+items.length);
+      const it=items[i],lb='Preparando para la app '+(i+1)+'/'+items.length;setProg(Math.round(i/items.length*80),lb);
       let b=it.o,k=b?await WI_1(b):null;
-      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,null,PA);}catch{b=null;}k=b?await WI_1(b):null;}
+      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,(p,t)=>setProg(Math.round((i+p)/items.length*80),t?lb+' · '+t:lb),PA);}catch{b=null;}k=b?await WI_1(b):null;}
       if(b&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS))o.push({b,a:k.a});
     }
     if(GONE)return;
@@ -846,7 +860,7 @@
     $('SK_AX').hidden=!om;$('SK_AX').textContent=om+' no entran en el pack';
     t.textContent='📲 Agregando a WhatsApp...';
     if(!APD.open)APD.showModal();
-    window.__CS.onmessage=e=>{const d=String(e.data||'');t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error CheStickers '+d.slice(4):t.textContent;};
+    window.__CS.onmessage=e=>{const d=String(e.data||'');if(d==='R:ok')setTimeout(()=>{if(APD.open&&t.textContent.startsWith('✅'))APD.close();},2000);t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error CheStickers '+d.slice(4):t.textContent;};
     window.__CS.postMessage('Z:'+b64);
   }
   function AP_2(u,om,sa,fx){
@@ -886,7 +900,7 @@
         const it=items[i],n=N3(i+1),b0=Math.round(i/items.length*80),b1=Math.round((i+1)/items.length*80);
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
         if(!it.file&&!ID_OK){urls.push([i+1,it.u]);continue;}
-        try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
+        try{it.o=await EX_1(it,(p,t)=>setProg(Math.round(b0+(b1-b0)*p),t?lb+' · '+t:lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
         if(MU&&it.au){try{form.append('files',await AU_1(it.au),n+'.ogg');}catch{if(!it.au.v)nA++;}}
       }
       if(GONE)return;
@@ -1048,6 +1062,7 @@
 
   TL_1().then(()=>window.TS0()).catch(()=>{});
 
+  if(MA){document.querySelector('#SK_TB button[data-t=t]').hidden=true;if(WS_OK)FF_L1().catch(()=>{});}
   doFetch('');
   (async()=>{
     try{
