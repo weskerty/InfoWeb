@@ -49,7 +49,6 @@
 .SK_VL{position:fixed;z-index:10000;margin:0;border-radius:14px;object-fit:fill;pointer-events:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .SK_DF{display:flex;gap:10px;justify-content:center;margin-top:14px}
 #SK_AP .SK_DF{flex-wrap:wrap}
-#SK_AC{word-break:break-all;margin:6px 0}
 #SK_AX{white-space:pre-line}
 @keyframes SK_LT{50%{transform:scale(1.15)}}
 .SK_LT{animation:SK_LT .5s ease-in-out 6}
@@ -113,7 +112,7 @@
 </div>
 <dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
 <dialog id="SK_GD" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p>✅ Listo</p><a id="SK_GW" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Entrar al Grupo</a><p>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
-<dialog id="SK_AP" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_AT"></p><button type="button" id="SK_AC" class="RD_B1"></button><p id="SK_AX" class="SK_TX" hidden></p><p id="SK_AM" hidden>Primero instala la app CheStickers</p><div class="SK_DF"><a id="SK_AL" class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a><button type="button" id="SK_AO" class="RD_B1 GL_C">📲 Abrir App para Instalar Stickers</button></div></dialog>
+<dialog id="SK_AP" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_AT"></p><p id="SK_AX" class="SK_TX" hidden></p><p id="SK_AM" hidden>Primero instala la app CheStickers</p><div class="SK_DF"><a id="SK_AL" class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a><button type="button" id="SK_AO" class="RD_B1 GL_C">📲 Abrir la app</button></div></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -151,14 +150,15 @@
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
   let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
-  const MA=window.__AN1==='app'||window.__AN1==='webview';
+  const MA=window.__AN1==='webview';
   let R=[],RF=[],PS=[],FT='',pg=0,P=[];
-  let ovNS=64,ovSel=-1;
+  let ovNS=DIM/4,ovSel=-1;
   const HM=new Map();
 
   const gEl=$('sk-grid'),pgEl=$('sk-pg'),ERD=$('SK_ER'),GD=$('SK_GD'),qEl=$('sk-q'),inEl=$('sc-in');
   const DG=$('SK_DG'),PD=$('SK_PD'),pBar=$('sc-pbar'),pLbl=$('sc-prog-lbl'),cropImg=$('sc-crop-img');
   const TR=$('SK_TR'),AU=$('SK_AU');
+  for(const c of [$('sc-ov-c'),$('sc-lv')])c.width=c.height=DIM;
   const SN_U='web/recursos/notificaciones/cat.mp3';
   let SN_A=null;
   const ED_S={c:$('SK_EC'),o:$('SK_EO'),m:$('SK_EM')};
@@ -800,7 +800,6 @@
 
   let ZP_T=null;
   const DS_1=()=>fetch('/api/stickers?d=1',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>j.d!==false).catch(()=>true);
-  const MP_L=()=>window.MUP1?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/MediaUP.js';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('MediaUP'));};document.head.appendChild(s);});
   async function WI_1(b){
     const d=new Uint8Array(await b.slice(0,30).arrayBuffer()),s=String.fromCharCode(...d.slice(12,16));
     if(s==='VP8X')return{w:1+(d[24]|d[25]<<8|d[26]<<16),h:1+(d[27]|d[28]<<8|d[29]<<16),a:!!(d[20]&2)};
@@ -831,7 +830,7 @@
     const z=new DataView(new ArrayBuffer(22));z.setUint32(0,0x06054b50,true);z.setUint16(8,fs.length,true);z.setUint16(10,fs.length,true);z.setUint32(12,c.reduce((a,x)=>a+x.byteLength,0),true);z.setUint32(16,o,true);
     return new Blob([...p,...c,z],{type:'application/zip'});
   }
-  async function AP_1(items,sa){
+  async function AP_1(items){
     const o=[];
     items.forEach(it=>{delete it.fx;});
     for(let i=0;i<items.length;i++){
@@ -843,44 +842,31 @@
     if(GONE)return;
     if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
     const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
-    if(z.length<3){if(sa)ER_D1(ER_1(new Error('sinwa')));ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
-    const zb=await ZP_1(z);
-    if(window.__CS){WV_1(zb,items.length-z.length);return;}
-    setProg(90,'Subiendo...');
-    await MP_L();
-    const u=await window.MUP1(zb,'stickers.zip');
-    if(GONE)return;
-    AP_2(u,items.length-z.length,sa,items.filter(it=>it.fx).length);
+    if(z.length<3){ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
+    WV_1(await ZP_1(z),items.length-z.length,items.filter(it=>it.fx).length);
   }
-  async function WV_1(zb,om){
+  async function WV_1(zb,om,fx){
     const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(zb);});
     if(GONE)return;
     const t=$('SK_AT');
-    $('SK_AC').hidden=true;APD.querySelector('.SK_DF').hidden=true;$('SK_AM').hidden=true;
-    $('SK_AX').hidden=!om;$('SK_AX').textContent=om+' no entran en el pack';
+    APD.querySelector('.SK_DF').hidden=true;$('SK_AM').hidden=true;
+    $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack':'',fx?'Tu navegador no convierte animados: salieron fijos':''].filter(Boolean).join('\n');
     t.textContent='📲 Agregando a WhatsApp...';
     if(!APD.open)APD.showModal();
     window.__CS.onmessage=e=>{const d=String(e.data||'');if(d==='R:ok')setTimeout(()=>{if(APD.open&&t.textContent.startsWith('✅'))APD.close();},2000);t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error CheStickers '+d.slice(4):t.textContent;};
     window.__CS.postMessage('Z:'+b64);
   }
-  function AP_2(u,om,sa,fx){
-    SN_1();
-    $('SK_AT').textContent=sa?'😿 Servidor saturado. Podes agregarlo a WhatsApp con la app CheStickers (sin sonido): instalala y pega este codigo.':'✅ Pack listo para CheStickers (sin sonido). Si no se abre solo, pega este codigo en la app.';
-    const c=$('SK_AC'),cp=()=>navigator.clipboard?.writeText(u)||Promise.reject();
-    c.hidden=false;APD.querySelector('.SK_DF').hidden=false;
-    c.textContent=u;
-    c.onclick=()=>cp().then(()=>{c.textContent='Copiado!';setTimeout(()=>{if(c.textContent==='Copiado!')c.textContent=u;},2000);}).catch(()=>{});
-    $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack de la app':'',fx?'Tu navegador no convierte animados: salieron fijos. Para animados abri en Chrome':''].filter(Boolean).join('\n');
-    $('SK_AM').hidden=true;$('SK_AL').classList.remove('SK_LT');
-    $('SK_AO').onclick=()=>AI_1(u);
+  function SA_1(m){
+    if(GONE)return;
+    $('SK_AT').textContent=m||'😿 Servidor saturado. Usa la app CheStickers para cargar los stickers a WhatsApp (sin sonido).';
+    $('SK_AX').hidden=true;$('SK_AM').hidden=true;APD.querySelector('.SK_DF').hidden=false;$('SK_AL').classList.remove('SK_LT');
+    $('SK_AO').onclick=AI_1;
     if(!APD.open)APD.showModal();
-    cp().catch(()=>{});
-    AI_1(u);
   }
-  function AI_1(u){
+  function AI_1(){
     let f=0;const h=()=>{f=1;};
     window.addEventListener('blur',h,{once:true});document.addEventListener('visibilitychange',h,{once:true});
-    location.href='chestickers://pack?u='+encodeURIComponent(u);
+    location.href='chestickers://open';
     setTimeout(()=>{window.removeEventListener('blur',h);document.removeEventListener('visibilitychange',h);if(f||GONE)return;$('SK_AM').hidden=false;const a=$('SK_AL');a.classList.remove('SK_LT');void a.offsetWidth;a.classList.add('SK_LT');},2000);
   }
   function PD_O(l){setProg(0,l);if(!PD.open)PD.showModal();document.body.style.overflow='hidden';}
@@ -893,7 +879,8 @@
     const items=[...P];
     PD_O('Procesando...');
     let nA=0,nF=0;
-    if(MA||!await DS_1()){try{await AP_1(items,MA?0:1);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
+    if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app CheStickers para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
+    if(!await DS_1()){PD_C();SA_1();return;}
     try{
       const form=new FormData(),urls=[];
       for(let i=0;i<items.length;i++){
@@ -912,13 +899,13 @@
       let jr=await res.json();const {sid,w}=jr;
       if(!SD_RX.test(sid||''))throw new Error('sid');
       KH_1(items);
-      if(!w){try{jr=RS_1(jr);}catch(e){if(e.message!=='sinwa')throw e;await AP_1(items,1);return;}}
+      if(!w)jr=RS_1(jr);
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{jr=RS_1(await WT_1(sid,w,$('SK_WT')));}finally{$('SK_WT').hidden=true;TR_R();}}
       OK_1(jr);
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin sonido');
-    }catch(e){ER_D1(ER_1(e)||'Error Stickers '+e.message);}
+    }catch(e){if(e.message==='sinwa')SA_1();else ER_D1(ER_1(e)||'Error Stickers '+e.message);}
     finally{PD_C();}
   };
 
@@ -1012,7 +999,7 @@
       let img;
       try{img=await IMG_U1(src);}catch(e){URL.revokeObjectURL(src);throw e;}
       if(ED?.it!==it){URL.revokeObjectURL(src);return;}
-      it.ov.push({img,src,blob,x:128,y:128,s:ovNS,anim});
+      it.ov.push({img,src,blob,x:DIM/2,y:DIM/2,s:ovNS,anim});
       ovSel=it.ov.length-1;
       $('ov-sz-lbl').textContent=ovNS+'px';
       ovRL();
@@ -1038,11 +1025,11 @@
 
   function ovSz(d){
     const ov=ovSel>=0?ED?.it.ov[ovSel]:null;
-    if(ov){ov.s=Math.max(16,Math.min(240,ov.s+d));$('ov-sz-lbl').textContent=ov.s+'px';ovRL();}
-    else{ovNS=Math.max(16,Math.min(240,ovNS+d));$('ov-sz-lbl').textContent=ovNS+'px';}
+    if(ov){ov.s=Math.max(DIM/16,Math.min(DIM*15/16,ov.s+d));$('ov-sz-lbl').textContent=ov.s+'px';ovRL();}
+    else{ovNS=Math.max(DIM/16,Math.min(DIM*15/16,ovNS+d));$('ov-sz-lbl').textContent=ovNS+'px';}
   }
-  $('ov-sm').onclick=()=>ovSz(-16);
-  $('ov-lg').onclick=()=>ovSz(16);
+  $('ov-sm').onclick=()=>ovSz(-DIM/16);
+  $('ov-lg').onclick=()=>ovSz(DIM/16);
   $('sc-ov-f').onsubmit=e=>{e.preventDefault();ovSrch($('sc-ov-q').value.trim());};
   $('sc-ov-fi').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)ovAdd(f);};
   $('sc-ov-up').onclick=()=>$('sc-ov-fi').click();
