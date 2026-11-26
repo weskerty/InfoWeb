@@ -44,6 +44,10 @@
 .SK_NB{display:inline-block;min-width:22px;padding:0 6px;border-radius:11px;background:var(--RD_M);font-size:.8rem;line-height:22px}
 .SK_VL{position:fixed;z-index:10000;margin:0;border-radius:14px;object-fit:fill;pointer-events:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .SK_DF{display:flex;gap:10px;justify-content:center;margin-top:14px}
+#SK_AP .SK_DF{flex-wrap:wrap}
+#SK_AC{word-break:break-all;margin:6px 0}
+@keyframes SK_LT{50%{transform:scale(1.15)}}
+.SK_LT{animation:SK_LT .5s ease-in-out 6}
 .SK_PD{width:min(320px,calc(100vw - 32px));text-align:center}
 .sc-crop-wrap{max-width:100%;max-height:55vh;overflow:hidden}
 .sc-crop-wrap img{display:block;max-width:100%;max-height:55vh}
@@ -104,6 +108,7 @@
 </div>
 <dialog id="SK_ER" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_EP" role="alert"></p></dialog>
 <dialog id="SK_GD" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p>✅ Listo</p><a id="SK_GW" class="RD_B1 GL_C lk-wa" href="#" target="_blank" rel="noopener">Entrar al Grupo</a><p>y Envia esto:<br><button type="button" id="SK_GC" class="RD_B1"></button></p></dialog>
+<dialog id="SK_AP" class="DX1 SK_DG"><button data-x="1" aria-label="Cerrar">✕</button><p id="SK_AT"></p><button type="button" id="SK_AC" class="RD_B1"></button><p id="SK_AX" class="SK_TX" hidden></p><p id="SK_AM" hidden>Primero instala la app CheStickers</p><div class="SK_DF"><a id="SK_AL" class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a><button type="button" id="SK_AO" class="RD_B1 GL_C">📲 Abrir App para Instalar Stickers</button></div></dialog>
 <dialog id="SK_DG" class="DX1 SK_DG">
 <button data-x="1" aria-label="Cancelar">✕</button>
 <div id="SK_EC" hidden><div class="sc-crop-wrap"><img id="sc-crop-img" alt=""></div><button type="button" id="SK_CN">Sin recorte</button></div>
@@ -131,7 +136,8 @@
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
-  const MAX_SZ=20*1024*1024,DIM=256,TARGET=900*1024,AU_MX=1024*1024,AU_S=10;
+  const MAX_SZ=20*1024*1024,DIM=512,TARGET=900*1024,AU_MX=1024*1024,AU_S=10,LA=490*1024,LS=95*1024;
+  const PB={t:TARGET,st:TARGET,s:1},PA={t:LA,st:LS,s:0};
   const MAXFR=150,VID_MAX=10,VID_FPS=15,THM=512;
   const ID_OK=typeof ImageDecoder!=='undefined';
   const SD_RX=/^[a-f0-9]{12}$/;
@@ -139,6 +145,7 @@
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
   let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
+  const MA=window.__AN1==='app';
   let R=[],RF=[],PS=[],FT='',pg=0,P=[];
   let ovNS=64,ovSel=-1;
   const HM=new Map();
@@ -192,12 +199,14 @@
   }
   ERD.querySelector('[data-x]').onclick=()=>ERD.close();
   GD.querySelector('[data-x]').onclick=()=>GD.close();
+  const APD=$('SK_AP');APD.querySelector('[data-x]').onclick=()=>APD.close();
   function setProg(p,l){pBar.style.width=p+'%';if(l!=null)pLbl.textContent=l;}
   function getCID(){try{let id=localStorage.getItem('sk_cid');if(!id){id=crypto.randomUUID();localStorage.setItem('sk_cid',id);}return id;}catch{return 'anon';}}
   function KN_1(it){
     if(it.type==='ad')return it.content?{type:'ad',content:it.content,width:it.width,height:it.height}:null;
     const f=it.file,url=f&&(typeof f.webp==='string'?f.webp:f.sm?.webp?.url);
-    return url?{url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||'',s:it.slug}:null;
+    const hq=f&&typeof f==='object'?['hd','md','sm'].map(k=>f[k]?.webp).filter(w=>w?.url).sort((a,b)=>(b.width||0)-(a.width||0))[0]?.url:null;
+    return url?{url,hq:hq||url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||'',s:it.slug}:null;
   }
   const KT={sticker:'stickers',gif:'gifs',static_meme:'static-memes',clip:'clips'};
   function KH_1(l){if(KY)l.forEach(it=>{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});});}
@@ -352,7 +361,7 @@
     const it=PK_F(b._u);
     if(it){PK_RM(it);b.setAttribute('aria-pressed','false');return;}
     if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');return;}
-    PK_AD({u:b._u,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');VL_1(b);
+    PK_AD({u:b._u,h:b._k.hq,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');VL_1(b);
   };
 
   function VL_1(b){
@@ -409,13 +418,13 @@
       if(fv){PD_O('Abriendo video...');try{pv=URL.createObjectURL((await FV_1(f,1))[0]);}finally{PD_C();}}
       return{file:f,pv,fv,isVid,isWebp:false,isAnim:false,sq:false,au:MU?{f,s:0,d:AU_S,v:1}:null};
     }
-    const bm=await createImageBitmap(f);const r=bm.width/bm.height;bm.close();
-    return{file:f,pv:URL.createObjectURL(f),isVid,isWebp,isAnim:await AN_T1(f),sq:r>=.8&&r<=1.25};
+    const bm=await createImageBitmap(f),w=bm.width,h=bm.height,r=w/h;bm.close();
+    return{file:f,pv:URL.createObjectURL(f),isVid,isWebp,isAnim:await AN_T1(f),sq:r>=.8&&r<=1.25,w,h};
   }
 
   async function KF_1(it){
     if(it.file)return;
-    const b=await fetch(it.u).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();});
+    const b=await fetch(it.h||it.u).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();});
     const ty=b.type.startsWith('image/')?b.type:'image/webp';
     const pv=it.pv;Object.assign(it,await MK_F(new File([b],'k.'+ty.split('/')[1],{type:ty})));
     if(pv?.startsWith('blob:'))URL.revokeObjectURL(pv);
@@ -624,7 +633,7 @@
     return out;
   }
 
-  async function WB_E1(it,base,ovs,fps,onp){
+  async function WB_E1(it,base,ovs,fps,onp,pf){
     const ff=await FF_L1();
     const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
     const ctx=c.getContext('2d');
@@ -650,13 +659,15 @@
         if(onp)onp((i+1)/n);
       }
       let out=null;
-      for(const q of [50,43,36,29,22,15,8,1]){
-        await ff.exec(['-framerate',String(fps),'-i','i%04d.png','-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
+      const L=[[fps,50],[fps,36],[12,36],[12,22],[10,22],[10,8],[10,1]].filter(x=>x[0]<=fps);
+      const st=[...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
+      for(const [f,q,z] of st){
+        await ff.exec(['-framerate',String(fps),'-i','i%04d.png','-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
         out=await ff.readFile('o.webp');
-        if(out.byteLength<=TARGET)break;
+        if(out.byteLength<=pf.t)break;
       }
       await ff.deleteFile('o.webp').catch(()=>{});
-      return new Blob([out],{type:'image/webp'});
+      return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
     }finally{
       for(const nm of names)await ff.deleteFile(nm).catch(()=>{});
       lv.style.display='none';ckEl.style.display='';
@@ -719,27 +730,27 @@
     return VD_F1(it.file,VID_FPS);
   }
 
-  async function ST_E1(it,ovs){
+  async function ST_E1(it,ovs,pf){
     const img=await IMG_L1(it.file);
     const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
     const x=c.getContext('2d');DR_B1(x,img,it.crop);DR_O1(x,ovs,0);
-    const b=await new Promise(r=>c.toBlob(r,'image/webp',.9));
-    if(!b)throw new Error('webp');
-    return b;
+    let b=null;
+    for(const q of [.9,.75,.6,.45,.3]){b=await new Promise(r=>c.toBlob(r,'image/webp',q));if(!b)throw new Error('webp');if(b.size<=pf.st)return b;}
+    return pf.s?b:null;
   }
 
-  async function EX_1(it,onp){
+  async function EX_1(it,onp,pf=PB){
     await KF_1(it);
-    if(!it.isVid&&it.isWebp&&it.sq&&it.file.size<TARGET&&!it.crop&&!it.ov.length)return it.file;
+    if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length)return it.file;
     let base=null,ovs=[];
     try{
       if(it.isVid)base=await VD_F2(it);
       else if(it.isAnim)base=await AN_D1(it.file,it.isAnim);
       ovs=await OV_P1(it.ov);
-      if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs);
+      if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base)base={img:await IMG_L1(it.file)};
       const fps=base.fps||ovs.find(o=>o.an)?.an.fps||VID_FPS;
-      return await WB_E1(it,base,ovs,fps,onp);
+      return await WB_E1(it,base,ovs,fps,onp,pf);
     }finally{
       AN_F1(base);
       ovs.forEach(o=>AN_F1(o.an));
@@ -757,6 +768,75 @@
     });
   }
 
+  let ZP_T=null;
+  const MP_L=()=>window.MUP1?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/MediaUP.js';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('MediaUP'));};document.head.appendChild(s);});
+  async function WI_1(b){
+    const d=new Uint8Array(await b.slice(0,30).arrayBuffer()),s=String.fromCharCode(...d.slice(12,16));
+    if(s==='VP8X')return{w:1+(d[24]|d[25]<<8|d[26]<<16),h:1+(d[27]|d[28]<<8|d[29]<<16),a:!!(d[20]&2)};
+    if(s==='VP8 ')return{w:(d[26]|d[27]<<8)&16383,h:(d[28]|d[29]<<8)&16383,a:false};
+    if(s==='VP8L'){const v=(d[21]|d[22]<<8|d[23]<<16|d[24]<<24)>>>0;return{w:(v&16383)+1,h:((v>>>14)&16383)+1,a:false};}
+    return{w:0,h:0,a:false};
+  }
+  async function D2_1(b){
+    const ff=await FF_L1(),img=await IMG_L1(b),c=document.createElement('canvas');c.width=DIM;c.height=DIM;
+    const x=c.getContext('2d');
+    try{
+      for(let k=0;k<2;k++){x.clearRect(0,0,DIM,DIM);x.drawImage(img,0,0,DIM,DIM);if(k){const q=x.getImageData(0,0,1,1).data;x.fillStyle='rgb('+(255-q[0])+','+(255-q[1])+','+(255-q[2])+')';x.fillRect(0,0,1,1);}await ff.writeFile('d'+k+'.png',new Uint8Array(await(await new Promise(r=>c.toBlob(r,'image/png'))).arrayBuffer()));}
+      await ff.exec(['-framerate','1','-i','d%d.png','-c:v','libwebp_anim','-f','webp','-quality','75','-loop','0','-y','d.webp']);
+      const o=new Blob([await ff.readFile('d.webp')],{type:'image/webp'});
+      return o.size<=LA&&(await WI_1(o)).a?o:null;
+    }finally{for(const n of ['d0.png','d1.png','d.webp'])await ff.deleteFile(n).catch(()=>{});}
+  }
+  async function ZP_1(fs){
+    const T=ZP_T||(ZP_T=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xEDB88320^(n>>>1):n>>>1;return n>>>0;}));
+    const p=[],c=[],e=new TextEncoder();let o=0;
+    for(const f of fs){
+      const d=new Uint8Array(await f.b.arrayBuffer()),nm=e.encode(f.n);let r=-1;for(const x of d)r=T[(r^x)&255]^(r>>>8);r=(r^-1)>>>0;
+      const h=new DataView(new ArrayBuffer(30)),k=new DataView(new ArrayBuffer(46));
+      h.setUint32(0,0x04034b50,true);h.setUint16(4,10,true);h.setUint32(14,r,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nm.length,true);
+      k.setUint32(0,0x02014b50,true);k.setUint16(4,20,true);k.setUint16(6,10,true);k.setUint32(16,r,true);k.setUint32(20,d.length,true);k.setUint32(24,d.length,true);k.setUint16(28,nm.length,true);k.setUint32(42,o,true);
+      p.push(h,nm,d);c.push(k,nm);o+=30+nm.length+d.length;
+    }
+    const z=new DataView(new ArrayBuffer(22));z.setUint32(0,0x06054b50,true);z.setUint16(8,fs.length,true);z.setUint16(10,fs.length,true);z.setUint32(12,c.reduce((a,x)=>a+x.byteLength,0),true);z.setUint32(16,o,true);
+    return new Blob([...p,...c,z],{type:'application/zip'});
+  }
+  async function AP_1(items,sa){
+    const o=[];
+    for(let i=0;i<items.length;i++){
+      const it=items[i];setProg(Math.round(i/items.length*80),'Preparando para la app '+(i+1)+'/'+items.length);
+      let b=it.o,k=b?await WI_1(b):null;
+      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,null,PA);}catch{b=null;}k=b?await WI_1(b):null;}
+      if(b&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS))o.push({b,a:k.a});
+    }
+    if(GONE)return;
+    if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b);x.a=true;}
+    const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
+    if(z.length<3){if(sa)ER_D1(ER_1(new Error('sinwa')));ER_D1('La app CheStickers necesita al menos 3 stickers compatibles');return;}
+    setProg(90,'Subiendo...');
+    await MP_L();
+    const u=await window.MUP1(await ZP_1(z),'stickers.zip');
+    if(GONE)return;
+    AP_2(u,items.length-z.length,sa);
+  }
+  function AP_2(u,om,sa){
+    SN_1();
+    $('SK_AT').textContent=sa?'😿 Servidor saturado. Podes agregarlo a WhatsApp con la app CheStickers (sin sonido): instalala y pega este codigo.':'✅ Pack listo para CheStickers (sin sonido). Si no se abre solo, pega este codigo en la app.';
+    const c=$('SK_AC'),cp=()=>navigator.clipboard?.writeText(u)||Promise.reject();
+    c.textContent=u;
+    c.onclick=()=>cp().then(()=>{c.textContent='Copiado!';setTimeout(()=>{if(c.textContent==='Copiado!')c.textContent=u;},2000);}).catch(()=>{});
+    $('SK_AX').hidden=!om;$('SK_AX').textContent=om+' no entran en el pack de la app';
+    $('SK_AM').hidden=true;$('SK_AL').classList.remove('SK_LT');
+    $('SK_AO').onclick=()=>AI_1(u);
+    if(!APD.open)APD.showModal();
+    cp().catch(()=>{});
+    AI_1(u);
+  }
+  function AI_1(u){
+    let f=0;const h=()=>{f=1;};
+    window.addEventListener('blur',h,{once:true});document.addEventListener('visibilitychange',h,{once:true});
+    location.href='chestickers://pack?u='+encodeURIComponent(u);
+    setTimeout(()=>{window.removeEventListener('blur',h);document.removeEventListener('visibilitychange',h);if(f||GONE)return;$('SK_AM').hidden=false;const a=$('SK_AL');a.classList.remove('SK_LT');void a.offsetWidth;a.classList.add('SK_LT');},2000);
+  }
   function PD_O(l){setProg(0,l);if(!PD.open)PD.showModal();document.body.style.overflow='hidden';}
   function PD_C(){if(PD.open)PD.close();document.body.style.overflow='';}
   PD.addEventListener('cancel',e=>e.preventDefault());
@@ -767,13 +847,14 @@
     const items=[...P];
     PD_O('Procesando...');
     let nA=0,nF=0;
+    if(MA){try{await AP_1(items,0);}catch(e){ER_D1('Error Stickers '+e.message);}finally{PD_C();}return;}
     try{
       const form=new FormData(),urls=[];
       for(let i=0;i<items.length;i++){
         const it=items[i],n=N3(i+1),b0=Math.round(i/items.length*80),b1=Math.round((i+1)/items.length*80);
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
         if(!it.file&&!ID_OK){urls.push([i+1,it.u]);continue;}
-        try{form.append('files',await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb)),n+'.webp');}catch{nF++;continue;}
+        try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
         if(MU&&it.au){try{form.append('files',await AU_1(it.au),n+'.ogg');}catch{if(!it.au.v)nA++;}}
       }
       if(GONE)return;
@@ -785,7 +866,7 @@
       let jr=await res.json();const {sid,w}=jr;
       if(!SD_RX.test(sid||''))throw new Error('sid');
       KH_1(items);
-      if(!w)jr=RS_1(jr);
+      if(!w){try{jr=RS_1(jr);}catch(e){if(e.message!=='sinwa')throw e;await AP_1(items,1);return;}}
       items.forEach(FR_1);P=[];UP_1();
       if(w){PD_C();try{jr=RS_1(await WT_1(sid,w,$('SK_WT')));}finally{$('SK_WT').hidden=true;TR_R();}}
       OK_1(jr);
