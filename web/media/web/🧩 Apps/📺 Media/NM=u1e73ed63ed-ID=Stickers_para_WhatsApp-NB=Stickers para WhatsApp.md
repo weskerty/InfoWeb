@@ -18,6 +18,7 @@
 .SK1 .SK_KL{margin:10px 0 0}
 .SK_KL a{display:inline-flex}
 .SK1 .SK_NT{margin:4px 0 0;color:var(--RD_MF);font-size:.72rem;opacity:.8}
+.SK1 .SK_NT a{margin-top:6px;font-size:.85rem}
 .SK_PL{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:14px}
 .sc-fr{position:relative;display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--RD_M);border:1px solid var(--RD_L)}
 .SK_FI{position:relative;flex:none;width:96px;height:96px;border-radius:10px;overflow:hidden}
@@ -93,7 +94,7 @@
 <div id="sk-grid" class="sk-grid"></div>
 <div id="sk-pg" class="PG1"></div>
 <p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/KLIPY.svg" width="120" height="20" alt="Powered by KLIPY"></a></p>
-<p class="SK_NT">Los stickers pueden tardar hasta 30 minutos en llegar. No repitas el pedido: los repetidos se ignoran.</p>
+<p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheStickers.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
 <section id="SK_P" hidden>
 <p class="SK_TX">Subi fotos, GIF o videos (se usan los primeros 10s) o elegi stickers en Buscar.</p>
@@ -676,7 +677,6 @@
       const st=[...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
       for(let j=0;j<st.length;j++){
         const [f,q,z]=st[j];
-        if(onp)onp(1,'comprimiendo '+(j+1));
         await ff.exec(['-f','image2','-framerate',String(fps),'-pixel_format','rgba','-video_size',DIM+'x'+DIM,'-c:v','rawvideo','-i','i%04d.raw','-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
         out=await ff.readFile('o.webp');
         if(out.byteLength<=pf.t)break;
@@ -834,9 +834,9 @@
     const o=[];
     items.forEach(it=>{delete it.fx;});
     for(let i=0;i<items.length;i++){
-      const it=items[i],lb='Preparando para la app '+(i+1)+'/'+items.length;setProg(Math.round(i/items.length*80),lb);
+      const it=items[i];setProg(Math.round(i/items.length*80),'Preparando...');
       let b=it.o,k=b?await WI_1(b):null;
-      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,(p,t)=>setProg(Math.round((i+p)/items.length*80),t?lb+' · '+t:lb),PA);}catch{b=null;}k=b?await WI_1(b):null;}
+      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,p=>setProg(Math.round((i+p)/items.length*80)),PA);}catch{b=null;}k=b?await WI_1(b):null;}
       if(b&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS))o.push({b,a:k.a});
     }
     if(GONE)return;
@@ -887,7 +887,7 @@
         const it=items[i],n=N3(i+1),b0=Math.round(i/items.length*80),b1=Math.round((i+1)/items.length*80);
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
         if(!it.file&&!ID_OK){urls.push([i+1,it.u]);continue;}
-        try{it.o=await EX_1(it,(p,t)=>setProg(Math.round(b0+(b1-b0)*p),t?lb+' · '+t:lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
+        try{it.o=await EX_1(it,p=>setProg(Math.round(b0+(b1-b0)*p),lb));form.append('files',it.o,n+'.webp');}catch{nF++;continue;}
         if(MU&&it.au){try{form.append('files',await AU_1(it.au),n+'.ogg');}catch{if(!it.au.v)nA++;}}
       }
       if(GONE)return;
@@ -1049,7 +1049,7 @@
 
   TL_1().then(()=>window.TS0()).catch(()=>{});
 
-  if(MA){document.querySelector('#SK_TB button[data-t=t]').hidden=true;if(WS_OK)FF_L1().catch(()=>{});}
+  if(MA){document.querySelector('#SK_TB button[data-t=t]').hidden=true;$('SK_DA').hidden=true;if(WS_OK)FF_L1().catch(()=>{});}
   doFetch('');
   (async()=>{
     try{
