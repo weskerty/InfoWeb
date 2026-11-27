@@ -127,7 +127,7 @@
 <p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
 <section id="SK_P" hidden>
-<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta <span data-sk-seconds>30</span>s en Recortar, o elegi stickers en Buscar.</p>
+<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta <span data-sk-seconds>10</span>s en Recortar, o elegi stickers en Buscar.</p>
 <button type="button" id="SK_AD" class="RD_B1">📤 Agregar fotos, GIF o videos</button>
 <input type="file" id="sc-in" accept="image/*,video/*" multiple hidden>
 <div id="SK_IMPORT" class="SK_IMPORT" role="status" aria-live="polite" hidden><img id="SK_IMPORT_IMG" class="wait-anim" alt=""><span id="SK_IMPORT_TX"></span></div>
@@ -181,7 +181,7 @@
 <button type="button" id="SK_MP" disabled>▶️ Escuchar</button>
 </div>
 <audio id="SK_AU" preload="metadata" hidden></audio>
-<p class="SK_TX">Hasta <span data-sk-seconds>30</span>s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
+<p class="SK_TX">Hasta <span data-sk-seconds>10</span>s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
 </div>
 <div class="SK_DF"><button type="button" id="SK_DC">Cancelar</button><button type="button" id="SK_DK">✅ Listo</button></div>
 </dialog>
@@ -191,7 +191,7 @@
 <script>
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
-  const MAX_SECONDS=30,MAX_FPS=15;
+  const MAX_SECONDS=10,MAX_FPS=15;
   const MA=window.__AN1==='webview';
   const VID_MAX=MA?Math.min(10,MAX_SECONDS):MAX_SECONDS,VID_FPS=MAX_FPS,AU_S=VID_MAX,MAXFR=Math.ceil(VID_MAX*VID_FPS),THM=512;
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
