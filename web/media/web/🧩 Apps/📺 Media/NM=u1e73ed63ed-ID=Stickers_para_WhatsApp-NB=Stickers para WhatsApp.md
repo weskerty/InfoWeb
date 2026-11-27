@@ -127,7 +127,7 @@
 <p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
 <section id="SK_P" hidden>
-<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta <span data-sk-seconds>10</span>s en Recortar, o elegi stickers en Buscar.</p>
+<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta <span data-sk-seconds>30</span>s en Recortar, o elegi stickers en Buscar.</p>
 <button type="button" id="SK_AD" class="RD_B1">📤 Agregar fotos, GIF o videos</button>
 <input type="file" id="sc-in" accept="image/*,video/*" multiple hidden>
 <div id="SK_IMPORT" class="SK_IMPORT" role="status" aria-live="polite" hidden><img id="SK_IMPORT_IMG" class="wait-anim" alt=""><span id="SK_IMPORT_TX"></span></div>
@@ -181,7 +181,7 @@
 <button type="button" id="SK_MP" disabled>▶️ Escuchar</button>
 </div>
 <audio id="SK_AU" preload="metadata" hidden></audio>
-<p class="SK_TX">Hasta <span data-sk-seconds>10</span>s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
+<p class="SK_TX">Hasta <span data-sk-seconds>30</span>s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
 </div>
 <div class="SK_DF"><button type="button" id="SK_DC">Cancelar</button><button type="button" id="SK_DK">✅ Listo</button></div>
 </dialog>
@@ -272,7 +272,7 @@
     return url?{url,hq:hq||url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||'',s:it.slug}:null;
   }
   const KT={sticker:'stickers',gif:'gifs',static_meme:'static-memes',clip:'clips'};
-  function KH_1(l){if(KY)l.forEach(it=>{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});});}
+  function KH_1(l){if(KY)l.forEach(it=>{try{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});}catch{}});}
   async function KS_1(q,ad){
     if(KY)try{
       const p=new URLSearchParams({page:1,per_page:50,customer_id:getCID(),locale:'PY',content_filter:'off'}),a=ad?'&'+new URLSearchParams({'ad-min-width':50,'ad-max-width':Math.min(400,innerWidth-32),'ad-min-height':50,'ad-max-height':250,'ad-device-w':screen.width,'ad-device-h':screen.height,'ad-pxratio':devicePixelRatio,'ad-language':'ES'}):'';
@@ -1790,6 +1790,7 @@
     SN_P();
     const items=[...P];
     PD_O('Procesando...');
+    KH_1(items);
     let nA=0,nF=0,nX=0;
     if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app Che😻Agana para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{if(!GONE)PD_C();}return;}
     const op={items,form:null,wait:null};SEND_OP=op;let form=null;
@@ -1821,7 +1822,6 @@
       op.form=null;form=null;
       const {sid,w}=jr;
       if(!SD_RX.test(sid||''))throw SE_1('response','El servidor respondio sin un identificador valido. No se reenvio automaticamente.');
-      KH_1(items);
       if(!w)jr=RS_1(jr);
       items.forEach(FR_1);P=P.filter(it=>!items.includes(it));UP_1();
       if(w){PD_C();try{jr=RS_1(await WT_1(sid,w,$('SK_WT')));}finally{if(!GONE){$('SK_WT').hidden=true;TR_R();}}}
