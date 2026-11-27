@@ -378,7 +378,7 @@
   const TL_1=()=>window.TS1?Promise.resolve():TSP||(TSP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{TSP=null;no(new Error('verificacion'))};document.head.appendChild(s)}));
   const SE_1=(code,message,status=0)=>Object.assign(new Error(message),{sendCode:code,status});
   const TK_1=()=>TL_1().then(()=>window.TS1()).catch(()=>{throw SE_1('verify-local','No se pudo completar la verificacion en este navegador. El paquete todavia no se envio.');});
-  const ER_1=e=>e.sendCode?e.message:e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Error 503 proba luego':e.message==='403'?'Error 403 proba luego':e.message==='verificacion'?'Proba otro Navegador.':null;
+  const ER_1=e=>e.sendCode?e.message:e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'503 proba luego':e.message==='403'?'403 proba luego':e.message==='verificacion'?'No se pudo completar la verificacion en este navegador.':null;
   const SEND_REMOTE=e=>['verify-local','verify-server','forbidden','http','network','response'].includes(e?.sendCode)||['sinwa','403','503','verificacion'].includes(e?.message);
   let SEND_OP=null;
   const SEND_NET=new Set();
@@ -396,10 +396,10 @@
                                                                                    
     if(status===403&&body?.error==='Error verificacion, recarga la pagina')return SE_1('verify-server','El servidor rechazo la verificacion. Podes reintentar sin convertir de nuevo.',status);
     if(status===403)return SE_1('forbidden','El servidor rechazo el envio (403). No se confirmo un problema de verificacion.',status);
-    if(status===413)return SE_1('http','El paquete supera el tamaño que acepta el servidor (413).',status);
-    if(status===429)return SE_1('http','Demasiados intentos. Espera un momento antes de volver a enviar (429).',status);
-    if(status===503)return SE_1('http','Servidor ocupado. No se reenvio el paquete automaticamente (503).',status);
-    return SE_1('http','El servidor no pudo completar la solicitud ('+status+'). No se reenvio automaticamente.',status);
+    if(status===413)return SE_1('http','Demasiado Pesado (413).',status);
+    if(status===429)return SE_1('http','Demasiados intentos. Espera un rato (429).',status);
+    if(status===503)return SE_1('http','Servidor ocupado. (503).',status);
+    return SE_1('http','El servidor no pudo completar la solicitud ('+status+'). ',status);
   }
   function SEND_TOKEN(ac){
     return new Promise((resolve,reject)=>{
@@ -850,28 +850,25 @@
   });}
 
   async function AN_OPEN(it,onCreate){
-    if(!ID_OK)throw new Error('animacion');
-    const meta=await AN_META(it.file,it.isAnim);if(!meta?.du)throw new Error('animacion');
-    let closed=false,dec;const vm={du:meta.du,close(){if(closed)return;closed=true;try{dec?.close();}catch{}VMS.delete(vm);}};VMS.add(vm);onCreate?.(vm);
+    let closed=false,reader=null;
+    const vm={du:0,close(){if(closed)return;closed=true;reader?.close();VMS.delete(vm);}};
+    VMS.add(vm);onCreate?.(vm);
     try{
-      const data=await it.file.arrayBuffer();if(GONE||closed)throw new Error('salida');
-      dec=new ImageDecoder({data,type:it.isAnim==='gif'?'image/gif':'image/webp'});
-      await dec.tracks.ready;
+      reader=await AN_READER(it.file,it.isAnim);
       if(GONE||closed)throw new Error('salida');
+      vm.du=reader.meta.du;
       vm.frame=async t=>{
         if(GONE||closed)throw new Error('salida');
-        t=Math.max(0,Math.min(t,meta.du-.000001));
-        let lo=0,hi=meta.times.length-1;
-        while(lo<hi){const m=Math.ceil((lo+hi)/2);if(meta.times[m]<=t)lo=m;else hi=m-1;}
-        const r=await dec.decode({frameIndex:lo});
-        try{
-          if(GONE||closed)throw new Error('salida');
-          const f=r.image,k=Math.min(1,THM/Math.max(f.displayWidth,f.displayHeight)),c=document.createElement('canvas');
-          c.width=Math.max(1,Math.round(f.displayWidth*k));c.height=Math.max(1,Math.round(f.displayHeight*k));c.getContext('2d').drawImage(f,0,0,c.width,c.height);return await SK_BLOB(c);
-        }finally{r.image.close();}
+        const frame=await reader.get(AN_IDX(reader.meta,Math.max(0,Math.min(t,vm.du-.000001))));
+        if(GONE||closed)throw new Error('salida');
+        const w=frame.displayWidth||frame.width,h=frame.displayHeight||frame.height,k=Math.min(1,THM/Math.max(w,h));
+        const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+        try{c.getContext('2d').drawImage(frame,0,0,c.width,c.height);return await SK_BLOB(c);}
+        finally{c.width=c.height=1;}
       };
       return vm;
-    }catch(e){vm.close();throw e;}
+    }catch(e){reader?.close();vm.close();throw e;}
   }
 
   async function MK_F(f){
@@ -1475,6 +1472,151 @@
   }
 
                                                                   
+  function AN_R_SIZE(w,h){
+    if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w>4096||h>4096||w*h>8388608)throw new Error('animacion demasiado grande');
+  }
+  function AN_R_WEBP(b){
+    const need=(p,n,end=b.length)=>{if(!Number.isSafeInteger(p)||!Number.isSafeInteger(n)||p<0||n<0||p+n>end)throw new Error('animacion incompleta');};
+    const tag=p=>{need(p,4);return String.fromCharCode(b[p],b[p+1],b[p+2],b[p+3]);};
+    const u24=p=>{need(p,3);return b[p]|b[p+1]<<8|b[p+2]<<16;};
+    const u32=p=>{need(p,4);return (b[p]|b[p+1]<<8|b[p+2]<<16|b[p+3]<<24)>>>0;};
+    if(tag(0)!=='RIFF'||tag(8)!=='WEBP')throw new Error('animacion WebP');
+    const end=u32(4)+8;need(0,end);if(end<30)throw new Error('animacion incompleta');
+    let w=0,h=0,anim=false,icc=null;const frames=[];
+    for(let p=12;p<end;){
+      need(p,8,end);const t=tag(p),n=u32(p+4),s=p+8,next=s+n+(n&1);need(s,n+(n&1),end);
+      if(t==='VP8X'){
+        if(w||n<10||!(b[s]&2))throw new Error('cabecera WebP');
+        w=u24(s+4)+1;h=u24(s+7)+1;AN_R_SIZE(w,h);
+      }else if(t==='ICCP'){
+        if(icc||!n||n>4194304)throw new Error('perfil WebP');
+        icc=b.subarray(p,next);
+      }else if(t==='ANIM'){
+        if(anim||n<6||!w)throw new Error('control WebP');
+        anim=true;
+      }else if(t==='ANMF'){
+        if(!w||!anim||n<24||frames.length>=10000)throw new Error('fotograma WebP');
+        const x=u24(s)*2,y=u24(s+3)*2,fw=u24(s+6)+1,fh=u24(s+9)+1;
+        AN_R_SIZE(fw,fh);if(x+fw>w||y+fh>h)throw new Error('encuadre WebP');
+        let alpha=null,pixels=null,hasAlpha=false;
+        for(let q=s+16;q<s+n;){
+          need(q,8,s+n);const kind=tag(q),len=u32(q+4),v=q+8,after=v+len+(len&1);need(v,len+(len&1),s+n);
+          if(kind==='ALPH'){
+            if(alpha||pixels||!len)throw new Error('alpha WebP');
+            alpha=b.subarray(q,after);hasAlpha=true;
+          }else if(kind==='VP8 '||kind==='VP8L'){
+            if(pixels)throw new Error('datos WebP');
+            let pw,ph;
+            if(kind==='VP8 '){
+              if(len<10||b[v]&1||b[v+3]!==157||b[v+4]!==1||b[v+5]!==42)throw new Error('datos VP8');
+              pw=(b[v+6]|b[v+7]<<8)&16383;ph=(b[v+8]|b[v+9]<<8)&16383;
+            }else{
+              if(alpha||len<5||b[v]!==47)throw new Error('datos VP8L');
+              const bits=u32(v+1);pw=(bits&16383)+1;ph=((bits>>>14)&16383)+1;hasAlpha=!!(bits&268435456);
+              if(bits>>>29)throw new Error('version VP8L');
+            }
+            if(pw!==fw||ph!==fh)throw new Error('dimensiones WebP');
+            pixels=b.subarray(q,after);
+          }
+          q=after;
+        }
+        if(!pixels)throw new Error('fotograma WebP vacio');
+        frames.push({x,y,w:fw,h:fh,dispose:!!(b[s+15]&1),replace:!!(b[s+15]&2),alpha,pixels,hasAlpha});
+      }
+      p=next;
+    }
+    if(!anim||!frames.length)throw new Error('animacion sin fotogramas');
+    const blob=i=>{
+      const f=frames[i],head=new Uint8Array(30),view=new DataView(head.buffer);
+      head.set([82,73,70,70],0);head.set([87,69,66,80,86,80,56,88],8);view.setUint32(16,10,true);
+      head[20]=(f.hasAlpha?16:0)|(icc?32:0);
+      for(let j=0;j<3;j++){head[24+j]=(f.w-1)>>>(8*j);head[27+j]=(f.h-1)>>>(8*j);}
+      view.setUint32(4,22+(icc?.byteLength||0)+(f.alpha?.byteLength||0)+f.pixels.byteLength,true);
+      return new Blob([head,...(icc?[icc]:[]),...(f.alpha?[f.alpha]:[]),f.pixels],{type:'image/webp'});
+    };
+    return {w,h,frames,blob};
+  }
+  async function AN_R_IMAGE(blob,signal){
+    const live=()=>{if(GONE||signal.aborted)throw new Error('salida');};
+    live();
+    if(typeof createImageBitmap==='function')try{
+      const image=await createImageBitmap(blob);
+      try{live();return {image,close(){image.close();}};}catch(e){image.close();throw e;}
+    }catch(e){live();}
+    return new Promise((resolve,reject)=>{
+      const image=new Image(),url=URL.createObjectURL(blob);let done=false;
+      const clean=()=>{image.onload=null;image.onerror=null;signal.removeEventListener('abort',abort);URL.revokeObjectURL(url);};
+      const finish=e=>{if(done)return;done=true;clean();if(e){image.removeAttribute('src');reject(e);}else resolve({image,close(){image.removeAttribute('src');}});};
+      const abort=()=>finish(new Error('salida'));
+      image.onload=()=>{try{live();if(!image.naturalWidth||!image.naturalHeight)throw new Error('fotograma vacio');finish();}catch(e){finish(e);}};
+      image.onerror=()=>finish(new Error('fotograma WebP'));
+      signal.addEventListener('abort',abort,{once:true});
+      if(signal.aborted){abort();return;}
+      image.src=url;
+    });
+  }
+  async function AN_READER(file,ty,report){
+    if(GONE)throw new Error('salida');
+    if(!file?.size||file.size>67108864)throw new Error('animacion demasiado grande');
+    const meta=await AN_META(file,ty);
+    if(GONE)throw new Error('salida');
+    if(!meta.times.length||meta.times.length>10000)throw new Error('demasiados fotogramas');
+    let bytes=new Uint8Array(await file.arrayBuffer()),parsed=null,decoder=null,current=null,canvas=null,ctx=null,closed=false,index=-1,q=Promise.resolve();
+    const ac=new AbortController(),check=()=>{if(closed||GONE)throw new Error('salida');};
+    const note=e=>{try{report?.('native:'+String(e?.message||e).replace(/\s+/g,' ').slice(0,90));}catch{}};
+    const nativeClose=()=>{try{current?.close();}catch{}current=null;try{decoder?.close();}catch{}decoder=null;index=-1;};
+    const close=()=>{if(closed)return;closed=true;ac.abort();nativeClose();if(canvas)canvas.width=canvas.height=1;canvas=null;ctx=null;parsed=null;bytes=null;};
+    const fallback=()=>{
+      check();nativeClose();
+      if(ty!=='webp_anim')throw new Error('lector de animacion no disponible');
+      parsed=parsed||AN_R_WEBP(bytes);
+      if(parsed.frames.length!==meta.times.length)throw new Error('fotogramas incompletos');
+      canvas=document.createElement('canvas');canvas.width=parsed.w;canvas.height=parsed.h;
+      ctx=canvas.getContext('2d');if(!ctx)throw new Error('canvas no disponible');
+    };
+    try{
+      check();
+      if(ty==='webp_anim'){
+        parsed=AN_R_WEBP(bytes);
+        if(parsed.frames.length!==meta.times.length)throw new Error('fotogramas incompletos');
+      }else if(ty==='gif'){
+        if(bytes.length<13)throw new Error('animacion incompleta');
+        AN_R_SIZE(bytes[6]|bytes[7]<<8,bytes[8]|bytes[9]<<8);
+      }else throw new Error('animacion no compatible');
+      if(typeof ImageDecoder!=='undefined')try{
+        decoder=new ImageDecoder({data:bytes,type:ty==='gif'?'image/gif':'image/webp'});
+        await decoder.tracks.ready;await decoder.completed;check();
+        if(!decoder.tracks.selectedTrack||decoder.tracks.selectedTrack.frameCount!==meta.times.length)throw new Error('fotogramas incompletos');
+      }catch(e){check();note(e);fallback();}
+      else fallback();
+      const read=async wanted=>{
+        check();if(!Number.isInteger(wanted)||wanted<0||wanted>=meta.times.length)throw new Error('fotograma fuera de rango');
+        if(decoder){
+          if(index===wanted&&current)return current;
+          try{
+            try{current?.close();}catch{}current=null;
+            const result=await decoder.decode({frameIndex:wanted}),image=result.image;
+            try{check();AN_R_SIZE(image.displayWidth||image.codedWidth,image.displayHeight||image.codedHeight);current=image;index=wanted;return current;}
+            catch(e){image.close();throw e;}
+          }catch(e){check();note(e);fallback();}
+        }
+        if(wanted<index){ctx.clearRect(0,0,canvas.width,canvas.height);index=-1;}
+        while(index<wanted){
+          check();const next=index+1,f=parsed.frames[next];
+          const decoded=await AN_R_IMAGE(parsed.blob(next),ac.signal);
+          try{
+            check();
+            if(index>=0){const prev=parsed.frames[index];if(prev.dispose)ctx.clearRect(prev.x,prev.y,prev.w,prev.h);}
+            if(f.replace)ctx.clearRect(f.x,f.y,f.w,f.h);
+            ctx.drawImage(decoded.image,f.x,f.y,f.w,f.h);index=next;
+          }finally{decoded.close();}
+        }
+        check();return canvas;
+      };
+      return {meta,get mode(){return decoder?'native':'webp';},get(wanted){const task=q.catch(()=>{}).then(()=>read(wanted));q=task.catch(()=>{});return task;},close};
+    }catch(e){close();throw e;}
+  }
+
   const FRAME_ACTIVE=new Set(),RAW_ACTIVE=new Set();
   function FRAME_OWN(p){
     const close=p.close;let closed=false,closing;
@@ -1487,39 +1629,34 @@
     const t=loop&&p.dur>0?((time%p.dur)+p.dur)%p.dur:Math.max(0,time);
     return p.get(t,ff);
   }
-  async function AN_STREAM(b,ty,trim){
-    if(!ID_OK)return null;
-    let dec,current=null,closed=false,index=-1;
+  async function AN_STREAM(b,ty,trim,lg){
+    let reader=null,current=null,scaled=null,closed=false,index=-1;
     try{
-      const meta=await AN_META(b,ty),cut=TRIM_1({trim},meta.du),end=cut.s+cut.d;
+      reader=await AN_READER(b,ty,lg);
+      const meta=reader.meta,cut=TRIM_1({trim},meta.du),end=cut.s+cut.d;
       const times=[0,...meta.times.filter(t=>t>cut.s&&t<end).map(t=>t-cut.s)];
-      dec=new ImageDecoder({data:await b.arrayBuffer(),type:ty==='gif'?'image/gif':'image/webp'});
-      await dec.tracks.ready;await dec.completed;
-      const track=dec.tracks.selectedTrack;
-      if(!track||track.frameCount<2){dec.close();return null;}
+      if(meta.times.length<2){reader.close();return null;}
       if(GONE)throw new Error('salida');
-      const p=FRAME_OWN({fps:AN_FPS(times,cut.d),dur:cut.d,times,
+      return FRAME_OWN({fps:AN_FPS(times,cut.d),dur:cut.d,times,
         async get(time){
           if(closed||GONE)throw new Error('salida');
-          const next=Math.min(track.frameCount-1,AN_IDX(meta,Math.min(meta.du-1e-7,cut.s+time)));
+          const next=AN_IDX(meta,Math.min(meta.du-1e-7,cut.s+time));
           if(next===index&&current)return current;
-          current?.close();current=null;
-          const image=(await dec.decode({frameIndex:next})).image;
-          try{
-            if(closed||GONE)throw new Error('salida');
-            const w=image.displayWidth||image.codedWidth,h=image.displayHeight||image.codedHeight;
-            const k=Math.min(1,THM/Math.max(w,h,1));
-            if(k<1){current=await createImageBitmap(image,{resizeWidth:Math.max(1,Math.round(w*k)),resizeHeight:Math.max(1,Math.round(h*k)),resizeQuality:'high'});image.close();}
-            else current=image;
-            if(closed||GONE){current.close();current=null;throw new Error('salida');}
-            index=next;return current;
-          }catch(e){try{image.close();}catch{}throw e;}
+          const frame=await reader.get(next);
+          if(closed||GONE)throw new Error('salida');
+          const w=frame.displayWidth||frame.width,h=frame.displayHeight||frame.height,k=Math.min(1,THM/Math.max(w,h));
+          if(k<1){
+            scaled||=document.createElement('canvas');
+            scaled.width=Math.max(1,Math.round(w*k));scaled.height=Math.max(1,Math.round(h*k));
+            scaled.getContext('2d').drawImage(frame,0,0,scaled.width,scaled.height);current=scaled;
+          }else current=frame;
+          index=next;return current;
         },
-        close(){closed=true;current?.close();current=null;try{dec.close();}catch{}}
+        close(){closed=true;reader.close();current=null;if(scaled)scaled.width=scaled.height=1;}
       });
-      return p;
-    }catch(e){current?.close();try{dec?.close();}catch{}if(GONE)throw e;return null;}
+    }catch(e){reader?.close();if(scaled)scaled.width=scaled.height=1;if(GONE)throw e;lg?.('decode:'+DG_1(e));return null;}
   }
+
   async function VD_STREAM(it){
     let vm=null,current=null,closed=false,ff0=null,mounted=false;
     const root='/skvideo',name='sk-frame.png';
@@ -1556,6 +1693,9 @@
     });
     return p;
   }
+  let RAW_BLOCKED=false;
+  const RAW_QUOTA=e=>e?.name==='QuotaExceededError'||/quota|exceed.*storage/i.test(String(e?.message||e));
+  function RAW_ERROR(e){if(RAW_QUOTA(e))RAW_BLOCKED=true;return Object.assign(new Error(e?.message||String(e)),{rawStorage:true,name:e?.name||'Error'});}
   function RAW_BUDGET(){return (navigator.deviceMemory&&navigator.deviceMemory<=2?64:128)*1024*1024;}
   async function RAW_SINK(ff,expected,forceMemory=false){
     let dir=null,handle=null,writer=null,fileName='',mounted=false,closing=null,closed=false,count=0;
@@ -1563,7 +1703,7 @@
     const sink={mode:'memory',budget:RAW_BUDGET(),
       async write(data){
         if(closed||GONE)throw new Error('salida');
-        if(writer)try{await writer.write(data);}catch(e){throw Object.assign(new Error(e?.message||String(e)),{rawStorage:true});}
+        if(writer)try{await writer.write(data);}catch(e){throw RAW_ERROR(e);}
         else{const name='i'+String(count).padStart(6,'0')+'.raw';names.push(name);await ff.writeFile(name,new Uint8Array(data.buffer,data.byteOffset,data.byteLength));if(closed||GONE){await ff.deleteFile(name).catch(()=>{});throw new Error('salida');}}
         count++;
       },
@@ -1586,7 +1726,7 @@
     };
     RAW_ACTIVE.add(sink);
                                                                                   
-    if(!forceMemory&&expected>32*1024*1024&&navigator.storage?.getDirectory)try{
+    if(!forceMemory&&!RAW_BLOCKED&&expected>32*1024*1024&&navigator.storage?.getDirectory)try{
       const estimate=await navigator.storage.estimate?.();
       if(estimate?.quota&&estimate.quota-(estimate.usage||0)<expected*1.15)throw new Error('espacio');
       dir=await(await navigator.storage.getDirectory()).getDirectoryHandle('sk-stickers-tmp',{create:true});
@@ -1599,6 +1739,7 @@
       if(closed||GONE){await writer.abort().catch(()=>{});writer=null;await dir.removeEntry(fileName).catch(()=>{});throw new Error('salida');}
       sink.mode='opfs';
     }catch(e){
+      if(RAW_QUOTA(e))RAW_BLOCKED=true;
       if(writer){await writer.abort().catch(()=>{});writer=null;}
       if(dir&&fileName)await dir.removeEntry(fileName).catch(()=>{});
       dir=null;handle=null;fileName='';if(GONE){await sink.close();throw e;}
@@ -1615,7 +1756,8 @@
     const baseDur=base.dur||0,overlayDur=ovs.reduce((m,o)=>Math.max(m,o.an?.dur||0),0);
     const dur=Math.min(pf.max||VID_MAX,VID_MAX,baseDur||overlayDur||1/VID_FPS);
     fps=AN_MIX_FPS(base,ovs,dur);
-    let sink=null,size=DIM,op=true;
+    let sink=null,size=DIM,op=true,lm='';
+    const log=({message})=>{lm=FF_LOG_LINE(lm,message);};ff.on('log',log);
     ckEl.style.display='none';lv.style.display='block';
     try{
       sink=await RAW_SINK(ff,Math.ceil(dur*fps-1e-8)*DIM*DIM*4,forceMemory);
@@ -1641,13 +1783,13 @@
         await sink.write(d);onp?.((i+1)/n*.75);
       }
       await AN_F1(base);for(const o of ovs)await AN_F1(o.an);
-      let input;try{input=await sink.seal(fps,size);}catch(e){if(sink.mode==='opfs')throw Object.assign(new Error(e?.message||String(e)),{rawStorage:true});throw e;}
+      let input;try{input=await sink.seal(fps,size);}catch(e){if(sink.mode==='opfs')throw RAW_ERROR(e);throw e;}
       const st=WB_STEPS(fps,pf);let out=null;
       for(let j=0;j<st.length;j++){
         if(GONE)throw new Error('salida');
         const [f,q,z]=st[j],filter='fps='+f+(z!==size?',scale='+z+':'+z:'');
-        const code=await ff.exec([...input,'-t',String(dur),'-vf',filter,'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
-        if(code!==0)throw new Error('webp '+code);
+        lm='';const code=await ff.exec([...input,'-t',String(dur),'-vf',filter,'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
+        if(code!==0)throw new Error('webp '+code+' '+lm);
         out=await ff.readFile('o.webp');onp?.(.75+.25*(j+1)/st.length);
         if(out.byteLength<=pf.t)break;
         if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
@@ -1655,7 +1797,7 @@
       if(!out?.byteLength)throw new Error('webp vacio');
       onp?.(1);return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
     }finally{
-      await sink?.close();await ff.deleteFile('o.webp').catch(()=>{});
+      ff.off('log',log);await sink?.close();await ff.deleteFile('o.webp').catch(()=>{});
       c.width=c.height=1;lv.style.display='none';ckEl.style.display='';
     }
   });}
@@ -1684,20 +1826,35 @@
     });
   }
 
-  async function OV_P1(overlays){
+  async function OV_P1(overlays,lg){
     const out=[];
-    try{for(const o of overlays){
+    try{for(let i=0;i<overlays.length;i++){
       if(GONE)throw new Error('salida');
-      const an=o.blob&&o.anim?await AN_STREAM(o.blob,o.anim):null;
-      out.push({img:o.img,an,x:o.x,y:o.y,s:o.s});
+      const o=overlays[i],entry={img:o.img,an:null,x:o.x,y:o.y,s:o.s,lost:false};
+      const log=m=>lg?.('ov'+(i+1)+':'+m);
+      if(o.blob&&o.anim){
+        const an=await AN_STREAM(o.blob,o.anim,null,log);
+        if(an){
+          const get=an.get;
+          an.get=async(time,ff)=>{
+            if(entry.lost)return entry.img;
+            try{return await get(time,ff);}
+            catch(e){if(GONE)throw e;entry.lost=true;await AN_F1(an);log('decode:'+DG_1(e));return entry.img;}
+          };
+          entry.an=an;
+        }else entry.lost=true;
+      }
+      out.push(entry);
     }
     return out;}catch(e){for(const o of out)await AN_F1(o.an);throw e;}
   }
 
-
-
-
-
+  function FF_LOG_LINE(previous,message){
+    const text=String(message||'').replace(/\s+/g,' ').trim();
+    if(!text||/^(?:Aborted\(\)|Conversion failed!?|Exiting normally|Last message repeated)/i.test(text))return previous;
+    const relevant=s=>/error|invalid|fail|cannot|could not|not found|unsupported|not implemented|no such|memory|unable|matches no streams|does not contain any stream|permission|not readable/i.test(s);
+    return relevant(text)||!relevant(previous)?text.slice(0,180):previous;
+  }
   async function VD_DIRECT(it,onp,pf){
     if(!it.isVid||it.ov?.length)throw new Error('video directo no aplicable');
     if(!Number.isFinite(it.du)||it.du<=0)throw new Error('duracion de video desconocida');
@@ -1715,7 +1872,7 @@
     return FM_1(it.file,async(ff,p)=>{
       const name='vdirect.webp';let out=null,lm='',stage=0,last=0,full=false,probing=false,firstPTS=NaN;
       const log=({message})=>{
-        if(message!=='Aborted()')lm=message;
+        lm=FF_LOG_LINE(lm,message);
         if(probing&&!Number.isFinite(firstPTS)){const m=/\bn:\s*0\s+pts:.*?\bpts_time:\s*([-\d.e+]+)/.exec(message);if(m)firstPTS=Number(m[1]);}
       };
       const progress=({time})=>{
@@ -1765,13 +1922,38 @@
     });
   }
 
+  const FM_MEMORY=new WeakSet();
+  const FM_READ_ERROR=e=>e?.name==='NotReadableError'||/NotReadableError|FileReaderSync.*readAsArrayBuffer|readAsArrayBuffer.*FileReaderSync/i.test(String(e?.message||e));
   async function FM_1(f,fn){return FF_JOB(async()=>{
-    const ff=await FF_L1();
-    await ff.createDir('/vc').catch(()=>{});
-    await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[f]},'/vc');
-    try{return await fn(ff,'/vc/'+f.name);}
-    catch(e){FF_R1();throw e;}
-    finally{await ff.unmount('/vc').catch(()=>{});}
+    const allowed=Number.isFinite(f?.size)&&f.size>0&&f.size<=MAX_SZ;
+    let memory=allowed&&FM_MEMORY.has(f);
+    for(let attempt=0;attempt<2;attempt++){
+      if(GONE)throw new Error('salida');
+      let ff=null,mounted=false,written=false,retry=false;
+      const path=memory?'/sk-input'+(/\.[a-z0-9]{1,8}$/i.exec(f.name||'')?.[0]||'.bin'):'/vc/'+f.name;
+      try{
+        ff=await FF_L1();
+        if(memory){
+          const data=new Uint8Array(await f.arrayBuffer());
+          if(GONE)throw new Error('salida');
+          if(data.byteLength!==f.size)throw Object.assign(new Error('Lectura incompleta del archivo'),{name:'NotReadableError'});
+          written=true;await ff.writeFile(path,data);
+        }else{
+          await ff.createDir('/vc').catch(()=>{});
+          await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[f]},'/vc');mounted=true;
+        }
+        if(GONE)throw new Error('salida');
+        return await fn(ff,path);
+      }catch(e){
+        retry=!memory&&allowed&&FM_READ_ERROR(e)&&!GONE&&attempt===0;
+        FF_R1();
+        if(!retry)throw e;
+        FM_MEMORY.add(f);memory=true;
+      }finally{
+        if(mounted)await ff.unmount('/vc').catch(()=>{});
+        if(written)await ff.deleteFile(path).catch(()=>{});
+      }
+    }
   });}
   function FF_R1(){if(FFP){FFP.then(f=>f.terminate()).catch(()=>{});FFP=null;}}
 
@@ -1842,40 +2024,40 @@
   async function FX_1(it,ovs,pf){
     if(pf.s&&it.isWebp&&it.file.size<=pf.t&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
     if(it.isAnim&&it.trim&&!it.fp)throw new Error('No se pudo recuperar el fotograma del tramo elegido');
-    it.fx=1;
+    it.fx=1;for(const o of ovs)if(o.an)o.lost=true;
     return await ST_E1(it,ovs,pf);
   }
 
   async function EX_1(it,onp,pf=PB,lg,forceMemory=false){
-    await KF_1(it);const original=it;
+    await KF_1(it);const original=it;delete original.fx;delete original.fxOv;
     const cap=Math.min(VID_MAX,pf.max||VID_MAX);
                                                                                      
     if((it.isVid||it.isAnim)&&cap<VID_MAX){const cut=TRIM_1(it);it={...it,trim:{s:cut.s,d:Math.min(cap,cut.d)}};}
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
-    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;for(const o of ov)await AN_F1(o.an);}}
+    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov,lg);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;original.fxOv=ov.filter(o=>o.lost).length;for(const o of ov)await AN_F1(o.an);}}
     if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;FF_R1();lg?.('direct:'+DG_1(e));}
-    let base=null,ovs=[];
+    let base=null,ovs=[],retried=false;
     try{
       if(it.isVid)base=await VD_STREAM(it);
-      else if(it.isAnim){base=await AN_STREAM(it.file,it.isAnim,it.trim);if(!base){if(it.trim&&!it.fp)throw new Error('No se pudo recuperar el fotograma del tramo elegido');it.fx=1;lg?.('d');}}
-      ovs=await OV_P1(it.ov);
-      if(!base&&it.isAnim&&it.trim)return await ST_E1(it,ovs,pf);
+      else if(it.isAnim){base=await AN_STREAM(it.file,it.isAnim,it.trim,lg);if(!base){if(it.trim&&!it.fp)throw new Error('No se pudo recuperar el fotograma del tramo elegido');it.fx=1;}}
+      ovs=await OV_P1(it.ov,lg);
+      if(!base&&it.isAnim&&it.trim&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
-      if(!base)base={img:await IMG_L1(it.file)};
+      if(!base)base={img:it.isAnim&&it.trim&&it.fp?await IMG_U1(it.fp):await IMG_L1(it.file)};
       const fps=base.fps||ovs.find(o=>o.an)?.an.fps||VID_FPS;
       try{return await WB_E1(it,base,ovs,fps,onp,pf,forceMemory);}catch(e){
         if(GONE)throw e;
-        if(e.rawStorage&&!forceMemory){await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('storage:'+DG_1(e));return await EX_1(it,onp,pf,lg,true);}
+        if(e.rawStorage&&!forceMemory){await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('storage:'+DG_1(e));retried=true;return await EX_1(it,onp,pf,lg,true);}
         if(!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e));return await FX_1(it,ovs,pf);
       }
-    }finally{if(it.fx)original.fx=it.fx;await AN_F1(base);for(const o of ovs)await AN_F1(o.an);}
+    }finally{if(!retried){if(it.fx)original.fx=it.fx;original.fxOv=ovs.filter(o=>o.lost).length;}await AN_F1(base);for(const o of ovs)await AN_F1(o.an);}
   }
 
 
   function AU_1(a){
     return FM_1(a.f,async(ff,p)=>{
       let lm='',noAudio=false;
-      const lh=({message})=>{if(message!=='Aborted()')lm=message;if(/matches no streams|does not contain any stream/i.test(message))noAudio=true;};
+      const lh=({message})=>{lm=FF_LOG_LINE(lm,message);if(/matches no streams|does not contain any stream/i.test(message))noAudio=true;};
       ff.on('log',lh);
       try{
         for(const rate of [48,32,24,16]){
@@ -1894,18 +2076,24 @@
   async function AU_2(a,lg){
     delete a.noTrack;
     for(let k=1;k<3;k++){
-      try{return await AU_1(a);}
+      try{const out=await AU_1(a);if(k>1)lg?.('audio:recuperado');return out;}
       catch(e){
         if(GONE)return null;
-        if(e?.noAudio){a.noTrack=true;return null;}
+        if(e?.noAudio){a.noTrack=true;if(k>1)lg?.('audio:sin pista');return null;}
         lg?.('a'+k+':'+DG_1(e));
-        if(e?.audioSize)return null;
+        if(e?.audioSize){lg?.('audio:omitido');return null;}
         FF_R1();
       }
     }
-    return null;
+    lg?.('audio:omitido');return null;
   }
-  const DG_1=e=>String(e?.message||e).replace(/\s+/g,' ').slice(0,90)+(document.hidden?' [oculta]':'');
+  const DG_1=e=>{
+    let text=String(e?.message||e).replace(/\s+/g,' ');
+    if(FM_READ_ERROR(e))text='lectura: '+text.replace(/(?:NotReadableError:\s*)?Failed to execute 'readAsArrayBuffer' on 'FileReaderSync':\s*/i,'');
+    else if(RAW_QUOTA(e))text='cuota: '+text;
+    else if(/out of bounds memory access|memory access out of bounds/i.test(text))text='wasm: '+text;
+    return text.slice(0,90)+(document.hidden?' [oculta]':'');
+  };
 
   let ZP_T=null;
   const DS_1=()=>fetch('/api/stickers?d=1',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>j.d!==false).catch(()=>true);
@@ -1942,7 +2130,7 @@
   async function AP_1(items){
     const o=[];
     const fits=async(b,k)=>!!b&&!!k&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS)&&(!k.a||await AN_META(b,'webp_anim').then(m=>m.du<=PA.max+1e-8).catch(()=>false));
-    items.forEach(it=>{delete it.fx;});
+    items.forEach(it=>{delete it.fx;delete it.fxOv;});
     for(let i=0;i<items.length;i++){
       const it=items[i];setProg(Math.round(i/items.length*80),'Preparando...');
       let b=it.o,k=b?await WI_1(b):null;
@@ -1953,14 +2141,14 @@
     if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
     const z=o.filter(x=>x.b).map((x,i)=>({n:(x.a?'animados/':'estaticos/')+N3(i+1)+'.webp',b:x.b}));
     if(z.length<3){ER_D1('La app Che😻Agana necesita al menos 3 stickers compatibles');return;}
-    WV_1(await ZP_1(z),items.length-z.length,items.filter(it=>it.fx).length);
+    WV_1(await ZP_1(z),items.length-z.length,items.filter(it=>it.fx).length,items.reduce((n,it)=>n+(it.fxOv||0),0));
   }
-  async function WV_1(zb,om,fx){
+  async function WV_1(zb,om,fx,fxOv=0){
     const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(zb);});
     if(GONE)return;
     const t=$('SK_AT');
     APD.querySelector('.SK_DF').hidden=true;$('SK_AM').hidden=true;
-    $('SK_AX').hidden=!om&&!fx;$('SK_AX').textContent=[om?om+' no entran en el pack':'',fx?'Tu navegador no convierte animados: salieron fijos':''].filter(Boolean).join('\n');
+    $('SK_AX').hidden=!om&&!fx&&!fxOv;$('SK_AX').textContent=[om?om+' no entran en el pack':'',fx?fx+' salieron fijos':'',fxOv?fxOv+' capas perdieron la animacion':''].filter(Boolean).join('\n');
     t.textContent='📲 Agregando a WhatsApp...';
     if(!APD.open)APD.showModal();
     window.__CS.onmessage=e=>{const d=String(e.data||'');if(d==='R:ok')setTimeout(()=>{if(APD.open&&t.textContent.startsWith('✅'))APD.close();},2000);t.textContent=d==='R:ok'?'✅ Agregado a WhatsApp':d==='R:cancel'?'No se agrego':d.startsWith('R:err:')?'WhatsApp rechazo el pack: '+d.slice(6):d.startsWith('R:x:')?'Error Che😻Agana '+d.slice(4):t.textContent;};
@@ -2008,7 +2196,7 @@
     const items=[...P];
     PD_O('Procesando...');
     KH_1(items);
-    let nA=0,nF=0,nX=0;
+    let nA=0,nF=0,nX=0,nXO=0;
     if(MA){if(!window.__CS){PD_C();SA_1('Abri esta pagina desde la app Che😻Agana para cargar los stickers a WhatsApp.');return;}try{await AP_1(items);}catch(e){ER_D1('Error Stickers '+e.message);}finally{if(!GONE)PD_C();}return;}
     const op={items,form:null,wait:null};SEND_OP=op;let form=null;
     try{
@@ -2025,16 +2213,17 @@
         const lb='Procesando '+(i+1)+'/'+items.length;setProg(b0,lb);
         delete it.o;
         if(!ID_OK&&it.u&&!it.trim&&(!it.file||it.isAnim&&!it.crop&&!it.ov.length)){urls.push([i+1,it.u]);if(ab[i])form.append('files',ab[i],n+'.ogg');continue;}
-        delete it.fx;
+        delete it.fx;delete it.fxOv;const diagStart=dg.length;
         try{const output=await EX_1(it,p=>{if(!GONE&&SEND_OP===op)setProg(Math.round(b0+(b1-b0)*p),lb);},PB,s=>dg.push(n+s));if(GONE||SEND_OP!==op)return;form.append('files',output,n+'.webp');}catch(e){if(GONE||SEND_OP!==op)return;nF++;dg.push(n+'x:'+DG_1(e));continue;}
-        if(it.fx)nX++;
+        if(it.fx)nX++;nXO+=it.fxOv||0;
+        if(dg.length>diagStart)dg.push(n+'ok:'+(it.fx?'fijo':it.isAnim||it.isVid||it.ov.some(o=>o.anim)&&!it.fxOv?'animado':'imagen')+(it.fxOv?';capas_fijas='+it.fxOv:''));
         if(ab[i])form.append('files',ab[i],n+'.ogg');
       }
       ab.length=0;
       if(GONE||SEND_OP!==op)return;
       if(nF===items.length)throw new Error('conversion');
       if(urls.length)form.append('urls',JSON.stringify(urls));
-      if(dg.length)form.append('dg',(navigator.deviceMemory||'?')+'GB '+(navigator.hardwareConcurrency||'?')+'n '+dg.join(' | '));
+      if(dg.length)form.append('dg',(navigator.deviceMemory||'?')+'GB '+(navigator.hardwareConcurrency||'?')+'n preparados='+String(items.length-nF)+'/'+items.length+' sin_audio='+nA+' fijos='+nX+' capas_fijas='+nXO+' | '+dg.join(' | '));
       let jr=await SEND_TRY(op);if(GONE||SEND_OP!==op)return;
       op.form=null;form=null;
       const {sid,w}=jr||{};
@@ -2047,6 +2236,7 @@
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin sonido');
       if(nX)ER_D1(nX+' salieron fijos');
+      if(nXO)ER_D1(nXO+' capas perdieron la animacion');
     }catch(e){if(GONE||e.sendCode==='cancel')return;if(SEND_REMOTE(e)){PD_C();SA_1();}else ER_D1(ER_1(e)||(e.message==='conversion'?'No se pudieron convertir los archivos. Tu pack se conserva.':'No se pudo completar el envio. Tu pack se conserva.'));}
     finally{form=null;SEND_DROP(op);if(!GONE)PD_C();}
   };
