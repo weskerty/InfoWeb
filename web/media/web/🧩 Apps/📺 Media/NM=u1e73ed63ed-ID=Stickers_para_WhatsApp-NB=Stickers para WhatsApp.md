@@ -20,6 +20,10 @@
 .SK1 .SK_NT{margin:4px 0 0;color:var(--RD_MF);font-size:.72rem;opacity:.8}
 .SK1 .SK_NT a{margin-top:6px;font-size:.85rem}
 .SK_PL{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:14px}
+.SK_IMPORT{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;color:var(--RD_MF)}
+.SK_IMPORT>img{width:40px;height:40px;object-fit:contain}
+.SK_FI.SK_LOADING{display:grid;place-items:center}
+.SK_FI.SK_LOADING>img{width:40px;height:40px;object-fit:contain}
 .sc-fr{position:relative;display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--RD_M);border:1px solid var(--RD_L)}
 .SK_FI{position:relative;flex:none;width:96px;height:96px;border-radius:10px;overflow:hidden}
 .SK_FI>img{width:100%;height:100%;object-fit:fill;display:block}
@@ -123,9 +127,10 @@
 <p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
 <section id="SK_P" hidden>
-<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta 10s en Recortar, o elegi stickers en Buscar.</p>
+<p class="SK_TX">Subi fotos, GIF o videos y elegi un tramo de hasta <span data-sk-seconds>30</span>s en Recortar, o elegi stickers en Buscar.</p>
 <button type="button" id="SK_AD" class="RD_B1">📤 Agregar fotos, GIF o videos</button>
 <input type="file" id="sc-in" accept="image/*,video/*" multiple hidden>
+<div id="SK_IMPORT" class="SK_IMPORT" role="status" aria-live="polite" hidden><img id="SK_IMPORT_IMG" class="wait-anim" alt=""><span id="SK_IMPORT_TX"></span></div>
 <div id="SK_PL" class="SK_PL"></div>
 </section>
 <section id="SK_T" hidden>
@@ -176,7 +181,7 @@
 <button type="button" id="SK_MP" disabled>▶️ Escuchar</button>
 </div>
 <audio id="SK_AU" preload="metadata" hidden></audio>
-<p class="SK_TX">Hasta 10s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
+<p class="SK_TX">Hasta <span data-sk-seconds>30</span>s de sonido. Los stickers con sonido son nuevos en WhatsApp: si el telefono no los muestra, actualiza WhatsApp.</p>
 </div>
 <div class="SK_DF"><button type="button" id="SK_DC">Cancelar</button><button type="button" id="SK_DK">✅ Listo</button></div>
 </dialog>
@@ -186,11 +191,13 @@
 <script>
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
+  const MAX_SECONDS=30,MAX_FPS=15;
+  const MA=window.__AN1==='webview';
+  const VID_MAX=MA?Math.min(10,MAX_SECONDS):MAX_SECONDS,VID_FPS=MAX_FPS,AU_S=VID_MAX,MAXFR=Math.ceil(VID_MAX*VID_FPS),THM=512;
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
   const ITEM=innerWidth<480?86:120;
-  const MAX_SZ=20*1024*1024,DIM=512,TARGET=900*1024,AU_MX=700*1024,AU_S=10,LA=490*1024,LS=95*1024;
-  const PB={t:TARGET,st:TARGET,s:1},PA={t:LA,st:LS,s:0};
-  const MAXFR=150,VID_MAX=10,VID_FPS=15,THM=512;
+  const MAX_SZ=20*1024*1024,DIM=512,TARGET=900*1024,AU_MX=700*1024,LA=490*1024,LS=95*1024;
+  const PB={t:TARGET,st:TARGET,s:1,max:MAX_SECONDS},PA={t:LA,st:LS,s:0,max:Math.min(10,MAX_SECONDS)};
   const ID_OK=typeof ImageDecoder!=='undefined';
   const WS_OK=(()=>{try{return new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0]))instanceof WebAssembly.Module;}catch{return false;}})();
   const SD_RX=/^[a-f0-9]{12}$/;
@@ -198,8 +205,9 @@
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
   let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
-  const MA=window.__AN1==='webview';
   let R=[],RF=[],PS=[],FT='',pg=0,P=[];
+  let IMP_PENDING=0,IMP_RUNNING=false;
+  const IMP_Q=[],KF_TASK=new Map();
   let ovNS=DIM/4,ovSel=-1;
   const HM=new Map();
 
@@ -211,7 +219,8 @@
   let SN_A=null;
   const ED_S={c:$('SK_EC'),o:$('SK_EO'),m:$('SK_EM')};
   $('SK1').style.setProperty('--SK_I',ITEM+'px');
-  $('sc-ck').src=WA;
+  $('sc-ck').src=WA;$('SK_IMPORT_IMG').src=WA;
+  $('SK1').querySelectorAll('[data-sk-seconds]').forEach(el=>el.textContent=VID_MAX);
 
   let _GF=window.GridFit||null,_GFp=null,SW=null,PG=PG_FALLBACK,_gfRo=null,_gfPending=false;
   function loadGF(){
@@ -295,7 +304,7 @@
   const PK_F=u=>P.find(x=>x.u===u);
   function FR_1(it){it.pr=(it.pr||0)+1;for(const k of ['pv','pc','fp'])if(it[k]?.startsWith('blob:'))URL.revokeObjectURL(it[k]);it.ov.forEach(o=>{if(o.src?.startsWith('blob:'))URL.revokeObjectURL(o.src);});}
   function PK_AD(it){it.ov=it.ov||[];P.push(it);UP_1();}
-  function PK_RM(it){const i=P.indexOf(it);if(i<0)return;FR_1(it);P.splice(i,1);UP_1();}
+  function PK_RM(it){const i=P.indexOf(it);if(i<0)return;KF_TASK.get(it)?.ac.abort();FR_1(it);P.splice(i,1);UP_1();}
   function UP_1(){$('SK_PN').textContent=P.length;TR_R();if(!$('SK_P').hidden)PL_R();gEl.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));}
 
   function TH_1(it){
@@ -304,6 +313,7 @@
     m.src=it.pc||(it.trim&&it.fp?it.fp:it.pv);return m;
   }
   function TR_R(){
+    $('sk-cf').disabled=!!IMP_PENDING||!!KF_TASK.size||!!ED_W;
     $('SK_TP').hidden=!P.length;
     TR.hidden=!P.length&&$('SK_WT').hidden;
     const v=$('SK_TV');v.textContent='';
@@ -469,7 +479,7 @@
     const b=e.target.closest('.sk-it');if(!b||!b._u)return;
     const it=PK_F(b._u);
     if(it){PK_RM(it);b.setAttribute('aria-pressed','false');return;}
-    if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');return;}
+    if(P.length+IMP_PENDING>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');return;}
     PK_AD({u:b._u,h:b._k.hq,pv:b._u,s:b._k.s,t:b._k.type,q:lastQ||''});b.setAttribute('aria-pressed','true');VL_1(b);
   };
 
@@ -486,16 +496,16 @@
 
   function PL_R(){
     const L=$('SK_PL');L.textContent='';
-    if(!P.length){L.append(MS_1('Tu pack esta vacio'));return;}
+    if(!P.length){if(!IMP_PENDING)L.append(MS_1('Tu pack esta vacio'));return;}
     P.forEach(it=>{
       const d=document.createElement('div');d.className='sc-fr';
       const f=document.createElement('div');f.className='SK_FI';d.append(f);
-      f.append(TH_1(it));
+      if(it.loading){f.classList.add('SK_LOADING');const wait=document.createElement('img');wait.className='wait-anim';wait.alt='Cargando';wait.src=WA;f.append(wait);}else f.append(TH_1(it));
       if(it.isVid){const s=document.createElement('span');s.className='SK_BG';s.textContent='🎬';f.append(s);}
       const x=BT_1('✕','Quitar','sc-rm');x.onclick=()=>PK_RM(it);d.append(x);
       const t=document.createElement('div');t.className='SK_TO';
       [['c','✂️','Recortar',!!it.crop||!!it.trim],['o','🖼️','Imagen',it.ov.length>0],['m','🎵','Sonido',!!it.au]].filter(x=>MU&&!MA||x[0]!=='m').forEach(([md,ic,lb,on])=>{
-        const b=BT_1(ic+' '+lb+(on?' ✅':''),lb);b.setAttribute('aria-pressed',on);b.onclick=()=>ED_O(it,md);t.append(b);
+        const b=BT_1(ic+' '+lb+(on?' ✅':''),lb);b.setAttribute('aria-pressed',on);b.disabled=!!it.loading||!!IMP_PENDING;b.onclick=()=>ED_O(it,md);t.append(b);
       });
       d.append(t);L.append(d);
     });
@@ -644,38 +654,83 @@
     const isVid=f.type.startsWith('video/'),isWebp=f.type==='image/webp';
     if(isVid){
       let {pv,du,pt}=await getVidThumb(f),fv=!pv;
-      if(GONE)throw new Error('salida');
-      if(fv){PD_O('Abriendo video...');try{
+      if(GONE){if(pv?.startsWith('blob:'))URL.revokeObjectURL(pv);throw new Error('salida');}
+      if(fv){
         du=du||await VF_META(f).catch(()=>0);pt=du?Math.min(.5,du*.1):pt;
         const b=(await FV_1(f,1,pt,.25))[0];if(GONE)throw new Error('salida');pv=URL.createObjectURL(b);
-      }finally{if(!GONE)PD_C();}}
+      }
       return{file:f,pv,du,pt,fv,isVid,isWebp:false,isAnim:false,sq:false,au:MU?{f,s:0,d:Math.min(AU_S,du||AU_S),v:1}:null};
     }
     const bm=await createImageBitmap(f),w=bm.width,h=bm.height,r=w/h;bm.close();
-    return{file:f,pv:URL.createObjectURL(f),isVid,isWebp,isAnim:await AN_T1(f),sq:r>=.8&&r<=1.25,w,h};
+    const isAnim=await AN_T1(f);if(GONE)throw new Error('salida');
+    return{file:f,pv:URL.createObjectURL(f),isVid,isWebp,isAnim,sq:r>=.8&&r<=1.25,w,h};
   }
 
-  async function KF_1(it){
-    if(it.file)return;
-    const b=await fetch(it.h||it.u).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();});
-    const ty=b.type.startsWith('image/')?b.type:'image/webp';
-    if(GONE)throw new Error('salida');
-    const pv=it.pv,next=await MK_F(new File([b],'k.'+ty.split('/')[1],{type:ty}));
-    if(GONE){next.ov=[];FR_1(next);throw new Error('salida');}
-    Object.assign(it,next);
-    if(pv?.startsWith('blob:'))URL.revokeObjectURL(pv);
+  function IMP_UI(){
+    if(GONE)return;
+    const count=IMP_PENDING+KF_TASK.size;
+    $('SK_IMPORT').hidden=!count;$('SK_P').setAttribute('aria-busy',String(!!count));
+    $('SK_IMPORT_TX').textContent=count?'Cargando '+count+(count===1?' archivo...':' archivos...'):'';
+    UP_1();
   }
-
-  async function addFiles(list){
+  function KF_1(it){
+    if(it.file)return Promise.resolve();
+    const prev=KF_TASK.get(it);if(prev)return prev.promise;
+    if(GONE)return Promise.reject(new Error('salida'));
+    const job={ac:new AbortController(),promise:null},owned=P.includes(it);
+    KF_TASK.set(it,job);it.loading=true;IMP_UI();
+    job.promise=(async()=>{
+      const live=()=>!GONE&&!job.ac.signal.aborted&&(!owned||P.includes(it));
+      try{
+        const b=await fetch(it.h||it.u,{signal:job.ac.signal}).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();});
+        if(!live())throw new Error('salida');
+        const ty=b.type.startsWith('image/')?b.type:'image/webp';
+        const pv=it.pv,next=await MK_F(new File([b],'k.'+ty.split('/')[1],{type:ty}));
+        if(!live()){next.ov=[];FR_1(next);throw new Error('salida');}
+        Object.assign(it,next);
+        if(pv?.startsWith('blob:'))URL.revokeObjectURL(pv);
+      }finally{
+        if(KF_TASK.get(it)===job)KF_TASK.delete(it);
+        delete it.loading;IMP_UI();
+      }
+    })();
+    return job.promise;
+  }
+  function IMP_STOP(){
+    for(const job of IMP_Q.splice(0)){job.f=null;job.done(false);}
+    IMP_PENDING=0;KF_TASK.forEach(job=>job.ac.abort());KF_TASK.clear();
+    $('SK_IMPORT').hidden=true;$('SK_P').removeAttribute('aria-busy');
+  }
+  async function IMP_RUN(){
+    if(IMP_RUNNING)return;
+    IMP_RUNNING=true;
+    try{
+      // Let the immediate loading state render before decoding the first file.
+      await new Promise(resolve=>setTimeout(resolve,0));
+      while(IMP_Q.length&&!GONE){
+        const job=IMP_Q.shift(),f=job.f;job.f=null;let added=false;
+        try{
+          if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');continue;}
+          const it=await MK_F(f);
+          if(GONE){it.ov=[];FR_1(it);continue;}
+          PK_AD(it);added=true;
+        }catch{if(!GONE)ER_D1(f.type.startsWith('video/')?'Video no compatible':'Imagen no compatible');}
+        finally{IMP_PENDING=Math.max(0,IMP_PENDING-1);job.done(added);IMP_UI();}
+      }
+    }finally{IMP_RUNNING=false;}
+  }
+  function addFiles(list){
+    if(GONE||DG.open||PD.open||ED_W)return Promise.resolve([]);
+    const waits=[];
     for(const f of list){
-      if(GONE)return;
-      if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');break;}
+      if(P.length+IMP_PENDING>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');break;}
       const v=f.type.startsWith('video/');
       if(!v&&!f.type.startsWith('image/')){ER_D1('Archivo no compatible');continue;}
       if(!v&&f.size>MAX_SZ){ER_D1('Maximo 20MB por imagen');continue;}
-      try{const it=await MK_F(f);if(GONE){it.ov=[];FR_1(it);return;}PK_AD(it);}catch{ER_D1(v?'Video no compatible':'Imagen no compatible');}
+      waits.push(new Promise(done=>IMP_Q.push({f,done})));IMP_PENDING++;
     }
-    if(!GONE)TB_1('p');
+    if(waits.length){TB_1('p');IMP_UI();void IMP_RUN();}
+    return Promise.all(waits);
   }
   $('SK_AD').onclick=()=>inEl.click();
   const DP_1=l=>{const fs=[...(l||[])].filter(f=>/^(image|video)\//.test(f.type));if(!fs.length||GONE||DG.open||PD.open)return 0;addFiles(fs);return 1;};
@@ -909,13 +964,12 @@
   }
 
   async function ED_O(it,md,h){
-    if(ED||ED_W||GONE||PD.open)return;
-    ED_W=1;
-    let t=0;
+    if(ED||ED_W||GONE||PD.open||IMP_PENDING)return;
+    ED_W=1;IMP_UI();
     try{
-      if(!it.file){t=setTimeout(()=>PD_O('Cargando...'),300);await KF_1(it);}
-    }catch(e){ER_D1('Error Klipy '+e.message);return;}
-    finally{if(t){clearTimeout(t);if(!GONE)PD_C();}ED_W=0;}
+      if(!it.file)await KF_1(it);
+    }catch(e){if(!GONE&&P.includes(it))ER_D1('Error Klipy '+e.message);return;}
+    finally{ED_W=0;IMP_UI();}
     if(!P.includes(it)||GONE||ED)return;
     ED={it,md,ok:0,sn:{crop:it.crop,trim:it.trim,ov:it.ov.map(o=>({...o})),au:it.au}};
     $('SK_DK').disabled=md==='c';
@@ -1162,7 +1216,7 @@
   function AN_FPS(times,dur){
     const gcd=(a,b)=>{while(b){const r=a%b;a=b;b=r;}return a;};
     let grid=Math.max(1,Math.round(dur*1000));
-    for(const time of times){const ms=Math.round(time*1000);if(ms>0)grid=gcd(grid,ms);if(grid<=66)return VID_FPS;}
+    for(const time of times){const ms=Math.round(time*1000);if(ms>0)grid=gcd(grid,ms);if(grid<=1000/VID_FPS)return VID_FPS;}
     return Math.max(1,Math.min(VID_FPS,1000/grid));
   }
 
@@ -1182,7 +1236,7 @@
   function AN_MIX_FPS(base,ovs,dur){
     const times=[0,dur];let floor=1;
     const add=(a,loop)=>{
-      if(!a?.fr?.length)return;
+      if(!a||!a.get&&!a.fr?.length)return;
       floor=Math.max(floor,a.fps||VID_FPS);
       if(!a.times?.length)return;
       const period=a.dur||dur;
@@ -1196,39 +1250,195 @@
     return Math.max(1,Math.min(VID_FPS,Math.max(floor,AN_FPS(times,dur))));
   }
 
-  async function AN_D1(b,ty,trim){
+  // Export providers retain only the frame currently being drawn.
+  const FRAME_ACTIVE=new Set(),RAW_ACTIVE=new Set();
+  function FRAME_OWN(p){
+    const close=p.close;let closed=false,closing;
+    p.close=()=>{if(closed)return closing;closed=true;FRAME_ACTIVE.delete(p);closing=close();return closing;};
+    FRAME_ACTIVE.add(p);return p;
+  }
+  async function FRAME_GET(p,time,ff,loop=false){
+    if(GONE)throw new Error('salida');
+    if(!p?.get)return AN_AT(p,time,loop);
+    const t=loop&&p.dur>0?((time%p.dur)+p.dur)%p.dur:Math.max(0,time);
+    return p.get(t,ff);
+  }
+  async function AN_STREAM(b,ty,trim){
     if(!ID_OK)return null;
-    let dec;const fr=[],times=[];
+    let dec,current=null,closed=false,index=-1;
     try{
       const meta=await AN_META(b,ty),cut=TRIM_1({trim},meta.du),end=cut.s+cut.d;
-      const changes=meta.times.filter(t=>t>cut.s&&t<end).map(t=>t-cut.s);
-      const fps=AN_FPS(changes,cut.d);
+      const times=[0,...meta.times.filter(t=>t>cut.s&&t<end).map(t=>t-cut.s)];
       dec=new ImageDecoder({data:await b.arrayBuffer(),type:ty==='gif'?'image/gif':'image/webp'});
       await dec.tracks.ready;await dec.completed;
-      const tr=dec.tracks.selectedTrack;
-      if(!tr||tr.frameCount<2)return null;
-      const n=Math.min(MAXFR,Math.max(1,Math.ceil(cut.d*fps-1e-8)));
-      let previous=-1;
+      const track=dec.tracks.selectedTrack;
+      if(!track||track.frameCount<2){dec.close();return null;}
+      if(GONE)throw new Error('salida');
+      const p=FRAME_OWN({fps:AN_FPS(times,cut.d),dur:cut.d,times,
+        async get(time){
+          if(closed||GONE)throw new Error('salida');
+          const next=Math.min(track.frameCount-1,AN_IDX(meta,Math.min(meta.du-1e-7,cut.s+time)));
+          if(next===index&&current)return current;
+          current?.close();current=null;
+          const image=(await dec.decode({frameIndex:next})).image;
+          try{
+            if(closed||GONE)throw new Error('salida');
+            const w=image.displayWidth||image.codedWidth,h=image.displayHeight||image.codedHeight;
+            const k=Math.min(1,THM/Math.max(w,h,1));
+            if(k<1){current=await createImageBitmap(image,{resizeWidth:Math.max(1,Math.round(w*k)),resizeHeight:Math.max(1,Math.round(h*k)),resizeQuality:'high'});image.close();}
+            else current=image;
+            if(closed||GONE){current.close();current=null;throw new Error('salida');}
+            index=next;return current;
+          }catch(e){try{image.close();}catch{}throw e;}
+        },
+        close(){closed=true;current?.close();current=null;try{dec.close();}catch{}}
+      });
+      return p;
+    }catch(e){current?.close();try{dec?.close();}catch{}if(GONE)throw e;return null;}
+  }
+  async function VD_STREAM(it){
+    let vm=null,current=null,closed=false,ff0=null,mounted=false;
+    const root='/skvideo',name='sk-frame.png';
+    if(!it.fv)try{vm=await VM_OPEN(it.file);}catch(e){if(GONE)throw e;}
+    const duration=vm?.du||it.du||await VF_META(it.file);
+    if(!Number.isFinite(duration)||duration<=0){vm?.close();throw new Error('duracion de video desconocida');}
+    if(GONE){vm?.close();throw new Error('salida');}
+    const cut=TRIM_1(it,duration);
+    const p=FRAME_OWN({fps:VID_FPS,dur:cut.d,
+      async get(time,ff){
+        if(closed||GONE)throw new Error('salida');
+        current?.close();current=null;
+        const at=Math.min(duration-.001,cut.s+time);
+        if(vm)try{current=await vm.bitmap(at);if(closed||GONE){current.close();current=null;throw new Error('salida');}return current;}catch(e){vm.close();vm=null;if(GONE||closed)throw e;}
+        // Legacy codec fallback: one PNG only, never a full PNG sequence.
+        ff0=ff;
+        if(!mounted){await ff.createDir(root).catch(()=>{});await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[it.file]},root);mounted=true;if(closed||GONE){mounted=false;await ff.unmount(root).catch(()=>{});throw new Error('salida');}}
+        try{
+          for(const begin of new Set([Math.max(0,at-.5),0])){
+            if(closed||GONE)throw new Error('salida');
+            await ff.deleteFile(name).catch(()=>{});
+            const filter="select='lte(t,"+(at-begin+.0001)+")',scale="+THM+':'+THM+':force_original_aspect_ratio=decrease';
+            const code=await ff.exec(['-ss',String(begin),'-t',String(at-begin+.001),'-i',root+'/'+it.file.name,'-an','-vf',filter,'-fps_mode','passthrough','-update','1','-y',name]);
+            if(code!==0)throw new Error('video '+code);
+            let data;try{data=await ff.readFile(name);}catch{}
+            if(data?.byteLength){current=await createImageBitmap(new Blob([data],{type:'image/png'}));break;}
+          }
+          if(!current)throw new Error('fotograma');
+          if(closed||GONE){current.close();current=null;throw new Error('salida');}
+          return current;
+        }finally{await ff.deleteFile(name).catch(()=>{});}
+      },
+      async close(){closed=true;vm?.close();current?.close();current=null;if(mounted){mounted=false;await ff0.unmount(root).catch(()=>{});}}
+    });
+    return p;
+  }
+  function RAW_BUDGET(){return (navigator.deviceMemory&&navigator.deviceMemory<=2?64:128)*1024*1024;}
+  async function RAW_SINK(ff,expected,forceMemory=false){
+    let dir=null,handle=null,writer=null,fileName='',mounted=false,closing=null,closed=false,count=0;
+    const names=[],root='/skraw';
+    const sink={mode:'memory',budget:RAW_BUDGET(),
+      async write(data){
+        if(closed||GONE)throw new Error('salida');
+        if(writer)try{await writer.write(data);}catch(e){throw Object.assign(new Error(e?.message||String(e)),{rawStorage:true});}
+        else{const name='i'+String(count).padStart(6,'0')+'.raw';names.push(name);await ff.writeFile(name,new Uint8Array(data.buffer,data.byteOffset,data.byteLength));if(closed||GONE){await ff.deleteFile(name).catch(()=>{});throw new Error('salida');}}
+        count++;
+      },
+      async seal(fps,size){
+        if(closed||GONE)throw new Error('salida');
+        if(writer){await writer.close();writer=null;if(closed||GONE)throw new Error('salida');const file=await handle.getFile();await ff.createDir(root).catch(()=>{});await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[file]},root);mounted=true;if(closed||GONE){mounted=false;await ff.unmount(root).catch(()=>{});throw new Error('salida');}
+          return ['-f','rawvideo','-framerate',String(fps),'-pixel_format','rgba','-video_size',size+'x'+size,'-i',root+'/'+file.name];}
+        return ['-f','image2','-framerate',String(fps),'-pixel_format','rgba','-video_size',size+'x'+size,'-c:v','rawvideo','-i','i%06d.raw'];
+      },
+      close(){
+        if(closing)return closing;closed=true;
+        closing=(async()=>{
+          if(writer){const w=writer;writer=null;await w.abort().catch(()=>{});}
+          if(mounted){mounted=false;await ff.unmount(root).catch(()=>{});}
+          for(const name of names)await ff.deleteFile(name).catch(()=>{});
+          if(dir&&fileName)await dir.removeEntry(fileName).catch(()=>{});
+          RAW_ACTIVE.delete(sink);
+        })();return closing;
+      }
+    };
+    RAW_ACTIVE.add(sink);
+    // Short jobs stay in RAM. OPFS avoids retaining large raw sequences in MEMFS.
+    if(!forceMemory&&expected>32*1024*1024&&navigator.storage?.getDirectory)try{
+      const estimate=await navigator.storage.estimate?.();
+      if(estimate?.quota&&estimate.quota-(estimate.usage||0)<expected*1.15)throw new Error('espacio');
+      dir=await(await navigator.storage.getDirectory()).getDirectoryHandle('sk-stickers-tmp',{create:true});
+      // Only abandoned old temporaries from this app; other tabs may still be active.
+      for await(const [name,h] of dir.entries())if(/^sk-[a-f0-9-]+\.raw$/.test(name)&&h.kind==='file'){
+        try{if(Date.now()-(await h.getFile()).lastModified>86400000)await dir.removeEntry(name);}catch{}
+      }
+      fileName='sk-'+crypto.randomUUID()+'.raw';handle=await dir.getFileHandle(fileName,{create:true});
+      writer=await handle.createWritable();
+      if(closed||GONE){await writer.abort().catch(()=>{});writer=null;await dir.removeEntry(fileName).catch(()=>{});throw new Error('salida');}
+      sink.mode='opfs';
+    }catch(e){
+      if(writer){await writer.abort().catch(()=>{});writer=null;}
+      if(dir&&fileName)await dir.removeEntry(fileName).catch(()=>{});
+      dir=null;handle=null;fileName='';if(GONE){await sink.close();throw e;}
+    }
+    return sink;
+  }
+  function WB_STEPS(fps,pf){
+    const L=[[fps,50],[fps,30],[Math.min(fps,12),22],[Math.min(fps,10),10],[Math.min(fps,10),1]].filter((x,j,a)=>!j||x[0]!==a[j-1][0]||x[1]!==a[j-1][1]);
+    return [...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
+  }
+  async function WB_E1(it,base,ovs,fps,onp,pf,forceMemory=false){return FF_JOB(async()=>{
+    const ff=await FF_L1(),c=document.createElement('canvas');c.width=c.height=DIM;
+    const ctx=c.getContext('2d',{willReadFrequently:true}),lv=$('sc-lv'),ckEl=$('sc-ck'),lctx=lv.getContext('2d');
+    const baseDur=base.dur||0,overlayDur=ovs.reduce((m,o)=>Math.max(m,o.an?.dur||0),0);
+    const dur=Math.min(pf.max||VID_MAX,VID_MAX,baseDur||overlayDur||1/VID_FPS);
+    fps=AN_MIX_FPS(base,ovs,dur);
+    let sink=null,size=DIM,op=true;
+    ckEl.style.display='none';lv.style.display='block';
+    try{
+      sink=await RAW_SINK(ff,Math.ceil(dur*fps-1e-8)*DIM*DIM*4,forceMemory);
+      // Older/private browsers without storage still get the whole chosen interval.
+      // Reduce detail before exhausting memory, following the existing quality policy.
+      const bounded=sink.mode==='memory'||!!navigator.deviceMemory&&navigator.deviceMemory<=2;
+      if(bounded&&Math.ceil(dur*fps-1e-8)*size*size*4>sink.budget){
+        size=256;fps=Math.max(1,Math.min(fps,Math.floor(sink.budget/(size*size*4*dur))));
+      }
+      const n=Math.min(MAXFR,Math.max(1,Math.ceil(dur*fps-1e-8)));
+      if(n*size*size*4>sink.budget&&bounded)throw new Error('No hay memoria suficiente para este tramo');
+      const raw=size===DIM?c:document.createElement('canvas');raw.width=raw.height=size;
+      const rx=raw===c?ctx:raw.getContext('2d',{willReadFrequently:true});
       for(let i=0;i<n;i++){
         if(GONE)throw new Error('salida');
-        const time=Math.min(meta.du-1e-7,cut.s+i/fps),index=Math.min(tr.frameCount-1,AN_IDX(meta,time));
-        if(index===previous)continue;
-        const image=(await dec.decode({frameIndex:index})).image;
-        try{
-          const w=image.displayWidth||image.codedWidth||image.width||0,h=image.displayHeight||image.codedHeight||image.height||0;
-          const scale=Math.min(1,THM/Math.max(w,h,1));
-          if(scale<1){fr.push(await createImageBitmap(image,{resizeWidth:Math.max(1,Math.round(w*scale)),resizeHeight:Math.max(1,Math.round(h*scale)),resizeQuality:'high'}));image.close();}
-          else fr.push(image);
-          times.push(Math.max(0,meta.times[index]-cut.s));previous=index;
-        }catch(e){try{image.close();}catch{}throw e;}
+        const time=i/fps;ctx.clearRect(0,0,DIM,DIM);
+        DR_B1(ctx,await FRAME_GET(base,time,ff),it.crop);
+        for(const o of ovs){const img=o.an?await FRAME_GET(o.an,time,ff,true):o.img;ctx.drawImage(img,o.x-o.s/2,o.y-o.s/2,o.s,o.s);}
+        if(raw!==c){rx.clearRect(0,0,size,size);rx.drawImage(c,0,0,size,size);}
+        const d=rx.getImageData(0,0,size,size).data;
+        if(op)for(let q=3;q<d.length;q+=4)if(d[q]<255){op=false;break;}
+        try{lctx.clearRect(0,0,DIM,DIM);lctx.drawImage(c,0,0,DIM,DIM);}catch{}
+        await sink.write(d);onp?.((i+1)/n*.75);
       }
-      return {fr,times,durations:times.map((t,i)=>(times[i+1]??cut.d)-t),fps,dur:cut.d};
-    }catch(e){AN_F1({fr});if(GONE)throw e;return null;}
-    finally{if(dec)try{dec.close();}catch{}}
-  }
+      await AN_F1(base);for(const o of ovs)await AN_F1(o.an);
+      let input;try{input=await sink.seal(fps,size);}catch(e){if(sink.mode==='opfs')throw Object.assign(new Error(e?.message||String(e)),{rawStorage:true});throw e;}
+      const st=WB_STEPS(fps,pf);let out=null;
+      for(let j=0;j<st.length;j++){
+        if(GONE)throw new Error('salida');
+        const [f,q,z]=st[j],filter='fps='+f+(z!==size?',scale='+z+':'+z:'');
+        const code=await ff.exec([...input,'-t',String(dur),'-vf',filter,'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
+        if(code!==0)throw new Error('webp '+code);
+        out=await ff.readFile('o.webp');onp?.(.75+.25*(j+1)/st.length);
+        if(out.byteLength<=pf.t)break;
+        if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
+      }
+      if(!out?.byteLength)throw new Error('webp vacio');
+      onp?.(1);return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
+    }finally{
+      await sink?.close();await ff.deleteFile('o.webp').catch(()=>{});
+      c.width=c.height=1;lv.style.display='none';ckEl.style.display='';
+    }
+  });}
 
   function AN_F1(a){
     if(!a)return;
+    if(a.close)return a.close();
     for(const x of new Set(a.fr||[]))try{x.close();}catch{}
     a.fr=[];
   }
@@ -1245,78 +1455,90 @@
 
   function DR_O1(ctx,ovs,time=0){
     ovs.forEach(o=>{
-      const src=o.an?.fr.length?AN_AT(o.an,time,true):o.img;
+      const src=o.an?.fr?.length?AN_AT(o.an,time,true):o.img;
       try{ctx.drawImage(src,o.x-o.s/2,o.y-o.s/2,o.s,o.s);}catch{}
     });
   }
 
   async function OV_P1(overlays){
     const out=[];
-    for(const o of overlays){
-      const an=o.blob&&o.anim?await AN_D1(o.blob,o.anim):null;
+    try{for(const o of overlays){
+      if(GONE)throw new Error('salida');
+      const an=o.blob&&o.anim?await AN_STREAM(o.blob,o.anim):null;
       out.push({img:o.img,an,x:o.x,y:o.y,s:o.s});
     }
-    return out;
+    return out;}catch(e){for(const o of out)await AN_F1(o.an);throw e;}
   }
 
-  async function WB_E1(it,base,ovs,fps,onp,pf){return FF_JOB(async()=>{
-    const ff=await FF_L1();
-    const c=document.createElement('canvas');c.width=DIM;c.height=DIM;
-    const ctx=c.getContext('2d');
-    const lv=$('sc-lv'),ckEl=$('sc-ck'),lctx=lv.getContext('2d');
-    ckEl.style.display='none';lv.style.display='block';
-    const baseDur=base.fr?.length?(base.dur||base.fr.length/(base.fps||VID_FPS)):0;
-    const overlayDur=ovs.reduce((m,o)=>Math.max(m,o.an?(o.an.dur||o.an.fr.length/(o.an.fps||VID_FPS)):0),0);
-    const dur=Math.min(VID_MAX,baseDur||overlayDur||1/VID_FPS);
-    fps=AN_MIX_FPS(base,ovs,dur);
-    const n=Math.min(MAXFR,Math.max(1,Math.ceil(dur*fps-1e-8))),names=[];
-    let op=true;
-    try{
-      for(let i=0;i<n;i++){
-        if(GONE)throw new Error('salida');
-        const time=i/fps;
-        ctx.clearRect(0,0,DIM,DIM);
-        DR_B1(ctx,AN_AT(base,time),it.crop);
-        DR_O1(ctx,ovs,time);
-        const d=ctx.getImageData(0,0,DIM,DIM).data;
-        if(op)for(let q=3;q<d.length;q+=4)if(d[q]<255){op=false;break;}
-        try{lctx.clearRect(0,0,DIM,DIM);lctx.drawImage(c,0,0,DIM,DIM);}catch{}
-        const nm='i'+String(i).padStart(4,'0')+'.raw';
-        await ff.writeFile(nm,new Uint8Array(d.buffer));names.push(nm);
-        if(onp)onp((i+1)/n);
-      }
-      AN_F1(base);
-      let out=null;
-      const L=[[fps,50],[fps,30],[Math.min(fps,12),22],[Math.min(fps,10),10],[Math.min(fps,10),1]].filter((x,j,a)=>!j||x[0]!==a[j-1][0]||x[1]!==a[j-1][1]);
-      const st=[...L.map(x=>[...x,DIM]),...(pf.s?L.map(x=>[...x,256]):[])];
-      for(let j=0;j<st.length;j++){
-        const [f,q,z]=st[j];
-        const code=await ff.exec(['-f','image2','-framerate',String(fps),'-pixel_format','rgba','-video_size',DIM+'x'+DIM,'-c:v','rawvideo','-i','i%04d.raw','-t',String(dur),'-vf','fps='+f+(z!==DIM?',scale='+z+':'+z:''),'-c:v',op?'libwebp':'libwebp_anim','-f','webp','-quality',String(q),'-loop','0','-y','o.webp']);
-        if(code!==0)throw new Error('webp '+code);
-        out=await ff.readFile('o.webp');
-        if(out.byteLength<=pf.t)break;
-        if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
-      }
-      if(!out?.byteLength)throw new Error('webp vacio');
-      return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
-    }finally{
-      for(const nm of [...names,'o.webp'])await ff.deleteFile(nm).catch(()=>{});
-      lv.style.display='none';ckEl.style.display='';
-    }
-  });}
 
-  async function VD_F1(file,fps,trim){
-    const vm=await VM_OPEN(file),fr=[];
-    try{
-      const cut=TRIM_1({trim},vm.du);
-      const n=Math.min(MAXFR,Math.max(1,Math.ceil(cut.d*fps-1e-8)));
-      for(let i=0;i<n;i++){
+
+
+
+  async function VD_DIRECT(it,onp,pf){
+    if(!it.isVid||it.ov?.length)throw new Error('video directo no aplicable');
+    if(!Number.isFinite(it.du)||it.du<=0)throw new Error('duracion de video desconocida');
+    const cut=TRIM_1(it),fps=VID_FPS,st=WB_STEPS(fps,pf);cut.d=Math.min(cut.d,pf.max||VID_MAX);
+    const filters=['scale='+THM+':'+THM+':force_original_aspect_ratio=decrease'],cd=it.crop;
+    if(cd){
+      if(![cd.x,cd.y,cd.w,cd.h,cd.sw,cd.sh].every(Number.isFinite)||cd.sw<=0||cd.sh<=0||cd.w<=0||cd.h<=0)throw new Error('recorte de video invalido');
+      const x=Math.max(0,Math.min(1,cd.x/cd.sw)),y=Math.max(0,Math.min(1,cd.y/cd.sh));
+      const w=Math.min(1-x,cd.w/cd.sw),h=Math.min(1-y,cd.h/cd.sh);
+      if(w<=0||h<=0)throw new Error('recorte de video vacio');
+      const num=n=>String(+n.toFixed(12));
+      filters.push('crop=w=iw*'+num(w)+':h=ih*'+num(h)+':x=iw*'+num(x)+':y=ih*'+num(y)+':exact=1');
+    }
+    filters.push('scale='+DIM+':'+DIM+':flags=bilinear','setsar=1');
+    return FM_1(it.file,async(ff,p)=>{
+      const name='vdirect.webp';let out=null,lm='',stage=0,last=0,full=false,probing=false,firstPTS=NaN;
+      const log=({message})=>{
+        if(message!=='Aborted()')lm=message;
+        if(probing&&!Number.isFinite(firstPTS)){const m=/\bn:\s*0\s+pts:.*?\bpts_time:\s*([-\d.e+]+)/.exec(message);if(m)firstPTS=Number(m[1]);}
+      };
+      const progress=({time})=>{
+        if(!onp||GONE||probing)return;
+        const ratio=Math.max(0,Math.min(1,(Number(time)||0)/(cut.d*1e6)));
+        last=Math.max(last,Math.min(.99,(stage+ratio)/st.length));onp(last);
+      };
+      ff.on('log',log);ff.on('progress',progress);
+      try{
+        const begin=Math.max(0,cut.s-.5),offset=cut.s-begin;
+        if(begin>0){
+          // A successful seek may still land after the frame currently held by sparse VFR.
+          // Check one decoded timestamp before committing to the short decode window.
+          probing=true;
+          try{
+            const code=await ff.exec(['-loglevel','info','-ss',String(begin),'-t',String(offset+cut.d),'-i',p,'-map','0:v:0','-an','-sn','-dn','-vf','showinfo=checksum=0','-frames:v','1','-f','null','-']);
+            full=code!==0||!Number.isFinite(firstPTS)||firstPTS>offset+1e-5;
+          }finally{probing=false;}
+        }
+        for(let j=0;j<st.length;j++){
+          if(GONE)throw new Error('salida');
+          stage=j;const [f,q,z]=st[j];out=null;
+          // Retain a little history so the frame held at the trim start is available.
+          // Sparse VFR can require a fallback from zero; keep that choice for later attempts.
+          for(const begin of new Set([full?0:Math.max(0,cut.s-.5),0])){
+            if(GONE)throw new Error('salida');
+            const offset=cut.s-begin,vf=[...filters,'tpad=stop_mode=clone:stop_duration='+String(cut.d+offset),'setpts=PTS-'+String(offset)+'/TB','fps='+fps+':start_time=0'];
+            if(f!==fps)vf.push('fps='+f);
+            if(z!==DIM)vf.push('scale='+z+':'+z);
+            await ff.deleteFile(name).catch(()=>{});lm='';
+            const code=await ff.exec(['-ss',String(begin),'-t',String(offset+cut.d),'-i',p,'-map','0:v:0','-an','-sn','-dn','-map_metadata','-1','-t',String(cut.d),'-vf',vf.join(','),'-frames:v',String(Math.max(1,Math.ceil(cut.d*f-1e-8))),'-c:v','libwebp','-f','webp','-quality',String(q),'-loop','0','-y',name]);
+            if(code!==0)throw new Error('webp directo '+code+' '+lm);
+            try{const data=await ff.readFile(name);if(data.byteLength>12)out=data;}catch{}
+            if(out){if(begin===0&&cut.s>.5)full=true;break;}
+          }
+          if(!out?.byteLength)throw new Error('webp directo vacio '+lm);
+          if(out.byteLength<=pf.t)break;
+          if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
+        }
         if(GONE)throw new Error('salida');
-        fr.push(await vm.bitmap(Math.min(vm.du-.001,cut.s+i/fps)));
+        if(onp)onp(1);
+        return out.byteLength<=pf.t||pf.s?new Blob([out],{type:'image/webp'}):null;
+      }finally{
+        ff.off('log',log);ff.off('progress',progress);
+        await ff.deleteFile(name).catch(()=>{});
       }
-      return {fr,fps,dur:cut.d};
-    }catch(e){AN_F1({fr});throw e;}
-    finally{vm.close();}
+    });
   }
 
   async function FM_1(f,fn){return FF_JOB(async()=>{
@@ -1365,18 +1587,7 @@
     });
   }
 
-  async function VD_F2(it){
-    await FF_L1();
-    const fr=[],cut=TRIM_1(it);
-    try{
-      for(const b of await FV_1(it.file,Math.min(MAXFR,Math.max(1,Math.ceil(cut.d*VID_FPS-1e-8))),cut.s,cut.d)){
-        if(GONE)throw new Error('salida');
-        fr.push(await createImageBitmap(b));
-      }
-      return {fr,fps:VID_FPS,dur:Math.min(cut.d,fr.length/VID_FPS)};
-    }catch(e){AN_F1({fr});if(it.fv||GONE)throw e;}
-    return VD_F1(it.file,VID_FPS,it.trim);
-  }
+
 
   async function PW_1(b,pf){return FF_JOB(async()=>{
     const ff=await FF_L1();let o=null;
@@ -1411,36 +1622,63 @@
     return await ST_E1(it,ovs,pf);
   }
 
-  async function EX_1(it,onp,pf=PB,lg){
-    await KF_1(it);
+  async function EX_1(it,onp,pf=PB,lg,forceMemory=false){
+    await KF_1(it);const original=it;
+    const cap=Math.min(VID_MAX,pf.max||VID_MAX);
+    // The local WhatsApp pack profile also applies when opened from the normal page.
+    if((it.isVid||it.isAnim)&&cap<VID_MAX){const cut=TRIM_1(it);it={...it,trim:{s:cut.s,d:Math.min(cap,cut.d)}};}
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
-    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{ov.forEach(o=>AN_F1(o.an));}}
+    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;for(const o of ov)await AN_F1(o.an);}}
+    if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;FF_R1();lg?.('direct:'+DG_1(e));}
     let base=null,ovs=[];
     try{
-      if(it.isVid)base=await VD_F2(it);
-      else if(it.isAnim){base=await AN_D1(it.file,it.isAnim,it.trim);if(!base){if(it.trim&&!it.fp)throw new Error('No se pudo recuperar el fotograma del tramo elegido');it.fx=1;lg?.('d');}}
+      if(it.isVid)base=await VD_STREAM(it);
+      else if(it.isAnim){base=await AN_STREAM(it.file,it.isAnim,it.trim);if(!base){if(it.trim&&!it.fp)throw new Error('No se pudo recuperar el fotograma del tramo elegido');it.fx=1;lg?.('d');}}
       ovs=await OV_P1(it.ov);
       if(!base&&it.isAnim&&it.trim)return await ST_E1(it,ovs,pf);
       if(!base&&!ovs.some(o=>o.an))return await ST_E1(it,ovs,pf);
       if(!base)base={img:await IMG_L1(it.file)};
       const fps=base.fps||ovs.find(o=>o.an)?.an.fps||VID_FPS;
-      try{return await WB_E1(it,base,ovs,fps,onp,pf);}catch(e){if(GONE||!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e));return await FX_1(it,ovs,pf);}
-    }finally{AN_F1(base);ovs.forEach(o=>AN_F1(o.an));}
+      try{return await WB_E1(it,base,ovs,fps,onp,pf,forceMemory);}catch(e){
+        if(GONE)throw e;
+        if(e.rawStorage&&!forceMemory){await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('storage:'+DG_1(e));return await EX_1(it,onp,pf,lg,true);}
+        if(!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e));return await FX_1(it,ovs,pf);
+      }
+    }finally{if(it.fx)original.fx=it.fx;await AN_F1(base);for(const o of ovs)await AN_F1(o.an);}
   }
+
 
   function AU_1(a){
     return FM_1(a.f,async(ff,p)=>{
-      let lm='';const lh=({message})=>{if(message!=='Aborted()')lm=message;};ff.on('log',lh);
+      let lm='',noAudio=false;
+      const lh=({message})=>{if(message!=='Aborted()')lm=message;if(/matches no streams|does not contain any stream/i.test(message))noAudio=true;};
+      ff.on('log',lh);
       try{
-        const r=await ff.exec(['-ss',String(a.s),'-t',String(a.d),'-i',p,'-vn','-map_metadata','-1','-ac','1','-ar','48000','-c:a','libopus','-b:a','48k','-f','ogg','-y','a.ogg']);
-        const o=r===0?await ff.readFile('a.ogg'):null;
-        if(!o?.byteLength||o.byteLength>AU_MX)throw new Error('audio '+r+' '+lm);
-        return new Blob([o],{type:'audio/ogg'});
+        for(const rate of [48,32,24,16]){
+          if(GONE)throw new Error('salida');
+          lm='';noAudio=false;
+          const r=await ff.exec(['-ss',String(Math.max(0,Number(a.s)||0)),'-t',String(Math.min(AU_S,Math.max(.001,Number(a.d)||AU_S))),'-i',p,'-vn','-map','0:a:0','-map_metadata','-1','-ac','1','-ar','48000','-c:a','libopus','-b:a',rate+'k','-f','ogg','-y','a.ogg']);
+          const o=r===0?await ff.readFile('a.ogg'):null;
+          if(!o?.byteLength)throw Object.assign(new Error('audio '+r+' '+lm),{noAudio});
+          if(o.byteLength<=AU_MX)return new Blob([o],{type:'audio/ogg'});
+          // A lower bitrate is useful only when a valid output is too large.
+        }
+        throw Object.assign(new Error('audio supera '+AU_MX+' bytes'),{audioSize:true});
       }finally{ff.off('log',lh);await ff.deleteFile('a.ogg').catch(()=>{});}
     });
   }
   async function AU_2(a,lg){
-    for(let k=1;k<3;k++){try{return await AU_1(a);}catch(e){if(GONE||/any stream/.test(e?.message))return null;lg('a'+k+':'+DG_1(e));FF_R1();}}
+    delete a.noTrack;
+    for(let k=1;k<3;k++){
+      try{return await AU_1(a);}
+      catch(e){
+        if(GONE)return null;
+        if(e?.noAudio){a.noTrack=true;return null;}
+        lg?.('a'+k+':'+DG_1(e));
+        if(e?.audioSize)return null;
+        FF_R1();
+      }
+    }
     return null;
   }
   const DG_1=e=>String(e?.message||e).replace(/\s+/g,' ').slice(0,90)+(document.hidden?' [oculta]':'');
@@ -1479,12 +1717,13 @@
   }
   async function AP_1(items){
     const o=[];
+    const fits=async(b,k)=>!!b&&!!k&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS)&&(!k.a||await AN_META(b,'webp_anim').then(m=>m.du<=PA.max+1e-8).catch(()=>false));
     items.forEach(it=>{delete it.fx;});
     for(let i=0;i<items.length;i++){
       const it=items[i];setProg(Math.round(i/items.length*80),'Preparando...');
       let b=it.o,k=b?await WI_1(b):null;
-      if(!k||k.w!==DIM||k.h!==DIM||b.size>(k.a?LA:LS)){try{b=await EX_1(it,p=>setProg(Math.round((i+p)/items.length*80)),PA);}catch{b=null;}k=b?await WI_1(b):null;}
-      if(b&&k.w===DIM&&k.h===DIM&&b.size<=(k.a?LA:LS))o.push({b,a:k.a});
+      if(!await fits(b,k)){try{b=await EX_1(it,p=>setProg(Math.round((i+p)/items.length*80)),PA);}catch{b=null;}k=b?await WI_1(b):null;}
+      if(await fits(b,k))o.push({b,a:k.a});
     }
     if(GONE)return;
     if(o.some(x=>x.a)&&o.some(x=>!x.a))for(const x of o)if(!x.a){x.b=await D2_1(x.b).catch(()=>null);x.a=true;}
@@ -1547,7 +1786,7 @@
   PD.addEventListener('cancel',e=>{e.preventDefault();if(SEND_OP?.wait)SEND_RESUME(false);});
 
   $('sk-cf').onclick=async()=>{
-    if(!P.length||PD.open||SEND_OP)return;
+    if(!P.length||PD.open||DG.open||SEND_OP||IMP_PENDING||KF_TASK.size||ED_W)return;
     SN_P();
     const items=[...P];
     PD_O('Procesando...');
@@ -1560,7 +1799,7 @@
       form=new FormData();const urls=[],dg=[],ab=[];op.form=form;
       if(MU)for(let i=0;i<items.length;i++){
         if(GONE||SEND_OP!==op)return;
-        const it=items[i];if(it.au&&(it.file||ID_OK)){ab[i]=await AU_2(it.au,s=>dg.push(N3(i+1)+s));if(!ab[i]&&!it.au.v)nA++;}
+        const it=items[i];if(it.au&&(it.file||ID_OK)){ab[i]=await AU_2(it.au,s=>dg.push(N3(i+1)+s));if(!ab[i]&&!(it.au.v&&it.au.noTrack))nA++;}
       }
       for(let i=0;i<items.length;i++){
         if(GONE||SEND_OP!==op)return;
@@ -1720,7 +1959,7 @@
 
   const cont=$('content');
   if(cont)cont.addEventListener('contentUnload',()=>{
-    GONE=true;SEND_NET.forEach(ac=>ac.abort());SEND_DROP();VMS.forEach(v=>v.close());
+    GONE=true;FRAME_ACTIVE.forEach(p=>{Promise.resolve(p.close()).catch(()=>{});});RAW_ACTIVE.forEach(s=>{s.close().catch(()=>{});});IMP_STOP();SEND_NET.forEach(ac=>ac.abort());SEND_DROP();VMS.forEach(v=>v.close());
     document.removeEventListener('contentState',CS_1);HM.clear();
     document.removeEventListener('paste',DP_P);document.removeEventListener('dragover',DP_O);document.removeEventListener('drop',DP_D);
     ED_X();
