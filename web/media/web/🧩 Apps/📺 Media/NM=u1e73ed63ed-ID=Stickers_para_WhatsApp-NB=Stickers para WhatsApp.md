@@ -253,7 +253,7 @@
           _gfPending=false;
           if(GONE||!gEl.clientWidth)return;
           const n=gf.itemsPerPage(gEl,ITEM,ITEM,GAP,140);
-          // Reflow visual pages without changing API cursors or reconnecting ads.
+                                                                                  
           if(n!==PG){PG=n;KL_REFLOW();}
         });
       };
@@ -313,7 +313,7 @@
     if(!Array.isArray(j.data))throw new Error('Respuesta KLIPY');
     return j.data.filter(it=>it&&(it.type==='ad'?ad&&it.content:it.url));
   }
-  // The overlay picker remains an independent, single-page search without ads.
+                                                                               
   async function KS_1(q,ad=false){
     try{
       const rows=await Promise.all(Object.keys(KT).map(type=>KL_GET(q,type,1,50,ad,KL_LIFE.signal)));
@@ -378,7 +378,8 @@
   const TL_1=()=>window.TS1?Promise.resolve():TSP||(TSP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='web/js/lib/Turnstile.js';s.onload=ok;s.onerror=()=>{TSP=null;no(new Error('verificacion'))};document.head.appendChild(s)}));
   const SE_1=(code,message,status=0)=>Object.assign(new Error(message),{sendCode:code,status});
   const TK_1=()=>TL_1().then(()=>window.TS1()).catch(()=>{throw SE_1('verify-local','No se pudo completar la verificacion en este navegador. El paquete todavia no se envio.');});
-  const ER_1=e=>e.sendCode?e.message:e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Servidor ocupado, proba en un minuto':e.message==='403'?'El servidor rechazo la solicitud (403). No se confirmo un problema de verificacion.':e.message==='verificacion'?'No se pudo completar la verificacion en este navegador.':null;
+  const ER_1=e=>e.sendCode?e.message:e.message==='sinwa'?'✖️ Servidor Saturado 😿':e.message==='503'?'Error 503 proba luego':e.message==='403'?'Error 403 proba luego':e.message==='verificacion'?'Proba otro Navegador.':null;
+  const SEND_REMOTE=e=>['verify-local','verify-server','forbidden','http','network','response'].includes(e?.sendCode)||['sinwa','403','503','verificacion'].includes(e?.message);
   let SEND_OP=null;
   const SEND_NET=new Set();
   async function SEND_BODY(res){
@@ -392,7 +393,7 @@
   }
   async function SEND_HTTP(res){
     const body=await SEND_BODY(res),status=res.status;
-    // Only this existing middleware response confirms rejection before processing.
+                                                                                   
     if(status===403&&body?.error==='Error verificacion, recarga la pagina')return SE_1('verify-server','El servidor rechazo la verificacion. Podes reintentar sin convertir de nuevo.',status);
     if(status===403)return SE_1('forbidden','El servidor rechazo el envio (403). No se confirmo un problema de verificacion.',status);
     if(status===413)return SE_1('http','El paquete supera el tamaño que acepta el servidor (413).',status);
@@ -444,19 +445,17 @@
     c().catch(()=>{});
   }
 
-  function KL_PAGES(items){
-    const pages=[];let row=[],count=0;
-    // Ads stay in API order and do not consume a media slot.
-    for(const it of items){
-      if(it.type!=='ad'&&count>=PG){pages.push(row);row=[];count=0;}
-      row.push(it);if(it.type!=='ad')count++;
+  function KL_PAGES(items,layout){
+    for(let i=layout.items.length;i<items.length;i++){
+      const it=items[i];let row=layout.pages.at(-1);
+      if(!row||it.type!=='ad'&&row.count>=PG){row=[];row.count=0;layout.pages.push(row);}
+      row.push(it);if(it.type!=='ad')row.count++;
     }
-    if(row.length)pages.push(row);
-    return pages;
+    layout.items=items;return layout.pages;
   }
   function KL_BATCH(s,type,items){
     if(!items.length)return;
-    const batch={type,items,pages:KL_PAGES(items)};
+    const batch={type,items};
     s.batches.push(batch);s.sources[type].batches.push(batch);
   }
   function KL_FALLBACK_BATCHES(s,items){
@@ -489,7 +488,7 @@
   function KL_STATUS(){
     const el=$('SK_MORE');if(!el||GONE)return;
     el.textContent='';el.hidden=true;
-    const s=KQ;if(!s||PS.length&&pg<PS.length-1)return;
+    const s=KQ;if(!s||PS.length&&pg<PS.length-2)return;
     if(s.busy){
       if(!PS.length)return;
       el.hidden=false;const im=document.createElement('img');im.src=WA;im.alt='';im.className='wait-anim';
@@ -506,7 +505,14 @@
     const s=KQ,batches=s?.batches||[];
     R=batches.flatMap(b=>b.items);
     const selected=s?(FT?s.sources[FT].batches:s.global):[];
-    RF=selected.flatMap(b=>b.items);PS=selected.flatMap(b=>b.pages);
+    RF=selected.flatMap(b=>b.items);
+    if(!s){PS=[];return;}
+    let layout=s.layouts.get(FT);
+    if(!layout||layout.size!==PG||layout.items.length>RF.length||!layout.items.every((it,i)=>it===RF[i])){
+      layout?.pages.forEach(row=>row.el?.remove());
+      layout={items:[],pages:[],size:PG};s.layouts.set(FT,layout);
+    }
+    PS=KL_PAGES(RF,layout);
   }
   function KL_POSITION(s=KQ){
     const pos=s?.positions.get(FT);if(!pos)return 0;
@@ -516,11 +522,8 @@
   function KL_REFLOW(){
     if(!KQ||GONE)return;
     KL_GESTURE=null;
-    for(const batch of KQ.batches){
-      for(const row of batch.pages)row.el?.remove();
-      batch.pages=KL_PAGES(batch.items);
-    }
-    KQ.edges.clear();PS_1();
+    for(const layout of KQ.layouts.values())for(const row of layout.pages)row.el?.remove();
+    KQ.layouts.clear();PS_1();
     if(PS.length)renderPage(KL_POSITION(),false,false);else KL_EMPTY();
   }
   function KL_HIDE(){
@@ -550,8 +553,8 @@
           try{
             const items=await KL_FALLBACK(s.q,ADS,s.ac.signal);
             if(GONE||s!==KQ||s.ac.signal.aborted)return;
-            // Backend fallback is a finite first batch. Keep previously loaded
-            // types, use only missing types, and never request backend page 2.
+                                                                               
+                                                                               
             KL_FALLBACK_BATCHES(s,items);s.fallback=true;
             for(const x of Object.values(s.sources)){x.page=Math.max(1,x.page);x.more=false;x.error='';}
             return;
@@ -563,11 +566,10 @@
     return s.flight;
   }
   function KL_AUTO(){
-    const s=KQ,row=PS[pg];
-    if(!s||GONE||!row||pg!==PS.length-1||s.edges.get(FT)===row)return;
-    s.edges.set(FT,row);
-    // One additional batch per arrival at the end, including one-page views.
-    // Completion does not recursively prefetch the rest of the categories.
+    const s=KQ;if(!s||GONE||!PS[pg]||pg<PS.length-2)return;
+    const edge=(FT?s.sources[FT].batches:s.global).at(-1);
+    if(!edge||s.edges.get(FT)===edge)return;
+    s.edges.set(FT,edge);
     void K_MORE(false,false);
   }
   function K_MORE(retry=false,advance=true){
@@ -580,8 +582,8 @@
       if(s.flight)await s.flight;
       if(!live())return;
       if(retry&&!s.fallback)s.fallbackTried=false;
-      // Empty/exhausted categories can be skipped, but never loop fetching
-      // successive pages solely to obtain an advertisement.
+                                                                           
+                                                            
       for(let i=0;i<Object.keys(KT).length&&live();i++){
         const type=KL_PICK(s,view,retry);if(!type)break;
         const src=s.sources[type];
@@ -592,10 +594,10 @@
         if(src.used<src.batches.length){s.global.push(src.batches[src.used++]);break;}
       }
       if(!live())return;
-      const oldLength=PS.length,atEnd=PS[pg]===oldRow&&pg===oldLength-1;
+      const oldLength=PS.length,atEnd=PS[pg]===oldRow&&pg===oldLength-1,wasFull=oldRow?.count>=PG;
       PS_1();
       if(PS.length){
-        const next=advance&&oldLength&&atEnd&&PS.length>oldLength?oldLength:KL_POSITION(s);
+        const next=advance&&oldLength&&atEnd&&wasFull&&PS.length>oldLength?oldLength:KL_POSITION(s);
         renderPage(next,false,false);
       }else KL_EMPTY();
     })().finally(()=>{s.jobs.delete(token);if(retry&&!oldRow&&live())KL_AUTO();});
@@ -604,7 +606,7 @@
   async function doFetch(q){
     if(GONE)return;
     KQ?.ac.abort();KL_RESET_VIEW();
-    const s={q,ac:new AbortController(),perPage:KL_PAGE_SIZE,sources:{},batches:[],global:[],turn:0,busy:false,flight:null,fallback:false,fallbackTried:false,positions:new Map(),edges:new Map(),jobs:new Map(),tick:0};
+    const s={q,ac:new AbortController(),perPage:KL_PAGE_SIZE,sources:{},batches:[],global:[],layouts:new Map(),turn:0,busy:false,flight:null,fallback:false,fallbackTried:false,positions:new Map(),edges:new Map(),jobs:new Map(),tick:0};
     for(const type of Object.keys(KT))s.sources[type]={page:0,more:true,error:'',batches:[],used:0};
     KQ=s;lastQ=q;R=[];RF=[];PS=[];pg=0;
     gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';KL_STATUS();SW?.pre();
@@ -641,8 +643,8 @@
   }
 
   function AD_1(it,order){
-    // Keep each delivered ad connected until this search ends. Reflow, filter
-    // changes and media-page eviction must not reload or discard its iframe.
+                                                                              
+                                                                             
     if(!it._slot){
       const slot=document.createElement('div');slot.className='sk-ad-slot';
       const f=document.createElement('iframe');f.className='sk-ad';f.title='Anuncio';f.scrolling='no';
@@ -669,12 +671,14 @@
     KL_HIDE();
     if(!row.el){
       row.el=document.createElement('div');row.el.className='sk-page';gEl.append(row.el);
-      row.forEach((it,i)=>{if(it.type!=='ad'){const b=CD_1(it);b.style.order=i;row.el.append(b);}});
+      row.drawn=0;
     }
+    for(let i=row.drawn;i<row.length;i++)if(row[i].type!=='ad'){const b=CD_1(row[i]);b.style.order=i;row.el.append(b);}
+    row.drawn=row.length;
     row.el.hidden=false;row.used=++s.tick;
     row.forEach((it,i)=>{if(it.type==='ad')AD_1(it,i);});
     row.el.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));
-    const mounted=s.batches.flatMap(b=>b.pages).filter(r=>r.el).sort((a,b)=>a.used-b.used);
+    const mounted=[...s.layouts.values()].flatMap(v=>v.pages).filter(r=>r.el).sort((a,b)=>a.used-b.used);
     while(mounted.length>KL_KEEP_PAGES){const old=mounted.shift();old.el.remove();old.el=null;}
     renderPg();if(load)KL_AUTO();
     if(sw)return;
@@ -731,7 +735,7 @@
     });
   }
 
-  // Times are source seconds. Preview position never changes the saved interval.
+                                                                                 
   const SK_TIME=s=>{const n=Math.round(Math.max(0,Number(s)||0)*10);return Math.floor(n/600)+':'+((n%600)/10).toFixed(1).padStart(4,'0');};
   function SK_RANGE(du,s=0,d=VID_MAX,limit=VID_MAX){
     du=Number(du);if(!Number.isFinite(du)||du<=0)du=limit;
@@ -770,7 +774,7 @@
       let id=0,raf=0,done=false;
       const end=()=>{if(done)return;done=true;clearTimeout(to);if(id)v.cancelVideoFrameCallback?.(id);if(raf)cancelAnimationFrame(raf);alive()?ok():no(new Error('salida'));};
       const to=setTimeout(end,90);
-      // A paused WebView may never deliver rVFC. Do not make it a requirement.
+                                                                               
       if(v.requestVideoFrameCallback)try{id=v.requestVideoFrameCallback(end);}catch{}
       raf=requestAnimationFrame(()=>{raf=requestAnimationFrame(end);});
     });
@@ -925,7 +929,7 @@
     if(IMP_RUNNING)return;
     IMP_RUNNING=true;
     try{
-      // Let the immediate loading state render before decoding the first file.
+                                                                               
       await new Promise(resolve=>setTimeout(resolve,0));
       while(IMP_Q.length&&!GONE){
         const job=IMP_Q.shift(),f=job.f;job.f=null;let added=false;
@@ -1019,7 +1023,7 @@
       if(!live())return;s.warning='Vista previa sin sonido: no se pudo iniciar el audio.';
       CR_SOUND_TAIL(e,s,e.playElapsed||0);$('SK_CStatus').textContent=s.warning;
     };
-    // Keep play() in the original click call stack for Safari. No conversion or await here.
+                                                                                            
     try{s.a.currentTime=s.start;}catch{}
     try{Promise.resolve(s.a.play()).catch(fail);}catch{fail();}
     const check=()=>{
@@ -1470,7 +1474,7 @@
     return Math.max(1,Math.min(VID_FPS,Math.max(floor,AN_FPS(times,dur))));
   }
 
-  // Export providers retain only the frame currently being drawn.
+                                                                  
   const FRAME_ACTIVE=new Set(),RAW_ACTIVE=new Set();
   function FRAME_OWN(p){
     const close=p.close;let closed=false,closing;
@@ -1530,7 +1534,7 @@
         current?.close();current=null;
         const at=Math.min(duration-.001,cut.s+time);
         if(vm)try{current=await vm.bitmap(at);if(closed||GONE){current.close();current=null;throw new Error('salida');}return current;}catch(e){vm.close();vm=null;if(GONE||closed)throw e;}
-        // Legacy codec fallback: one PNG only, never a full PNG sequence.
+                                                                          
         ff0=ff;
         if(!mounted){await ff.createDir(root).catch(()=>{});await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[it.file]},root);mounted=true;if(closed||GONE){mounted=false;await ff.unmount(root).catch(()=>{});throw new Error('salida');}}
         try{
@@ -1581,12 +1585,12 @@
       }
     };
     RAW_ACTIVE.add(sink);
-    // Short jobs stay in RAM. OPFS avoids retaining large raw sequences in MEMFS.
+                                                                                  
     if(!forceMemory&&expected>32*1024*1024&&navigator.storage?.getDirectory)try{
       const estimate=await navigator.storage.estimate?.();
       if(estimate?.quota&&estimate.quota-(estimate.usage||0)<expected*1.15)throw new Error('espacio');
       dir=await(await navigator.storage.getDirectory()).getDirectoryHandle('sk-stickers-tmp',{create:true});
-      // Only abandoned old temporaries from this app; other tabs may still be active.
+                                                                                      
       for await(const [name,h] of dir.entries())if(/^sk-[a-f0-9-]+\.raw$/.test(name)&&h.kind==='file'){
         try{if(Date.now()-(await h.getFile()).lastModified>86400000)await dir.removeEntry(name);}catch{}
       }
@@ -1615,8 +1619,8 @@
     ckEl.style.display='none';lv.style.display='block';
     try{
       sink=await RAW_SINK(ff,Math.ceil(dur*fps-1e-8)*DIM*DIM*4,forceMemory);
-      // Older/private browsers without storage still get the whole chosen interval.
-      // Reduce detail before exhausting memory, following the existing quality policy.
+                                                                                    
+                                                                                       
       const bounded=sink.mode==='memory'||!!navigator.deviceMemory&&navigator.deviceMemory<=2;
       if(bounded&&Math.ceil(dur*fps-1e-8)*size*size*4>sink.budget){
         size=256;fps=Math.max(1,Math.min(fps,Math.floor(sink.budget/(size*size*4*dur))));
@@ -1723,8 +1727,8 @@
       try{
         const begin=Math.max(0,cut.s-.5),offset=cut.s-begin;
         if(begin>0){
-          // A successful seek may still land after the frame currently held by sparse VFR.
-          // Check one decoded timestamp before committing to the short decode window.
+                                                                                           
+                                                                                      
           probing=true;
           try{
             const code=await ff.exec(['-loglevel','info','-ss',String(begin),'-t',String(offset+cut.d),'-i',p,'-map','0:v:0','-an','-sn','-dn','-vf','showinfo=checksum=0','-frames:v','1','-f','null','-']);
@@ -1734,8 +1738,8 @@
         for(let j=0;j<st.length;j++){
           if(GONE)throw new Error('salida');
           stage=j;const [f,q,z]=st[j];out=null;
-          // Retain a little history so the frame held at the trim start is available.
-          // Sparse VFR can require a fallback from zero; keep that choice for later attempts.
+                                                                                      
+                                                                                              
           for(const begin of new Set([full?0:Math.max(0,cut.s-.5),0])){
             if(GONE)throw new Error('salida');
             const offset=cut.s-begin,vf=[...filters,'tpad=stop_mode=clone:stop_duration='+String(cut.d+offset),'setpts=PTS-'+String(offset)+'/TB','fps='+fps+':start_time=0'];
@@ -1779,8 +1783,8 @@
       if(n===1){
         const name='vframe.png';
         try{
-          // Keep the last frame at the requested time, including the frame held at EOF.
-          // Very sparse VFR may need more history than the short first attempt.
+                                                                                        
+                                                                                
           for(const begin of new Set([Math.max(0,s-.5),0])){
             if(GONE)throw new Error('salida');
             await ff.deleteFile(name).catch(()=>{});
@@ -1845,7 +1849,7 @@
   async function EX_1(it,onp,pf=PB,lg,forceMemory=false){
     await KF_1(it);const original=it;
     const cap=Math.min(VID_MAX,pf.max||VID_MAX);
-    // The local WhatsApp pack profile also applies when opened from the normal page.
+                                                                                     
     if((it.isVid||it.isAnim)&&cap<VID_MAX){const cut=TRIM_1(it);it={...it,trim:{s:cut.s,d:Math.min(cap,cut.d)}};}
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
     if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;for(const o of ov)await AN_F1(o.an);}}
@@ -1881,7 +1885,7 @@
           const o=r===0?await ff.readFile('a.ogg'):null;
           if(!o?.byteLength)throw Object.assign(new Error('audio '+r+' '+lm),{noAudio});
           if(o.byteLength<=AU_MX)return new Blob([o],{type:'audio/ogg'});
-          // A lower bitrate is useful only when a valid output is too large.
+                                                                             
         }
         throw Object.assign(new Error('audio supera '+AU_MX+' bytes'),{audioSize:true});
       }finally{ff.off('log',lh);await ff.deleteFile('a.ogg').catch(()=>{});}
@@ -1991,15 +1995,8 @@
   function SEND_RESUME(retry){const op=SEND_OP;if(!op?.wait)return;const wake=op.wait;op.wait=null;SEND_CLEAR_UI();wake(retry);}
   SEND_RETRY.onclick=()=>SEND_RESUME(true);SEND_CANCEL.onclick=()=>SEND_RESUME(false);
   async function SEND_TRY(op){
-    for(;;){
-      if(GONE||SEND_OP!==op)throw SE_1('cancel','');
-      try{return await SEND_POST(op.form,{},op);}
-      catch(e){
-        if(GONE||SEND_OP!==op)throw SE_1('cancel','');
-        if(!['verify-local','verify-server'].includes(e.sendCode))throw e;
-        if(!await SEND_WAIT(op,e))throw SE_1('cancel','');
-      }
-    }
+    if(GONE||SEND_OP!==op)throw SE_1('cancel','');
+    return SEND_POST(op.form,{},op);
   }
   function PD_O(l){SEND_CLEAR_UI();setProg(0,l);if(!PD.open)PD.showModal();document.body.style.overflow='hidden';}
   function PD_C(){SEND_CLEAR_UI();if(PD.open)PD.close();document.body.style.overflow='';}
@@ -2040,7 +2037,7 @@
       if(dg.length)form.append('dg',(navigator.deviceMemory||'?')+'GB '+(navigator.hardwareConcurrency||'?')+'n '+dg.join(' | '));
       let jr=await SEND_TRY(op);if(GONE||SEND_OP!==op)return;
       op.form=null;form=null;
-      const {sid,w}=jr;
+      const {sid,w}=jr||{};
       if(!SD_RX.test(sid||''))throw SE_1('response','El servidor respondio sin un identificador valido. No se reenvio automaticamente.');
       if(!w)jr=RS_1(jr);
       items.forEach(FR_1);P=P.filter(it=>!items.includes(it));UP_1();
@@ -2050,7 +2047,7 @@
       if(nF)ER_D1(nF+' no se pudieron convertir');
       if(nA)ER_D1(nA+' sin sonido');
       if(nX)ER_D1(nX+' salieron fijos');
-    }catch(e){if(GONE||e.sendCode==='cancel')return;if(e.message==='sinwa')SA_1();else ER_D1(ER_1(e)||(e.message==='conversion'?'No se pudieron convertir los archivos. Tu pack se conserva.':'No se pudo completar el envio. Tu pack se conserva.'));}
+    }catch(e){if(GONE||e.sendCode==='cancel')return;if(SEND_REMOTE(e)){PD_C();SA_1();}else ER_D1(ER_1(e)||(e.message==='conversion'?'No se pudieron convertir los archivos. Tu pack se conserva.':'No se pudo completar el envio. Tu pack se conserva.'));}
     finally{form=null;SEND_DROP(op);if(!GONE)PD_C();}
   };
 
@@ -2063,8 +2060,8 @@
     W.hidden=false;B.style.width='0%';L.textContent='Pidiendo el pack...';
     try{
       if(!await DS_1())throw new Error('sinwa');
-      let jr=await SEND_POST(JSON.stringify({pack}),{'Content-Type':'application/json'});const {sid,w}=jr;
-      if(!SD_RX.test(sid||''))throw new Error('sid');
+      let jr=await SEND_POST(JSON.stringify({pack}),{'Content-Type':'application/json'});const {sid,w}=jr||{};
+      if(!SD_RX.test(sid||''))throw SE_1('response','');
       if(w){W.hidden=true;jr=await WT_1(sid,w,L);}
       else await new Promise((ok,no)=>{const t0=Date.now(),iv=setInterval(()=>{
         if(GONE){clearInterval(iv);no(new Error('salida'));return;}
@@ -2074,7 +2071,7 @@
       },500);});
       L.textContent='';W.hidden=true;
       OK_1(RS_1(jr));
-    }catch(e){L.textContent='';W.hidden=true;ER_D1(ER_1(e)||'Error Telegram '+e.message);}
+    }catch(e){L.textContent='';W.hidden=true;if(GONE||e.sendCode==='cancel')return;if(SEND_REMOTE(e))SA_1();else ER_D1(ER_1(e)||'Error Telegram '+e.message);}
     finally{TG_B=0;}
   }
   $('SK_TF').onsubmit=e=>{e.preventDefault();SN_P();TG_1($('SK_TQ').value);};
