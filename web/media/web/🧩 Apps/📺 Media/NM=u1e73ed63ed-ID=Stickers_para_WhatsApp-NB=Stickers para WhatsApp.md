@@ -6,13 +6,16 @@
 .SK_SB{display:flex;gap:8px;margin:0 0 12px}
 .SK_SB input{flex:1;min-width:0}
 .SK_TX{color:var(--RD_MF);font-size:.9rem;margin:0 0 12px}
-.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--SK_I));grid-auto-flow:dense;gap:8px;justify-content:center;margin-bottom:8px;min-height:40px}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--SK_I));grid-auto-flow:row;gap:8px;justify-content:center;margin-bottom:8px;min-height:40px}
 .sk-it{width:var(--SK_I);height:var(--SK_I);padding:0;border-radius:14px;overflow:hidden;cursor:pointer;position:relative;background:var(--RD_M);border:2px solid var(--RD_L);box-sizing:border-box;transition:border-color .15s}
 .sk-it img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
 .sk-it[aria-pressed=true]{border-color:var(--ok)}
 .sk-it[aria-pressed=true]::after{content:'✅';position:absolute;top:4px;right:6px;font-size:1.1em}
 @media(hover:hover){.sk-it:hover{border-color:var(--RD_BHB)}}
 .sk-ad{grid-column:1/-1;justify-self:center;border:0;color-scheme:light}
+.sk-page{display:contents}
+.sk-more{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0;color:var(--RD_MF)}
+.sk-more>img{width:28px;height:28px;object-fit:contain}
 .sk-msg{color:var(--RD_MF);font-size:.9em;padding:20px 0;margin:0;grid-column:1/-1}
 .sk-searching{display:flex;flex-direction:column;align-items:center;gap:8px;padding:32px 0;grid-column:1/-1;color:var(--RD_MF)}
 .SK1 .SK_KL{margin:10px 0 0}
@@ -123,6 +126,7 @@
 </div>
 <div id="sk-grid" class="sk-grid"></div>
 <div id="sk-pg" class="PG1"></div>
+<div id="SK_MORE" class="sk-more" role="status" aria-live="polite" hidden></div>
 <p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/KLIPY.svg" width="120" height="20" alt="Powered by KLIPY"></a></p>
 <p class="SK_NT" id="SK_DA">Descarga la App Creadora de Stickers<br><a class="RD_B1" href="web/js/lib/Binarios/CheAgana.apk" target="_blank" rel="noopener" download>⬇️ Descargar la app</a></p>
 </section>
@@ -192,6 +196,7 @@
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
   const MAX_SECONDS=10,MAX_FPS=15;
+  const KL_PAGE_SIZE=12,KL_KEEP_PAGES=6;
   const MA=window.__AN1==='webview';
   const VID_MAX=MA?Math.min(10,MAX_SECONDS):MAX_SECONDS,VID_FPS=MAX_FPS,AU_S=VID_MAX,MAXFR=Math.ceil(VID_MAX*VID_FPS),THM=512;
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
@@ -206,6 +211,8 @@
   const WA=window.__CFG?.waitAnim||'';
   let FFP=null,GONE=false,SB=0,TG_B=0,ED=null,ED_W=0,EA={},cropper=null,lastQ=null;
   let R=[],RF=[],PS=[],FT='',pg=0,P=[];
+  let KQ=null,KL_VIEW=0,KL_GESTURE=null;
+  const KL_NET=new Set(),KL_LIFE=new AbortController();
   let IMP_PENDING=0,IMP_RUNNING=false;
   const IMP_Q=[],KF_TASK=new Map();
   let ovNS=DIM/4,ovSel=-1;
@@ -244,7 +251,8 @@
           _gfPending=false;
           if(GONE||!gEl.clientWidth)return;
           const n=gf.itemsPerPage(gEl,ITEM,ITEM,GAP,140);
-          if(n!==PG){PG=n;if(RF.length){PS_1();renderPage(0);}}
+          // Existing API pages keep their contents and ads when the viewport changes.
+          if(n!==PG){PG=n;SW?.pre();}
         });
       };
       scheduleGF();
@@ -273,17 +281,42 @@
   }
   const KT={sticker:'stickers',gif:'gifs',static_meme:'static-memes',clip:'clips'};
   function KH_1(l){if(KY)l.forEach(it=>{try{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});}catch{}});}
-  async function KS_1(q,ad){
-    if(KY)try{
-      const p=new URLSearchParams({page:1,per_page:50,customer_id:getCID(),locale:'PY',content_filter:'off'}),a=ad?'&'+new URLSearchParams({'ad-min-width':50,'ad-max-width':Math.min(400,innerWidth-32),'ad-min-height':50,'ad-max-height':250,'ad-device-w':screen.width,'ad-device-h':screen.height,'ad-pxratio':devicePixelRatio,'ad-language':'ES'}):'';
-      if(q)p.set('q',q);
-      const rs=await Promise.all(['stickers','gifs','static-memes','clips'].map(e=>fetch(`https://api.klipy.com/api/v1/${KY}/${e}/${q?'search':'trending'}?${p}${e==='stickers'?a:''}`).then(r=>r.json())));
-      const data=[];
-      for(const r of rs){if(!r.result)throw 0;for(const it of r.data?.data||[]){const n=KN_1(it);if(n)data.push(n);}}
-      return {data};
-    }catch{}
+  async function KL_JSON(url,signal){
+    const ac=new AbortController(),abort=()=>ac.abort();
+    if(GONE||signal?.aborted)throw new Error('salida');
+    KL_NET.add(ac);signal?.addEventListener('abort',abort,{once:true});
+    const timer=setTimeout(abort,15000);
+    try{
+      const r=await fetch(url,{signal:ac.signal,cache:'no-store'});
+      if(!r.ok)throw new Error('KLIPY '+r.status);
+      return await r.json();
+    }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);KL_NET.delete(ac);}
+  }
+  async function KL_GET(q,type,page,size,ad,signal){
+    if(!KY)throw new Error('KLIPY');
+    const p=new URLSearchParams({page,per_page:size,customer_id:getCID(),locale:'PY',content_filter:'off'});
+    if(q)p.set('q',q);
+    if(ad){
+      const params={'ad-min-width':50,'ad-max-width':Math.max(50,Math.min(400,innerWidth-32)),'ad-min-height':50,'ad-max-height':250,'ad-device-w':Math.round(screen.width*(devicePixelRatio||1)),'ad-device-h':Math.round(screen.height*(devicePixelRatio||1)),'ad-pxratio':devicePixelRatio||1,'ad-language':(navigator.language||'es').split('-')[0]};
+      for(const [key,value]of Object.entries(params))p.set(key,value);
+    }
+    const j=await KL_JSON(`https://api.klipy.com/api/v1/${KY}/${KT[type]}/${q?'search':'trending'}?${p}`,signal),d=j.data;
+    if(!j.result||!Array.isArray(d?.data)||(d.current_page!=null&&Number(d.current_page)!==page))throw new Error('Respuesta KLIPY');
+    const items=d.data.map(KN_1).filter(it=>it&&(it.type!=='ad'||ad));
+    return{items,more:d.has_next===true&&items.some(it=>it.type!=='ad')};
+  }
+  async function KL_FALLBACK(q,ad,signal){
     const p=new URLSearchParams({cid:getCID()});if(q)p.set('q',q);if(!ad)p.set('ad','0');
-    const r=await fetch('/api/stickers?'+p);if(!r.ok)throw new Error(r.status);return r.json();
+    const j=await KL_JSON('/api/stickers?'+p,signal);
+    if(!Array.isArray(j.data))throw new Error('Respuesta KLIPY');
+    return j.data.filter(it=>it&&(it.type==='ad'?ad&&it.content:it.url));
+  }
+  // The overlay picker remains an independent, single-page search without ads.
+  async function KS_1(q,ad=false){
+    try{
+      const rows=await Promise.all(Object.keys(KT).map(type=>KL_GET(q,type,1,50,ad,KL_LIFE.signal)));
+      return{data:rows.flatMap(row=>row.items)};
+    }catch(e){if(GONE)throw e;return{data:await KL_FALLBACK(q,ad,KL_LIFE.signal)};}
   }
   function BT_1(t,l,c){const b=document.createElement('button');b.type='button';if(c)b.className=c;b.textContent=t;b.setAttribute('aria-label',l);b.title=l;return b;}
   function LD_1(t){const d=document.createElement('div');d.className='sk-searching';const i=document.createElement('img');i.className='wait-anim';i.src=WA;i.alt='';const s=document.createElement('span');s.textContent=t;d.append(i,s);return d;}
@@ -409,29 +442,124 @@
     c().catch(()=>{});
   }
 
-  async function doFetch(q){
-    if(SB)return;SB=1;
-    const btn=$('SK_SBB');btn.disabled=true;
-    gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';
-    try{
-      const j=await KS_1(q,ADS);
-      R=(j.data||[]).filter(x=>x.type==='ad'?ADS&&x.content:x.url);lastQ=q;
-      FL_1();
-    }catch(e){gEl.textContent='';gEl.append(MS_1('Error Klipy '+e.message));}
-    finally{setTimeout(()=>{SB=0;btn.disabled=false;},1500);}
+  function KL_BATCH(s,type,items){
+    if(!items.length)return;
+    const pages=[];let row=[],count=0,ads=0;
+    const end=()=>{if(row.length)pages.push(row);row=[];count=0;ads=0;};
+    // Keep the API sequence, including ads. Split around a second ad instead of
+    // extracting, cloning or discarding it. Consecutive ads stay in sequence.
+    for(const it of items){
+      if(count&&(it.type==='ad'?ads>0:count>=s.perPage))end();
+      row.push(it);if(it.type==='ad')ads++;else count++;
+    }
+    if(row.length&&!count&&pages.length)pages[pages.length-1].push(...row);else end();
+    s.batches.push({type,items,pages});
   }
-
-  function PS_1(){PS=[];RF.filter(x=>x.type!=='ad').forEach((x,i)=>{if(i%PG===0)PS.push([]);PS.at(-1).push(x);});if(!PS.length)PS.push([]);RF.filter(x=>x.type==='ad').forEach((x,i)=>PS[i]?.splice(1,0,x));}
+  function KL_FALLBACK_BATCHES(s,items){
+    let type='',row=[];
+    for(const it of items){
+      const next=it.type==='ad'?type:it.type;
+      if(type&&next!==type){KL_BATCH(s,type,row);row=[];}
+      if(next)type=next;row.push(it);
+    }
+    if(row.length)KL_BATCH(s,type,row);
+  }
+  function KL_TYPES(s=KQ){return s?(FT?[FT]:Object.keys(s.sources)):[];}
+  function KL_RESET_VIEW(){
+    KL_VIEW++;
+    gEl.style.transform='';gEl.style.transition='';gEl.style.visibility='';
+    for(const el of gEl.parentElement.children)if(el!==gEl&&el.classList.contains('sk-grid'))el.style.visibility='hidden';
+  }
+  function KL_STATUS(){
+    const el=$('SK_MORE');if(!el||GONE)return;
+    el.textContent='';el.hidden=true;
+    const s=KQ;if(!s||PS.length&&pg<PS.length-2)return;
+    const sources=KL_TYPES(s).map(t=>s.sources[t]),failed=sources.some(x=>x.error),more=sources.some(x=>x.more);
+    if(s.busy){
+      if(!PS.length)return;
+      el.hidden=false;const im=document.createElement('img');im.src=WA;im.alt='';im.className='wait-anim';
+      const tx=document.createElement('span');tx.textContent='Cargando más...';el.append(im,tx);return;
+    }
+    if(!more&&!failed)return;
+    el.hidden=false;
+    if(failed){const tx=document.createElement('span');tx.textContent='No se pudieron cargar algunos resultados.';el.append(tx);}
+    const b=BT_1(failed?'Reintentar':'Cargar más',failed?'Reintentar carga':'Cargar más resultados');
+    b.onclick=()=>K_MORE(failed);el.append(b);
+  }
+  function PS_1(){
+    const batches=KQ?.batches||[];
+    R=batches.flatMap(b=>b.items);
+    const selected=batches.filter(b=>!FT||b.type===FT);
+    RF=selected.flatMap(b=>b.items);PS=selected.flatMap(b=>b.pages);
+  }
+  function KL_EMPTY(){
+    for(const node of [...gEl.children]){if(node.classList.contains('sk-page'))node.hidden=true;else node.remove();}
+    gEl.append(KQ?.busy?LD_1('Buscando'):MS_1('Sin resultados'));pgEl.textContent='';KL_STATUS();
+  }
+  function K_LOAD(s,types){
+    if(GONE||s!==KQ||s.ac.signal.aborted)return Promise.resolve();
+    if(s.busy)return s.flight;
+    const wanted=types.filter(t=>s.sources[t].more);
+    if(!wanted.length)return Promise.resolve();
+    s.busy=true;KL_STATUS();
+    s.flight=(async()=>{
+      const rows=await Promise.all(wanted.map(async type=>{
+        const page=s.sources[type].page+1;
+        try{return{type,page,...await KL_GET(s.q,type,page,s.perPage,ADS,s.ac.signal)};}
+        catch(error){return{type,error};}
+      }));
+      if(GONE||s!==KQ||s.ac.signal.aborted)return;
+      if(!s.batches.length&&!s.fallbackTried&&wanted.length===Object.keys(KT).length&&rows.every(row=>row.error)){
+        s.fallbackTried=true;
+        try{
+          const items=await KL_FALLBACK(s.q,ADS,s.ac.signal);
+          if(GONE||s!==KQ||s.ac.signal.aborted)return;
+          // This backend only serves page 1. Never use it as a pagination source.
+          s.fallback=true;KL_FALLBACK_BATCHES(s,items);
+          for(const src of Object.values(s.sources)){src.page=1;src.more=false;src.error='';}
+          return;
+        }catch{if(GONE||s!==KQ||s.ac.signal.aborted)return;}
+      }
+      for(const row of rows){
+        const src=s.sources[row.type];
+        if(row.error){src.error='load';continue;}
+        src.page=row.page;src.more=row.more;src.error='';KL_BATCH(s,row.type,row.items);
+      }
+    })().finally(()=>{
+      s.busy=false;s.flight=null;
+      if(GONE||s!==KQ||s.ac.signal.aborted)return;
+      const current=PS[pg];PS_1();
+      if(PS.length)renderPage(current?Math.max(0,PS.indexOf(current)):0,false,false);else KL_EMPTY();
+    });
+    return s.flight;
+  }
+  async function K_MORE(retry=false,advance=true){
+    const s=KQ;if(!s||s.busy||GONE)return;
+    const types=KL_TYPES(s),failed=types.filter(t=>s.sources[t].error);
+    const wanted=retry&&failed.length?failed:types.filter(t=>s.sources[t].more&&!s.sources[t].error);
+    const view=FT,oldLength=PS.length,oldPage=pg;
+    await K_LOAD(s,wanted);
+    if(advance&&!GONE&&s===KQ&&FT===view&&pg===oldPage&&oldPage===oldLength-1&&PS.length>oldLength)renderPage(oldLength,false,false);
+  }
+  async function doFetch(q){
+    if(GONE)return;
+    KQ?.ac.abort();
+    KL_RESET_VIEW();
+    const s={q,ac:new AbortController(),perPage:KL_PAGE_SIZE,sources:{},batches:[],busy:false,flight:null,fallback:false,fallbackTried:false,visited:new Map(),tick:0};
+    for(const type of Object.keys(KT))s.sources[type]={page:0,more:true,error:''};
+    KQ=s;lastQ=q;R=[];RF=[];PS=[];pg=0;
+    gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';KL_STATUS();SW?.pre();
+    await K_LOAD(s,Object.keys(KT));
+  }
   function FL_1(){
-    RF=FT?R.filter(x=>x.type===FT||x.type==='ad'):R;
-    if(!RF.some(x=>x.type!=='ad'))RF=[];
+    KL_RESET_VIEW();
     pg=0;PS_1();
-    if(RF.length)renderPage(0);else{gEl.textContent='';pgEl.textContent='';gEl.append(MS_1('Sin resultados'));}
+    if(PS.length)renderPage(0,false,false);else KL_EMPTY();
   }
   $('SK_FT').onclick=e=>{
     const b=e.target.closest('button');if(!b)return;
     FT=b.dataset.f;$('SK_FT').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
-    if(R.length)FL_1();
+    if(KQ)FL_1();
   };
   $('SK_SF').onsubmit=e=>{
     e.preventDefault();
@@ -450,17 +578,34 @@
     b.append(m);return b;
   }
 
-  function AD_1(it){
+  function AD_1(it,host){
+    // An evicted ad is not executed again on back navigation. A newly delivered
+    // ad has its own object, even when KLIPY chooses the same campaign again.
+    if(it._shown)return;
     const f=document.createElement('iframe');f.className='sk-ad';f.title='Anuncio';f.scrolling='no';
     f.sandbox='allow-scripts allow-popups allow-popups-to-escape-sandbox';
-    f.width=it.width;f.height=it.height;f.srcdoc=it.content;gEl.append(f);
+    f.width=it.width;f.height=it.height;f.srcdoc=it.content;it._shown=true;host.append(f);
   }
 
-  function renderPage(p,sw){
+  function renderPage(p,sw=false,load=true){
+    if(GONE||!KQ||!PS[p])return;
+    const s=KQ,row=PS[p],seen=s.visited.get(FT)??-1;
     const dir=p>pg?1:p<pg?-1:0;
-    pg=p;gEl.textContent='';
-    PS[p].forEach(it=>it.type==='ad'?AD_1(it):gEl.append(CD_1(it)));
+    pg=p;s.visited.set(FT,Math.max(seen,p));
+    for(const node of [...gEl.children]){if(node.classList.contains('sk-page'))node.hidden=true;else node.remove();}
+    if(!row.el){
+      row.el=document.createElement('div');row.el.className='sk-page';
+      // Attach once, then toggle visibility: moving an iframe would reload it.
+      gEl.append(row.el);
+      row.forEach(it=>it.type==='ad'?AD_1(it,row.el):row.el.append(CD_1(it)));
+    }
+    row.el.hidden=false;row.used=++s.tick;
+    row.el.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));
+    const mounted=s.batches.flatMap(b=>b.pages).filter(r=>r.el).sort((a,b)=>a.used-b.used);
+    while(mounted.length>KL_KEEP_PAGES){const old=mounted.shift();old.el.remove();old.el=null;}
     renderPg();
+    // At most one speculative batch per forward visit, never a loop chasing ads.
+    if(load&&p>seen&&p>=PS.length-2&&dir>0)K_MORE(false,false);
     if(sw)return;
     if(SW)SW.pre();
     gEl.style.setProperty('--d',dir?(dir>0?'24px':'-24px'):'0px');
@@ -469,9 +614,13 @@
   }
 
   function renderPg(){
-    if(!_GF){loadGF().then(g=>{if(g)renderPg()});return}
-    if(!SW){SW=_GF.SW1(gEl,{n:()=>PS.length,p:()=>pg,ok:()=>!$('SK_B').hidden,go:i=>renderPage(i,1),
-      fill:(el,i)=>PS[i].forEach(it=>{if(it.type!=='ad')el.append(CD_1(it,1));else{const d=document.createElement('div');d.className='sk-ad';d.style.cssText=`width:${it.width}px;height:${it.height}px`;el.append(d);}})});SW.pre()}
+    if(GONE)return;KL_STATUS();
+    if(!_GF){loadGF().then(g=>{if(g&&!GONE)renderPg()});return}
+    if(!SW){
+      gEl.addEventListener('pointerdown',()=>{KL_GESTURE={session:KQ,view:KL_VIEW};},{signal:KL_LIFE.signal});
+      SW=_GF.SW1(gEl,{sig:KL_LIFE.signal,n:()=>PS.length,p:()=>pg,ok:()=>!GONE&&!$('SK_B').hidden,
+      go:i=>{if(KL_GESTURE?.session===KQ&&KL_GESTURE.view===KL_VIEW)renderPage(i,1);},
+      fill:(el,i)=>(PS[i]||[]).forEach(it=>{if(it.type!=='ad')el.append(CD_1(it,1));else if(!it._shown||PS[i].el){const d=document.createElement('div');d.className='sk-ad';d.style.cssText=`width:${it.width}px;height:${it.height}px`;el.append(d);}})});SW.pre()}
     _GF.PN1(pgEl,pg,PS.length,renderPage);
   }
 
@@ -1960,6 +2109,7 @@
   const cont=$('content');
   if(cont)cont.addEventListener('contentUnload',()=>{
     GONE=true;FRAME_ACTIVE.forEach(p=>{Promise.resolve(p.close()).catch(()=>{});});RAW_ACTIVE.forEach(s=>{s.close().catch(()=>{});});IMP_STOP();SEND_NET.forEach(ac=>ac.abort());SEND_DROP();VMS.forEach(v=>v.close());
+    KQ?.ac.abort();KL_LIFE.abort();KL_NET.forEach(ac=>ac.abort());KQ=null;R=[];RF=[];PS=[];
     document.removeEventListener('contentState',CS_1);HM.clear();
     document.removeEventListener('paste',DP_P);document.removeEventListener('dragover',DP_O);document.removeEventListener('drop',DP_D);
     ED_X();
