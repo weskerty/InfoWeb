@@ -6,13 +6,15 @@
 .SK_SB{display:flex;gap:8px;margin:0 0 12px}
 .SK_SB input{flex:1;min-width:0}
 .SK_TX{color:var(--RD_MF);font-size:.9rem;margin:0 0 12px}
-.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--SK_I));grid-auto-flow:row;gap:8px;justify-content:center;margin-bottom:8px;min-height:40px}
-.sk-it{width:var(--SK_I);height:var(--SK_I);padding:0;border-radius:14px;overflow:hidden;cursor:pointer;position:relative;background:var(--RD_M);border:2px solid var(--RD_L);box-sizing:border-box;transition:border-color .15s}
+.sk-viewport{position:relative;overflow:hidden}
+.sk-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:flex-start;margin-bottom:8px;min-height:40px}
+.sk-it{flex:0 0 var(--SK_I);width:var(--SK_I);height:var(--SK_I);padding:0;border-radius:14px;overflow:hidden;cursor:pointer;position:relative;background:var(--RD_M);border:2px solid var(--RD_L);box-sizing:border-box;transition:border-color .15s}
 .sk-it img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
 .sk-it[aria-pressed=true]{border-color:var(--ok)}
 .sk-it[aria-pressed=true]::after{content:'✅';position:absolute;top:4px;right:6px;font-size:1.1em}
 @media(hover:hover){.sk-it:hover{border-color:var(--RD_BHB)}}
-.sk-ad{grid-column:1/-1;justify-self:center;border:0;color-scheme:light}
+.sk-ad-slot{flex:0 0 100%;display:flex;justify-content:center;min-width:0}
+.sk-ad{display:block;max-width:100%;border:0;color-scheme:light}
 .sk-page{display:contents}
 .sk-more{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0;color:var(--RD_MF)}
 .sk-more>img{width:28px;height:28px;object-fit:contain}
@@ -124,7 +126,7 @@
 <button type="button" data-f="static_meme" aria-pressed="false">Memes</button>
 <button type="button" data-f="clip" aria-pressed="false">Clips</button>
 </div>
-<div id="sk-grid" class="sk-grid"></div>
+<div class="sk-viewport"><div id="sk-grid" class="sk-grid"></div></div>
 <div id="sk-pg" class="PG1"></div>
 <div id="SK_MORE" class="sk-more" role="status" aria-live="polite" hidden></div>
 <p class="SK_KL"><a href="https://klipy.com/" target="_blank" rel="noopener"><img src="web/adjuntos/Stickers_para_WhatsApp/KLIPY.svg" width="120" height="20" alt="Powered by KLIPY"></a></p>
@@ -196,7 +198,7 @@
 (function(){
   const ADS=true,MU=true,KY='gCkt49niqCB9S2nlTLshWVfj8DOHunjpQCc8dAhJaxWhWfeZfvKVMmhvA9LeGR4W';
   const MAX_SECONDS=10,MAX_FPS=15;
-  const KL_PAGE_SIZE=12,KL_KEEP_PAGES=6;
+  const KL_PAGE_SIZE=50,KL_KEEP_PAGES=6;
   const MA=window.__AN1==='webview';
   const VID_MAX=MA?Math.min(10,MAX_SECONDS):MAX_SECONDS,VID_FPS=MAX_FPS,AU_S=VID_MAX,MAXFR=Math.ceil(VID_MAX*VID_FPS),THM=512;
   const SK_MX=10,GAP=8,PG_FALLBACK=6,TG_W=75;
@@ -251,8 +253,8 @@
           _gfPending=false;
           if(GONE||!gEl.clientWidth)return;
           const n=gf.itemsPerPage(gEl,ITEM,ITEM,GAP,140);
-          // Existing API pages keep their contents and ads when the viewport changes.
-          if(n!==PG){PG=n;SW?.pre();}
+          // Reflow visual pages without changing API cursors or reconnecting ads.
+          if(n!==PG){PG=n;KL_REFLOW();}
         });
       };
       scheduleGF();
@@ -279,7 +281,7 @@
     const hq=f&&typeof f==='object'?['hd','md','sm'].map(k=>f[k]?.webp).filter(w=>w?.url).sort((a,b)=>(b.width||0)-(a.width||0))[0]?.url:null;
     return url?{url,hq:hq||url,title:it.title||'',type:it.type,blur_preview:it.blur_preview||'',s:it.slug}:null;
   }
-  const KT={sticker:'stickers',gif:'gifs',static_meme:'static-memes',clip:'clips'};
+  const KT={sticker:'stickers',gif:'gifs',clip:'clips',static_meme:'static-memes'};
   function KH_1(l){if(KY)l.forEach(it=>{try{if(it.s&&KT[it.t])fetch(`https://api.klipy.com/api/v1/${KY}/${KT[it.t]}/share/${encodeURIComponent(it.s)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_id:getCID(),q:it.q})}).catch(()=>{});}catch{}});}
   async function KL_JSON(url,signal){
     const ac=new AbortController(),abort=()=>ac.abort();
@@ -442,122 +444,182 @@
     c().catch(()=>{});
   }
 
+  function KL_PAGES(items){
+    const pages=[];let row=[],count=0;
+    // Ads stay in API order and do not consume a media slot.
+    for(const it of items){
+      if(it.type!=='ad'&&count>=PG){pages.push(row);row=[];count=0;}
+      row.push(it);if(it.type!=='ad')count++;
+    }
+    if(row.length)pages.push(row);
+    return pages;
+  }
   function KL_BATCH(s,type,items){
     if(!items.length)return;
-    const pages=[];let row=[],count=0,ads=0;
-    const end=()=>{if(row.length)pages.push(row);row=[];count=0;ads=0;};
-    // Keep the API sequence, including ads. Split around a second ad instead of
-    // extracting, cloning or discarding it. Consecutive ads stay in sequence.
-    for(const it of items){
-      if(count&&(it.type==='ad'?ads>0:count>=s.perPage))end();
-      row.push(it);if(it.type==='ad')ads++;else count++;
-    }
-    if(row.length&&!count&&pages.length)pages[pages.length-1].push(...row);else end();
-    s.batches.push({type,items,pages});
+    const batch={type,items,pages:KL_PAGES(items)};
+    s.batches.push(batch);s.sources[type].batches.push(batch);
   }
   function KL_FALLBACK_BATCHES(s,items){
     let type='',row=[];
+    const flush=()=>{if(type&&!s.sources[type].page)KL_BATCH(s,type,row);row=[];};
     for(const it of items){
       const next=it.type==='ad'?type:it.type;
-      if(type&&next!==type){KL_BATCH(s,type,row);row=[];}
+      if(next&&!KT[next])continue;
+      if(type&&next!==type)flush();
       if(next)type=next;row.push(it);
     }
-    if(row.length)KL_BATCH(s,type,row);
+    flush();
   }
-  function KL_TYPES(s=KQ){return s?(FT?[FT]:Object.keys(s.sources)):[];}
+  function KL_TYPES(s=KQ){return s?(FT?[FT]:Object.keys(KT)):[];}
   function KL_RESET_VIEW(){
     KL_VIEW++;
     gEl.style.transform='';gEl.style.transition='';gEl.style.visibility='';
     for(const el of gEl.parentElement.children)if(el!==gEl&&el.classList.contains('sk-grid'))el.style.visibility='hidden';
   }
+  function KL_PICK(s,view=FT,retry=false){
+    const types=Object.keys(KT),order=view?[view]:types.map((_,i)=>types[(s.turn+i)%types.length]);
+    if(retry){const failed=order.find(t=>s.sources[t].more&&s.sources[t].error);if(failed)return failed;}
+    for(const type of order){
+      const src=s.sources[type];
+      if(!view&&src.used<src.batches.length)return type;
+      if(src.more&&(!src.error||retry))return type;
+    }
+    return '';
+  }
   function KL_STATUS(){
     const el=$('SK_MORE');if(!el||GONE)return;
     el.textContent='';el.hidden=true;
-    const s=KQ;if(!s||PS.length&&pg<PS.length-2)return;
-    const sources=KL_TYPES(s).map(t=>s.sources[t]),failed=sources.some(x=>x.error),more=sources.some(x=>x.more);
+    const s=KQ;if(!s||PS.length&&pg<PS.length-1)return;
     if(s.busy){
       if(!PS.length)return;
       el.hidden=false;const im=document.createElement('img');im.src=WA;im.alt='';im.className='wait-anim';
       const tx=document.createElement('span');tx.textContent='Cargando más...';el.append(im,tx);return;
     }
-    if(!more&&!failed)return;
+    const failed=KL_TYPES(s).some(t=>s.sources[t].error);
+    if(!KL_PICK(s,FT,true)&&!failed)return;
     el.hidden=false;
-    if(failed){const tx=document.createElement('span');tx.textContent='No se pudieron cargar algunos resultados.';el.append(tx);}
+    if(failed){const tx=document.createElement('span');tx.textContent='No se pudieron cargar más resultados.';el.append(tx);}
     const b=BT_1(failed?'Reintentar':'Cargar más',failed?'Reintentar carga':'Cargar más resultados');
     b.onclick=()=>K_MORE(failed);el.append(b);
   }
   function PS_1(){
-    const batches=KQ?.batches||[];
+    const s=KQ,batches=s?.batches||[];
     R=batches.flatMap(b=>b.items);
-    const selected=batches.filter(b=>!FT||b.type===FT);
+    const selected=s?(FT?s.sources[FT].batches:s.global):[];
     RF=selected.flatMap(b=>b.items);PS=selected.flatMap(b=>b.pages);
   }
-  function KL_EMPTY(){
-    for(const node of [...gEl.children]){if(node.classList.contains('sk-page'))node.hidden=true;else node.remove();}
-    gEl.append(KQ?.busy?LD_1('Buscando'):MS_1('Sin resultados'));pgEl.textContent='';KL_STATUS();
+  function KL_POSITION(s=KQ){
+    const pos=s?.positions.get(FT);if(!pos)return 0;
+    const p=PS.findIndex(row=>row.includes(pos.anchor));
+    return p<0?Math.min(pos.page,Math.max(0,PS.length-1)):p;
   }
-  function K_LOAD(s,types){
+  function KL_REFLOW(){
+    if(!KQ||GONE)return;
+    KL_GESTURE=null;
+    for(const batch of KQ.batches){
+      for(const row of batch.pages)row.el?.remove();
+      batch.pages=KL_PAGES(batch.items);
+    }
+    KQ.edges.clear();PS_1();
+    if(PS.length)renderPage(KL_POSITION(),false,false);else KL_EMPTY();
+  }
+  function KL_HIDE(){
+    for(const node of [...gEl.children]){
+      if(node.classList.contains('sk-page')||node.classList.contains('sk-ad-slot'))node.hidden=true;
+      else node.remove();
+    }
+  }
+  function KL_EMPTY(){
+    KL_HIDE();gEl.append(KQ?.busy?LD_1('Buscando'):MS_1('Sin resultados'));
+    pgEl.textContent='';KL_STATUS();
+  }
+  function K_LOAD(s,type){
     if(GONE||s!==KQ||s.ac.signal.aborted)return Promise.resolve();
-    if(s.busy)return s.flight;
-    const wanted=types.filter(t=>s.sources[t].more);
-    if(!wanted.length)return Promise.resolve();
-    s.busy=true;KL_STATUS();
+    if(s.flight)return s.flight;
+    const src=s.sources[type];if(!src.more)return Promise.resolve();
+    s.busy=true;if(!PS.length)KL_EMPTY();else KL_STATUS();
     s.flight=(async()=>{
-      const rows=await Promise.all(wanted.map(async type=>{
-        const page=s.sources[type].page+1;
-        try{return{type,page,...await KL_GET(s.q,type,page,s.perPage,ADS,s.ac.signal)};}
-        catch(error){return{type,error};}
-      }));
-      if(GONE||s!==KQ||s.ac.signal.aborted)return;
-      if(!s.batches.length&&!s.fallbackTried&&wanted.length===Object.keys(KT).length&&rows.every(row=>row.error)){
-        s.fallbackTried=true;
-        try{
-          const items=await KL_FALLBACK(s.q,ADS,s.ac.signal);
-          if(GONE||s!==KQ||s.ac.signal.aborted)return;
-          // This backend only serves page 1. Never use it as a pagination source.
-          s.fallback=true;KL_FALLBACK_BATCHES(s,items);
-          for(const src of Object.values(s.sources)){src.page=1;src.more=false;src.error='';}
-          return;
-        }catch{if(GONE||s!==KQ||s.ac.signal.aborted)return;}
+      try{
+        const page=src.page+1,row=await KL_GET(s.q,type,page,s.perPage,ADS,s.ac.signal);
+        if(GONE||s!==KQ||s.ac.signal.aborted)return;
+        src.page=page;src.more=row.more;src.error='';KL_BATCH(s,type,row.items);
+      }catch{
+        if(GONE||s!==KQ||s.ac.signal.aborted)return;
+        if(!s.fallbackTried){
+          s.fallbackTried=true;
+          try{
+            const items=await KL_FALLBACK(s.q,ADS,s.ac.signal);
+            if(GONE||s!==KQ||s.ac.signal.aborted)return;
+            // Backend fallback is a finite first batch. Keep previously loaded
+            // types, use only missing types, and never request backend page 2.
+            KL_FALLBACK_BATCHES(s,items);s.fallback=true;
+            for(const x of Object.values(s.sources)){x.page=Math.max(1,x.page);x.more=false;x.error='';}
+            return;
+          }catch{if(GONE||s!==KQ||s.ac.signal.aborted)return;}
+        }
+        src.error='load';
       }
-      for(const row of rows){
-        const src=s.sources[row.type];
-        if(row.error){src.error='load';continue;}
-        src.page=row.page;src.more=row.more;src.error='';KL_BATCH(s,row.type,row.items);
-      }
-    })().finally(()=>{
-      s.busy=false;s.flight=null;
-      if(GONE||s!==KQ||s.ac.signal.aborted)return;
-      const current=PS[pg];PS_1();
-      if(PS.length)renderPage(current?Math.max(0,PS.indexOf(current)):0,false,false);else KL_EMPTY();
-    });
+    })().finally(()=>{s.busy=false;s.flight=null;if(s===KQ&&!GONE)KL_STATUS();});
     return s.flight;
   }
-  async function K_MORE(retry=false,advance=true){
-    const s=KQ;if(!s||s.busy||GONE)return;
-    const types=KL_TYPES(s),failed=types.filter(t=>s.sources[t].error);
-    const wanted=retry&&failed.length?failed:types.filter(t=>s.sources[t].more&&!s.sources[t].error);
-    const view=FT,oldLength=PS.length,oldPage=pg;
-    await K_LOAD(s,wanted);
-    if(advance&&!GONE&&s===KQ&&FT===view&&pg===oldPage&&oldPage===oldLength-1&&PS.length>oldLength)renderPage(oldLength,false,false);
+  function KL_AUTO(){
+    const s=KQ,row=PS[pg];
+    if(!s||GONE||!row||pg!==PS.length-1||s.edges.get(FT)===row)return;
+    s.edges.set(FT,row);
+    // One additional batch per arrival at the end, including one-page views.
+    // Completion does not recursively prefetch the rest of the categories.
+    void K_MORE(false,false);
+  }
+  function K_MORE(retry=false,advance=true){
+    const s=KQ,view=FT,token=KL_VIEW;
+    if(!s||GONE)return Promise.resolve();
+    if(s.jobs.has(token))return s.jobs.get(token);
+    const live=()=>!GONE&&s===KQ&&!s.ac.signal.aborted&&view===FT&&token===KL_VIEW;
+    const oldRow=PS[pg];
+    const job=(async()=>{
+      if(s.flight)await s.flight;
+      if(!live())return;
+      if(retry&&!s.fallback)s.fallbackTried=false;
+      // Empty/exhausted categories can be skipped, but never loop fetching
+      // successive pages solely to obtain an advertisement.
+      for(let i=0;i<Object.keys(KT).length&&live();i++){
+        const type=KL_PICK(s,view,retry);if(!type)break;
+        const src=s.sources[type];
+        if(view||src.used>=src.batches.length||retry&&src.error)await K_LOAD(s,type);
+        if(!live())return;
+        if(view||src.error&&src.used>=src.batches.length)break;
+        s.turn=(Object.keys(KT).indexOf(type)+1)%Object.keys(KT).length;
+        if(src.used<src.batches.length){s.global.push(src.batches[src.used++]);break;}
+      }
+      if(!live())return;
+      const oldLength=PS.length,atEnd=PS[pg]===oldRow&&pg===oldLength-1;
+      PS_1();
+      if(PS.length){
+        const next=advance&&oldLength&&atEnd&&PS.length>oldLength?oldLength:KL_POSITION(s);
+        renderPage(next,false,false);
+      }else KL_EMPTY();
+    })().finally(()=>{s.jobs.delete(token);if(retry&&!oldRow&&live())KL_AUTO();});
+    s.jobs.set(token,job);return job;
   }
   async function doFetch(q){
     if(GONE)return;
-    KQ?.ac.abort();
-    KL_RESET_VIEW();
-    const s={q,ac:new AbortController(),perPage:KL_PAGE_SIZE,sources:{},batches:[],busy:false,flight:null,fallback:false,fallbackTried:false,visited:new Map(),tick:0};
-    for(const type of Object.keys(KT))s.sources[type]={page:0,more:true,error:''};
+    KQ?.ac.abort();KL_RESET_VIEW();
+    const s={q,ac:new AbortController(),perPage:KL_PAGE_SIZE,sources:{},batches:[],global:[],turn:0,busy:false,flight:null,fallback:false,fallbackTried:false,positions:new Map(),edges:new Map(),jobs:new Map(),tick:0};
+    for(const type of Object.keys(KT))s.sources[type]={page:0,more:true,error:'',batches:[],used:0};
     KQ=s;lastQ=q;R=[];RF=[];PS=[];pg=0;
     gEl.textContent='';gEl.append(LD_1('Buscando'));pgEl.textContent='';KL_STATUS();SW?.pre();
-    await K_LOAD(s,Object.keys(KT));
+    const token=KL_VIEW;await K_MORE(false,false);
+    if(s===KQ&&token===KL_VIEW)KL_AUTO();
   }
   function FL_1(){
-    KL_RESET_VIEW();
-    pg=0;PS_1();
-    if(PS.length)renderPage(0,false,false);else KL_EMPTY();
+    KL_RESET_VIEW();PS_1();pg=KL_POSITION();
+    if(PS.length)renderPage(pg);else{
+      KL_EMPTY();const token=KL_VIEW;
+      K_MORE(false,false).then(()=>{if(token===KL_VIEW)KL_AUTO();});
+    }
   }
   $('SK_FT').onclick=e=>{
-    const b=e.target.closest('button');if(!b)return;
+    const b=e.target.closest('button');if(!b||b.dataset.f===FT)return;
     FT=b.dataset.f;$('SK_FT').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
     if(KQ)FL_1();
   };
@@ -578,34 +640,43 @@
     b.append(m);return b;
   }
 
-  function AD_1(it,host){
-    // An evicted ad is not executed again on back navigation. A newly delivered
-    // ad has its own object, even when KLIPY chooses the same campaign again.
-    if(it._shown)return;
-    const f=document.createElement('iframe');f.className='sk-ad';f.title='Anuncio';f.scrolling='no';
-    f.sandbox='allow-scripts allow-popups allow-popups-to-escape-sandbox';
-    f.width=it.width;f.height=it.height;f.srcdoc=it.content;it._shown=true;host.append(f);
+  function AD_1(it,order){
+    // Keep each delivered ad connected until this search ends. Reflow, filter
+    // changes and media-page eviction must not reload or discard its iframe.
+    if(!it._slot){
+      const slot=document.createElement('div');slot.className='sk-ad-slot';
+      const f=document.createElement('iframe');f.className='sk-ad';f.title='Anuncio';f.scrolling='no';
+      f.sandbox='allow-scripts allow-popups allow-popups-to-escape-sandbox';
+      f.width=it.width;f.height=it.height;f.srcdoc=it.content;
+      slot.append(f);it._slot=slot;gEl.append(slot);
+    }
+    it._slot.style.order=order;it._slot.hidden=false;
   }
-
+  function KL_GHOST(el,row){
+    row.forEach((it,i)=>{
+      if(it.type!=='ad'){const b=CD_1(it,1);b.style.order=i;el.append(b);}
+      else{
+        const slot=document.createElement('div');slot.className='sk-ad-slot';slot.style.order=i;
+        const d=document.createElement('div');d.className='sk-ad';d.style.cssText='width:'+it.width+'px;height:'+it.height+'px';
+        slot.append(d);el.append(slot);
+      }
+    });
+  }
   function renderPage(p,sw=false,load=true){
     if(GONE||!KQ||!PS[p])return;
-    const s=KQ,row=PS[p],seen=s.visited.get(FT)??-1;
-    const dir=p>pg?1:p<pg?-1:0;
-    pg=p;s.visited.set(FT,Math.max(seen,p));
-    for(const node of [...gEl.children]){if(node.classList.contains('sk-page'))node.hidden=true;else node.remove();}
+    const s=KQ,row=PS[p],dir=p>pg?1:p<pg?-1:0;
+    pg=p;s.positions.set(FT,{page:p,anchor:row.find(it=>it.type!=='ad')||row[0]});
+    KL_HIDE();
     if(!row.el){
-      row.el=document.createElement('div');row.el.className='sk-page';
-      // Attach once, then toggle visibility: moving an iframe would reload it.
-      gEl.append(row.el);
-      row.forEach(it=>it.type==='ad'?AD_1(it,row.el):row.el.append(CD_1(it)));
+      row.el=document.createElement('div');row.el.className='sk-page';gEl.append(row.el);
+      row.forEach((it,i)=>{if(it.type!=='ad'){const b=CD_1(it);b.style.order=i;row.el.append(b);}});
     }
     row.el.hidden=false;row.used=++s.tick;
+    row.forEach((it,i)=>{if(it.type==='ad')AD_1(it,i);});
     row.el.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));
     const mounted=s.batches.flatMap(b=>b.pages).filter(r=>r.el).sort((a,b)=>a.used-b.used);
     while(mounted.length>KL_KEEP_PAGES){const old=mounted.shift();old.el.remove();old.el=null;}
-    renderPg();
-    // At most one speculative batch per forward visit, never a loop chasing ads.
-    if(load&&p>seen&&p>=PS.length-2&&dir>0)K_MORE(false,false);
+    renderPg();if(load)KL_AUTO();
     if(sw)return;
     if(SW)SW.pre();
     gEl.style.setProperty('--d',dir?(dir>0?'24px':'-24px'):'0px');
@@ -620,7 +691,7 @@
       gEl.addEventListener('pointerdown',()=>{KL_GESTURE={session:KQ,view:KL_VIEW};},{signal:KL_LIFE.signal});
       SW=_GF.SW1(gEl,{sig:KL_LIFE.signal,n:()=>PS.length,p:()=>pg,ok:()=>!GONE&&!$('SK_B').hidden,
       go:i=>{if(KL_GESTURE?.session===KQ&&KL_GESTURE.view===KL_VIEW)renderPage(i,1);},
-      fill:(el,i)=>(PS[i]||[]).forEach(it=>{if(it.type!=='ad')el.append(CD_1(it,1));else if(!it._shown||PS[i].el){const d=document.createElement('div');d.className='sk-ad';d.style.cssText=`width:${it.width}px;height:${it.height}px`;el.append(d);}})});SW.pre()}
+      fill:(el,i)=>KL_GHOST(el,PS[i]||[])});SW.pre()}
     _GF.PN1(pgEl,pg,PS.length,renderPage);
   }
 
