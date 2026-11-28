@@ -337,8 +337,8 @@
   $('SK_TB').onclick=e=>{const b=e.target.closest('button');if(b)TB_1(b.dataset.t);};
 
   const PK_F=u=>P.find(x=>x.u===u);
-  function FR_1(it){it.pr=(it.pr||0)+1;for(const k of ['pv','pc','fp'])if(it[k]?.startsWith('blob:'))URL.revokeObjectURL(it[k]);it.ov.forEach(o=>{if(o.src?.startsWith('blob:'))URL.revokeObjectURL(o.src);});}
-  function PK_AD(it){it.ov=it.ov||[];P.push(it);UP_1();}
+  function FR_1(it){if(it.pin){PIN_FREE(it.pin);it.pin=null;}it.pr=(it.pr||0)+1;for(const k of ['pv','pc','fp'])if(it[k]?.startsWith('blob:'))URL.revokeObjectURL(it[k]);it.ov.forEach(o=>{if(o.src?.startsWith('blob:'))URL.revokeObjectURL(o.src);});}
+  function PK_AD(it){it.ov=it.ov||[];it.t0=Date.now();P.push(it);UP_1();}
   function PK_RM(it){const i=P.indexOf(it);if(i<0)return;KF_TASK.get(it)?.ac.abort();FR_1(it);P.splice(i,1);UP_1();}
   function UP_1(){$('SK_PN').textContent=P.length;TR_R();if(!$('SK_P').hidden)PL_R();gEl.querySelectorAll('.sk-it').forEach(b=>b.setAttribute('aria-pressed',!!PK_F(b._u)));}
 
@@ -887,6 +887,41 @@
     return{file:f,pv:URL.createObjectURL(f),isVid,isWebp,isAnim,sq:r>=.8&&r<=1.25,w,h};
   }
 
+  let PIN_MEM=0,PIN_DIR=null;
+  function PIN_FREE(p){if(!p)return;if(p.m){PIN_MEM=Math.max(0,PIN_MEM-p.m);p.m=0;}if(p.n&&PIN_DIR){const n=p.n;p.n='';PIN_DIR.removeEntry(n).catch(()=>{});}}
+  async function PIN_FILE(f){
+    const own={f,m:0,n:''};
+    if(GONE||!f||!Number.isFinite(f.size)||f.size<=0)return own;
+    const wrap=g=>new File([g],f.name,{type:f.type,lastModified:f.lastModified});
+    if(PIN_MEM+f.size<=RAW_BUDGET()){
+      PIN_MEM+=f.size;
+      try{
+        const buf=await f.arrayBuffer();
+        if(buf.byteLength!==f.size)throw new Error('lectura');
+        return{f:wrap(buf),m:f.size,n:''};
+      }catch{PIN_MEM=Math.max(0,PIN_MEM-f.size);return own;}
+    }
+    if(f.size>512*1024*1024||RAW_BLOCKED||!navigator.storage?.getDirectory)return own;
+    let n='';
+    try{
+      const est=await navigator.storage.estimate?.();
+      if(est?.quota&&est.quota-(est.usage||0)<f.size*1.15)return own;
+      if(!PIN_DIR){
+        PIN_DIR=await(await navigator.storage.getDirectory()).getDirectoryHandle('sk-stickers-tmp',{create:true});
+        for await(const [k,h] of PIN_DIR.entries())if(/^sk-[a-f0-9-]+\.pin$/.test(k)&&h.kind==='file'){try{if(Date.now()-(await h.getFile()).lastModified>86400000)await PIN_DIR.removeEntry(k);}catch{}}
+      }
+      n='sk-'+crypto.randomUUID()+'.pin';
+      const h=await PIN_DIR.getFileHandle(n,{create:true});
+      await f.stream().pipeTo(await h.createWritable());
+      const g=await h.getFile();
+      if(g.size!==f.size||GONE)throw new Error('copia');
+      return{f:wrap(g),m:0,n};
+    }catch(e){
+      if(RAW_QUOTA(e))RAW_BLOCKED=true;
+      if(n&&PIN_DIR)await PIN_DIR.removeEntry(n).catch(()=>{});
+      return own;
+    }
+  }
   function IMP_UI(){
     if(GONE)return;
     const count=IMP_PENDING+KF_TASK.size;
@@ -929,14 +964,16 @@
                                                                                
       await new Promise(resolve=>setTimeout(resolve,0));
       while(IMP_Q.length&&!GONE){
-        const job=IMP_Q.shift(),f=job.f;job.f=null;let added=false;
+        const job=IMP_Q.shift(),f=job.f;job.f=null;let added=false,pin=null;
         try{
           if(P.length>=SK_MX){ER_D1('Maximo '+SK_MX+' stickers por pack');continue;}
-          const it=await MK_F(f);
+          pin=await PIN_FILE(f);
+          const it=await MK_F(pin.f);
           if(GONE){it.ov=[];FR_1(it);continue;}
+          it.pin=pin;pin=null;
           PK_AD(it);added=true;
         }catch{if(!GONE)ER_D1(f.type.startsWith('video/')?'Video no compatible':'Imagen no compatible');}
-        finally{IMP_PENDING=Math.max(0,IMP_PENDING-1);job.done(added);IMP_UI();}
+        finally{if(pin)PIN_FREE(pin);IMP_PENDING=Math.max(0,IMP_PENDING-1);job.done(added);IMP_UI();}
       }
     }finally{IMP_RUNNING=false;}
   }
@@ -1263,6 +1300,7 @@
   }
   function MU_O(it){
     EA=it.au?{...it.au}:{f:null,s:0,d:AU_S,v:false,du:0};
+    if(it.isAnim&&!it.adu&&it.file)AN_META(it.file,it.isAnim).then(m=>{it.adu=m.du;}).catch(()=>{});
     if(it.isVid&&EA.f&&(EA.v||EA.f===it.file)){EA.f=it.file;EA.v=true;Object.assign(EA,TRIM_1(it));}
     $('SK_MV').hidden=!it.isVid;
     $('SK_MR').hidden=!window.MediaRecorder||!navigator.mediaDevices?.getUserMedia;
@@ -1337,10 +1375,11 @@
   $('SK_M0').onclick=()=>{if(!ED)return;EA={f:null,s:0,d:AU_S,v:false,du:0};MU_L();};
   $('SK_MV').onclick=()=>{if(!ED?.it.isVid)return;EA={f:ED.it.file,...TRIM_1(ED.it),v:true,du:ED.it.du||0};MU_L();};
   $('SK_MB').onclick=()=>{if(ED?.md==='m'){MU_PICK=ED;$('SK_MF').click();}};
+  const AU_DEF=it=>Math.min(AU_S,(it?.isVid?TRIM_1(it).d:it?.adu)||AU_S);
   $('SK_MF').onchange=e=>{
     const f=e.target.files[0];e.target.value='';const ed=MU_PICK;MU_PICK=null;
     if(!f||!ED||ED!==ed||ED.md!=='m'||GONE)return;
-    EA={f,s:0,d:AU_S,v:false,du:0};MU_L();
+    EA={f,s:0,d:AU_DEF(ED.it),v:false,du:0};MU_L();
   };
 
   let RC=null;
@@ -1352,10 +1391,10 @@
     let s;try{s=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){if(ED===ed&&!GONE)ER_D1(e.name==='NotFoundError'?'Sin microfono':'Microfono bloqueado');return;}
     if(ED!==ed||MU_GEN!==requestGen||GONE||RC){s.getTracks().forEach(x=>x.stop());return;}
     MU_X();const gen=MU_GEN;$('SK_MC').hidden=true;
-    const m=new MediaRecorder(s),ch=[],t0=Date.now(),r={m,s};
-    const T=()=>{const e=(Date.now()-t0)/1000;if(e>=AU_S)return RC_X(1);$('SK_MR').textContent='⏹️ Grabando '+Math.ceil(AU_S-e)+'s';};
+    const mk=o=>{try{return new MediaRecorder(s,o);}catch{return null;}},mt=['audio/webm;codecs=opus','audio/ogg;codecs=opus'].find(t=>window.MediaRecorder.isTypeSupported?.(t)),m=(mt&&mk({mimeType:mt}))||new MediaRecorder(s),ch=[],t0=Date.now(),r={m,s};
+    const T=()=>{const e=(Date.now()-t0)/1000;if(e>=AU_S)return RC_X(1);$('SK_MR').textContent='⏹️ Detener · '+Math.ceil(AU_S-e)+'s';};
     m.ondataavailable=e=>{if(e.data.size)ch.push(e.data);};
-    m.onstop=()=>{if(!r.k||ED!==ed||MU_GEN!==gen||GONE||!ch.length)return;const ty=m.mimeType||ch[0].type,f=new File(ch,'Grabacion.'+(/mp4/.test(ty)?'m4a':'webm'),{type:ty});f.r=1;f.du=Math.min(AU_S,(Date.now()-t0)/1000);EA={f,s:0,d:Math.min(AU_S,f.du),v:false,du:f.du};MU_L();};
+    m.onstop=()=>{if(!r.k||ED!==ed||MU_GEN!==gen||GONE||!ch.length)return;const ty=m.mimeType||ch[0].type,f=new File(ch,'Grabacion.'+(/mp4/.test(ty)?'m4a':/ogg/.test(ty)?'ogg':'webm'),{type:ty});f.r=1;f.du=Math.min(AU_S,(Date.now()-t0)/1000);EA={f,s:0,d:Math.min(AU_S,f.du),v:false,du:f.du};MU_L();};
     RC=r;r.t=setInterval(T,250);m.start();T();
   };
 
@@ -1659,7 +1698,7 @@
 
   async function VD_STREAM(it){
     let vm=null,current=null,closed=false,ff0=null,mounted=false;
-    const root='/skvideo',name='sk-frame.png';
+    const root='/skvideo',name='sk-frame.png',mem=FM_MEMORY.has(it.file)&&it.file.size>0&&it.file.size<=FM_LIMIT(),mp='/sk-vin'+(/\.[a-z0-9]{1,8}$/i.exec(it.file.name||'')?.[0]||'.bin');
     if(!it.fv)try{vm=await VM_OPEN(it.file);}catch(e){if(GONE)throw e;}
     const duration=vm?.du||it.du||await VF_META(it.file);
     if(!Number.isFinite(duration)||duration<=0){vm?.close();throw new Error('duracion de video desconocida');}
@@ -1673,13 +1712,13 @@
         if(vm)try{current=await vm.bitmap(at);if(closed||GONE){current.close();current=null;throw new Error('salida');}return current;}catch(e){vm.close();vm=null;if(GONE||closed)throw e;}
                                                                           
         ff0=ff;
-        if(!mounted){await ff.createDir(root).catch(()=>{});await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[it.file]},root);mounted=true;if(closed||GONE){mounted=false;await ff.unmount(root).catch(()=>{});throw new Error('salida');}}
+        if(!mounted){if(mem){await ff.writeFile(mp,new Uint8Array(await it.file.arrayBuffer()));mounted=true;if(closed||GONE){mounted=false;await ff.deleteFile(mp).catch(()=>{});throw new Error('salida');}}else{await ff.createDir(root).catch(()=>{});await ff.mount(window.FFmpegWASM.FFFSType.WORKERFS,{files:[it.file]},root);mounted=true;if(closed||GONE){mounted=false;await ff.unmount(root).catch(()=>{});throw new Error('salida');}}}
         try{
           for(const begin of new Set([Math.max(0,at-.5),0])){
             if(closed||GONE)throw new Error('salida');
             await ff.deleteFile(name).catch(()=>{});
             const filter="select='lte(t,"+(at-begin+.0001)+")',scale="+THM+':'+THM+':force_original_aspect_ratio=decrease';
-            const code=await ff.exec(['-ss',String(begin),'-t',String(at-begin+.001),'-i',root+'/'+it.file.name,'-an','-vf',filter,'-fps_mode','passthrough','-update','1','-y',name]);
+            const code=await ff.exec(['-ss',String(begin),'-t',String(at-begin+.001),'-i',mem?mp:root+'/'+it.file.name,'-an','-vf',filter,'-fps_mode','passthrough','-update','1','-y',name]);
             if(code!==0)throw new Error('video '+code);
             let data;try{data=await ff.readFile(name);}catch{}
             if(data?.byteLength){current=await createImageBitmap(new Blob([data],{type:'image/png'}));break;}
@@ -1689,7 +1728,7 @@
           return current;
         }finally{await ff.deleteFile(name).catch(()=>{});}
       },
-      async close(){closed=true;vm?.close();current?.close();current=null;if(mounted){mounted=false;await ff0.unmount(root).catch(()=>{});}}
+      async close(){closed=true;vm?.close();current?.close();current=null;if(mounted){mounted=false;await (mem?ff0.deleteFile(mp):ff0.unmount(root)).catch(()=>{});}}
     });
     return p;
   }
@@ -1731,7 +1770,7 @@
       if(estimate?.quota&&estimate.quota-(estimate.usage||0)<expected*1.15)throw new Error('espacio');
       dir=await(await navigator.storage.getDirectory()).getDirectoryHandle('sk-stickers-tmp',{create:true});
                                                                                       
-      for await(const [name,h] of dir.entries())if(/^sk-[a-f0-9-]+\.raw$/.test(name)&&h.kind==='file'){
+      for await(const [name,h] of dir.entries())if(/^sk-[a-f0-9-]+\.(?:raw|pin)$/.test(name)&&h.kind==='file'){
         try{if(Date.now()-(await h.getFile()).lastModified>86400000)await dir.removeEntry(name);}catch{}
       }
       fileName='sk-'+crypto.randomUUID()+'.raw';handle=await dir.getFileHandle(fileName,{create:true});
@@ -1853,7 +1892,11 @@
     const text=String(message||'').replace(/\s+/g,' ').trim();
     if(!text||/^(?:Aborted\(\)|Conversion failed!?|Exiting normally|Last message repeated)/i.test(text))return previous;
     const relevant=s=>/error|invalid|fail|cannot|could not|not found|unsupported|not implemented|no such|memory|unable|matches no streams|does not contain any stream|permission|not readable/i.test(s);
-    return relevant(text)||!relevant(previous)?text.slice(0,180):previous;
+    const generic=s=>/marking filters|nothing was written/i.test(s),rd=s=>/not ?readable|FileReaderSync|permission/i.test(s),take=text.slice(0,180);
+    if(rd(text))return take;
+    if(rd(previous))return previous;
+    if(relevant(previous)&&!generic(previous))return previous;
+    return relevant(text)||!relevant(previous)?take:previous;
   }
   async function VD_DIRECT(it,onp,pf){
     if(!it.isVid||it.ov?.length)throw new Error('video directo no aplicable');
@@ -1870,9 +1913,10 @@
     }
     filters.push('scale='+DIM+':'+DIM+':flags=bilinear','setsar=1');
     return FM_1(it.file,async(ff,p)=>{
-      const name='vdirect.webp';let out=null,lm='',stage=0,last=0,full=false,probing=false,firstPTS=NaN;
+      const name='vdirect.webp';let out=null,lm='',vc='',stage=0,last=0,full=false,probing=false,firstPTS=NaN;
       const log=({message})=>{
         lm=FF_LOG_LINE(lm,message);
+        if(!vc){const mv=/Stream #\d+:\d+[^:]*: Video: ([a-z0-9_]+)/i.exec(message);if(mv)vc=mv[1];}
         if(probing&&!Number.isFinite(firstPTS)){const m=/\bn:\s*0\s+pts:.*?\bpts_time:\s*([-\d.e+]+)/.exec(message);if(m)firstPTS=Number(m[1]);}
       };
       const progress=({time})=>{
@@ -1904,11 +1948,11 @@
             if(z!==DIM)vf.push('scale='+z+':'+z);
             await ff.deleteFile(name).catch(()=>{});lm='';
             const code=await ff.exec(['-ss',String(begin),'-t',String(offset+cut.d),'-i',p,'-map','0:v:0','-an','-sn','-dn','-map_metadata','-1','-t',String(cut.d),'-vf',vf.join(','),'-frames:v',String(Math.max(1,Math.ceil(cut.d*f-1e-8))),'-c:v','libwebp','-f','webp','-quality',String(q),'-loop','0','-y',name]);
-            if(code!==0)throw new Error('webp directo '+code+' '+lm);
+            if(code!==0)throw new Error('webp directo '+code+(vc?' ['+vc+'] ':' ')+lm);
             try{const data=await ff.readFile(name);if(data.byteLength>12)out=data;}catch{}
             if(out){if(begin===0&&cut.s>.5)full=true;break;}
           }
-          if(!out?.byteLength)throw new Error('webp directo vacio '+lm);
+          if(!out?.byteLength)throw new Error('webp directo vacio'+(vc?' ['+vc+'] ':' ')+lm);
           if(out.byteLength<=pf.t)break;
           if(out.byteLength>pf.t*2.5)while(st[j+1]&&st[j+1][0]===f&&st[j+1][2]===z)j++;
         }
@@ -1923,9 +1967,10 @@
   }
 
   const FM_MEMORY=new WeakSet();
+  const FM_LIMIT=()=>Math.max(MAX_SZ,RAW_BUDGET());
   const FM_READ_ERROR=e=>e?.name==='NotReadableError'||/NotReadableError|FileReaderSync.*readAsArrayBuffer|readAsArrayBuffer.*FileReaderSync/i.test(String(e?.message||e));
   async function FM_1(f,fn){return FF_JOB(async()=>{
-    const allowed=Number.isFinite(f?.size)&&f.size>0&&f.size<=MAX_SZ;
+    const allowed=Number.isFinite(f?.size)&&f.size>0&&f.size<=FM_LIMIT();
     let memory=allowed&&FM_MEMORY.has(f);
     for(let attempt=0;attempt<2;attempt++){
       if(GONE)throw new Error('salida');
@@ -2035,7 +2080,7 @@
     if((it.isVid||it.isAnim)&&cap<VID_MAX){const cut=TRIM_1(it);it={...it,trim:{s:cut.s,d:Math.min(cap,cut.d)}};}
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
     if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov,lg);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;original.fxOv=ov.filter(o=>o.lost).length;for(const o of ov)await AN_F1(o.an);}}
-    if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;FF_R1();lg?.('direct:'+DG_1(e));}
+    if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;FF_R1();lg?.('direct:'+DG_1(e)+await DG_I(it,e));}
     let base=null,ovs=[],retried=false;
     try{
       if(it.isVid)base=await VD_STREAM(it);
@@ -2048,7 +2093,8 @@
       try{return await WB_E1(it,base,ovs,fps,onp,pf,forceMemory);}catch(e){
         if(GONE)throw e;
         if(e.rawStorage&&!forceMemory){await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('storage:'+DG_1(e));retried=true;return await EX_1(it,onp,pf,lg,true);}
-        if(!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e));return await FX_1(it,ovs,pf);
+        if(it.file&&FM_READ_ERROR(e)&&!FM_MEMORY.has(it.file)&&it.file.size>0&&it.file.size<=FM_LIMIT()){FM_MEMORY.add(it.file);FF_R1();await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('mem:'+DG_1(e));retried=true;return await EX_1(it,onp,pf,lg,forceMemory);}
+        if(!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e)+await DG_I(it,e));return await FX_1(it,ovs,pf);
       }
     }finally{if(!retried){if(it.fx)original.fx=it.fx;original.fxOv=ovs.filter(o=>o.lost).length;}await AN_F1(base);for(const o of ovs)await AN_F1(o.an);}
   }
@@ -2073,6 +2119,35 @@
       }finally{ff.off('log',lh);await ff.deleteFile('a.ogg').catch(()=>{});}
     });
   }
+  async function AU_B(a){
+    const OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    if(!OC||!a?.f||a.f.size>64*1024*1024||Number(a.du)>240)return null;
+    let buf;
+    try{
+      const ab=await a.f.arrayBuffer(),ctx=new OC(1,1,48000);
+      buf=await new Promise((ok,no)=>{const q=ctx.decodeAudioData(ab,ok,no);q?.catch?.(no);});
+    }catch{return null;}
+    if(GONE)return null;
+    const sr=buf.sampleRate,s0=Math.max(0,Math.floor((Number(a.s)||0)*sr)),n=Math.min(buf.length-s0,Math.floor(Math.min(AU_S,Math.max(.001,Number(a.d)||AU_S))*sr));
+    if(n<=0)return null;
+    const chs=buf.numberOfChannels,data=[],pcm=new Int16Array(n);
+    for(let c=0;c<chs;c++)data.push(buf.getChannelData(c));
+    for(let i=0;i<n;i++){let v=0;for(let c=0;c<chs;c++)v+=data[c][s0+i];pcm[i]=Math.max(-32768,Math.min(32767,Math.round(v/chs*32767)));}
+    return FF_JOB(async()=>{
+      const ff=await FF_L1();
+      try{
+        await ff.writeFile('a.pcm',new Uint8Array(pcm.buffer));
+        for(const rate of [48,32,24,16]){
+          if(GONE)throw new Error('salida');
+          const r=await ff.exec(['-f','s16le','-ar',String(sr),'-ac','1','-i','a.pcm','-map_metadata','-1','-ar','48000','-c:a','libopus','-b:a',rate+'k','-f','ogg','-y','a.ogg']);
+          const o=r===0?await ff.readFile('a.ogg'):null;
+          if(!o?.byteLength)return null;
+          if(o.byteLength<=AU_MX)return new Blob([o],{type:'audio/ogg'});
+        }
+        return null;
+      }finally{await ff.deleteFile('a.pcm').catch(()=>{});await ff.deleteFile('a.ogg').catch(()=>{});}
+    });
+  }
   async function AU_2(a,lg){
     delete a.noTrack;
     for(let k=1;k<3;k++){
@@ -2085,14 +2160,20 @@
         FF_R1();
       }
     }
+    try{const out=await AU_B(a);if(out){lg?.('audio:navegador');return out;}}catch(e){if(GONE)return null;lg?.('ab:'+DG_1(e));}
     lg?.('audio:omitido');return null;
+  }
+  async function DG_I(it,e){
+    if(!it?.file||!FM_READ_ERROR(e))return '';
+    let q='ok';try{await it.file.slice(0,1).arrayBuffer();}catch{q='fail';}
+    return ' '+(it.file.size/1048576).toFixed(1)+'MB '+(it.file.type||'?')+' '+Math.round((Date.now()-(it.t0||Date.now()))/1000)+'s '+(it.pin?(it.pin.m?'m':it.pin.n?'o':'p0'):'p0')+' main='+q;
   }
   const DG_1=e=>{
     let text=String(e?.message||e).replace(/\s+/g,' ');
-    if(FM_READ_ERROR(e))text='lectura: '+text.replace(/(?:NotReadableError:\s*)?Failed to execute 'readAsArrayBuffer' on 'FileReaderSync':\s*/i,'');
+    if(FM_READ_ERROR(e))text='lectura';
     else if(RAW_QUOTA(e))text='cuota: '+text;
     else if(/out of bounds memory access|memory access out of bounds/i.test(text))text='wasm: '+text;
-    return text.slice(0,90)+(document.hidden?' [oculta]':'');
+    return text.slice(0,140)+(document.hidden?' [oculta]':'');
   };
 
   let ZP_T=null;
