@@ -191,7 +191,7 @@
 </div>
 <div class="SK_DF"><button type="button" id="SK_DC">Cancelar</button><button type="button" id="SK_DK">✅ Listo</button></div>
 </dialog>
-<dialog id="SK_PD" class="SK_PD"><img id="sc-ck" class="wait-anim" alt=""><canvas id="sc-lv" class="sc-lv" width="256" height="256"></canvas><div id="sc-prog-lbl"></div><div class="sc-pbar-w"><div class="sc-pbar" id="sc-pbar"></div></div><div id="SK_SEND_REC" hidden><p id="SK_SEND_MSG" class="SK_TX" role="status"></p><div class="SK_DF"><button type="button" id="SK_SEND_RETRY">Reintentar verificacion</button><button type="button" id="SK_SEND_CANCEL">Volver al pack</button></div></div></dialog>
+<dialog id="SK_PD" class="SK_PD"><img id="sc-ck" class="wait-anim" alt=""><canvas id="sc-lv" class="sc-lv" width="256" height="256"></canvas><div id="sc-prog-lbl"></div><p id="SK_JH" class="SK_TX" hidden>Para mas velocidad usa un navegador con JIT</p><div class="sc-pbar-w"><div class="sc-pbar" id="sc-pbar"></div></div><div id="SK_SEND_REC" hidden><p id="SK_SEND_MSG" class="SK_TX" role="status"></p><div class="SK_DF"><button type="button" id="SK_SEND_RETRY">Reintentar verificacion</button><button type="button" id="SK_SEND_CANCEL">Volver al pack</button></div></div></dialog>
 </div>
 
 <script>
@@ -208,6 +208,9 @@
   const ID_OK=typeof ImageDecoder!=='undefined';
   const WS_OK=(()=>{try{return new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0]))instanceof WebAssembly.Module;}catch{return false;}})();
   const SD_RX=/^[a-f0-9]{12}$/;
+  let JL=WS_OK?0:1,JA=JL;
+  const JH_T='. Activa JIT en este sitio o usa otro navegador';
+  function JL_1(e,v){if(v?JL:JA)return;const t=String(e?.message||e);if((window.WebAssembly&&e instanceof WebAssembly.RuntimeError)||/WebAssembly|wasm|out of bounds|unreachable/i.test(t)){if(v)JL=1;else JA=1;$('SK_JH').hidden=false;}}
   const $=id=>document.getElementById(id);
   const N3=n=>String(n).padStart(3,'0');
   const WA=window.__CFG?.waitAnim||'';
@@ -273,7 +276,7 @@
   ERD.querySelector('[data-x]').onclick=()=>ERD.close();
   GD.querySelector('[data-x]').onclick=()=>GD.close();
   const APD=$('SK_AP');APD.querySelector('[data-x]').onclick=()=>APD.close();
-  function setProg(p,l){pBar.style.width=p+'%';if(l!=null)pLbl.textContent=l;}
+  function setProg(p,l){pBar.style.width=p+'%';if(l!=null)pLbl.textContent=l;if(JL||JA)$('SK_JH').hidden=false;}
   function getCID(){try{let id=localStorage.getItem('sk_cid');if(!id){id=crypto.randomUUID();localStorage.setItem('sk_cid',id);}return id;}catch{return 'anon';}}
   function KN_1(it){
     if(it.type==='ad')return it.content?{type:'ad',content:it.content,width:it.width,height:it.height}:null;
@@ -2073,14 +2076,70 @@
     return await ST_E1(it,ovs,pf);
   }
 
+  function WP_M(fr,w,h){
+    const L4=n=>new Uint8Array([n&255,n>>>8&255,n>>>16&255,n>>>24&255]),L3=n=>new Uint8Array([n&255,n>>>8&255,n>>>16&255]),A=s=>new Uint8Array([...s].map(c=>c.charCodeAt(0))),ch=[];
+    let al=0;
+    for(const f of fr){
+      const d=f.b,ps=[];let p=12,n=0;
+      while(p+8<=d.length){
+        const t=String.fromCharCode(d[p],d[p+1],d[p+2],d[p+3]),s=(d[p+4]|d[p+5]<<8|d[p+6]<<16)>>>0;
+        if(t==='ALPH'||t==='VP8 '||t==='VP8L'){const q=new Uint8Array(8+s+(s&1));q.set(d.subarray(p,Math.min(p+8+s,d.length)));ps.push(q);n+=q.length;if(t!=='VP8 ')al=1;}
+        p+=8+s+(s&1);
+      }
+      if(!ps.length)throw new Error('webp');
+      ch.push(A('ANMF'),L4(16+n),L3(0),L3(0),L3(w-1),L3(h-1),L3(f.d),new Uint8Array([2]),...ps);
+    }
+    const vx=new Uint8Array([2|(al?16:0),0,0,0,...L3(w-1),...L3(h-1)]);
+    return new Blob([A('RIFF'),L4(ch.reduce((a,x)=>a+x.length,0)+36),A('WEBP'),A('VP8X'),L4(10),vx,A('ANIM'),L4(6),new Uint8Array(6),...ch],{type:'image/webp'});
+  }
+  async function NA_1(it,ovs,pf,onp){
+    const base=it.isVid?await VD_STREAM(it):await AN_STREAM(it.file,it.isAnim,it.trim,null);
+    if(!base)return null;
+    try{
+      for(const o of ovs)if(o.an&&!o.an.fr?.length)o.lost=true;
+      const dur=Math.min(pf.max||VID_MAX,VID_MAX,base.dur||ovs.reduce((m,o)=>Math.max(m,o.an?.dur||0),0));
+      if(!(dur>0))return null;
+      const c=document.createElement('canvas');c.width=c.height=DIM;
+      const x=c.getContext('2d'),n=Math.max(1,Math.min(100,Math.round(dur*10))),st=dur/n,bs=[],tb=q=>new Promise(r=>c.toBlob(r,'image/webp',q));
+      for(let i=0;i<n;i++){
+        if(GONE)throw new Error('salida');
+        const f=await FRAME_GET(base,i*st,null);
+        x.clearRect(0,0,DIM,DIM);DR_B1(x,f,it.crop);DR_O1(x,ovs,i*st);
+        const b=await tb(.7);
+        if(!b||b.type!=='image/webp')return null;
+        bs.push(b);onp?.((i+1)/n*.7);
+      }
+      let best=null;
+      const LV=[[1,0],[1,.5],[1,.35],[2,.4],[2,.25],[3,.25],[4,.2]];
+      for(let j=0;j<LV.length;j++){
+        const [k,q]=LV[j],fr=[];
+        for(let i=0;i<n;i+=k){
+          if(GONE)throw new Error('salida');
+          let b=bs[i];
+          if(q){const bm=await createImageBitmap(b);x.clearRect(0,0,DIM,DIM);x.drawImage(bm,0,0);bm.close();b=await tb(q);if(!b)return null;}
+          fr.push({b:new Uint8Array(await b.arrayBuffer()),d:Math.max(20,Math.round(st*1000*k))});
+        }
+        best=WP_M(fr,DIM,DIM);
+        onp?.(.7+(j+1)/LV.length*.3);
+        if(best.size<=pf.t)return best;
+      }
+      return null;
+    }finally{await AN_F1(base);}
+  }
+  async function NV_1(it,ovs,pf,onp,lg){
+    try{const o=await NA_1(it,ovs,pf,onp);if(o){lg?.('nativo:animado');return o;}lg?.('nativo:sin');}
+    catch(e){if(GONE)throw e;lg?.('nativo:'+DG_1(e));}
+    return FX_1(it,ovs,pf);
+  }
+
   async function EX_1(it,onp,pf=PB,lg,forceMemory=false){
     await KF_1(it);const original=it;delete original.fx;delete original.fxOv;
     const cap=Math.min(VID_MAX,pf.max||VID_MAX);
                                                                                      
     if((it.isVid||it.isAnim)&&cap<VID_MAX){const cut=TRIM_1(it);it={...it,trim:{s:cut.s,d:Math.min(cap,cut.d)}};}
     if(!it.isVid&&it.isWebp&&it.w===DIM&&it.h===DIM&&it.file.size<=(it.isAnim?pf.t:pf.st)&&!it.crop&&!it.ov.length&&await AN_PASS(it))return it.file;
-    if(!WS_OK&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov,lg);try{return await FX_1(it,ov,pf);}finally{if(it.fx)original.fx=it.fx;original.fxOv=ov.filter(o=>o.lost).length;for(const o of ov)await AN_F1(o.an);}}
-    if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;FF_R1();lg?.('direct:'+DG_1(e)+await DG_I(it,e));}
+    if(JL&&(it.isVid||it.isAnim)){const ov=await OV_P1(it.ov,lg);try{return await NV_1(it,ov,pf,onp,lg);}finally{if(it.fx)original.fx=it.fx;original.fxOv=ov.filter(o=>o.lost).length;for(const o of ov)await AN_F1(o.an);}}
+    if(!forceMemory&&it.isVid&&!it.ov.length)try{return await VD_DIRECT(it,onp,pf);}catch(e){if(GONE)throw e;JL_1(e,1);FF_R1();lg?.('direct:'+DG_1(e)+await DG_I(it,e));}
     let base=null,ovs=[],retried=false;
     try{
       if(it.isVid)base=await VD_STREAM(it);
@@ -2094,7 +2153,7 @@
         if(GONE)throw e;
         if(e.rawStorage&&!forceMemory){await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('storage:'+DG_1(e));retried=true;return await EX_1(it,onp,pf,lg,true);}
         if(it.file&&FM_READ_ERROR(e)&&!FM_MEMORY.has(it.file)&&it.file.size>0&&it.file.size<=FM_LIMIT()){FM_MEMORY.add(it.file);FF_R1();await AN_F1(base);for(const o of ovs)await AN_F1(o.an);lg?.('mem:'+DG_1(e));retried=true;return await EX_1(it,onp,pf,lg,forceMemory);}
-        if(!(it.isAnim||it.isVid))throw e;FF_R1();lg?.('v:'+DG_1(e)+await DG_I(it,e));return await FX_1(it,ovs,pf);
+        if(!(it.isAnim||it.isVid))throw e;JL_1(e,1);FF_R1();lg?.('v:'+DG_1(e)+await DG_I(it,e));await AN_F1(base);return await NV_1(it,ovs,pf,onp,lg);
       }
     }finally{if(!retried){if(it.fx)original.fx=it.fx;original.fxOv=ovs.filter(o=>o.lost).length;}await AN_F1(base);for(const o of ovs)await AN_F1(o.an);}
   }
@@ -2119,24 +2178,110 @@
       }finally{ff.off('log',lh);await ff.deleteFile('a.ogg').catch(()=>{});}
     });
   }
-  async function AU_B(a){
+  const OG_T=(()=>{const t=[];for(let i=0;i<256;i++){let c=i<<24;for(let k=0;k<8;k++)c=(c&0x80000000?(c<<1)^0x04c11db7:c<<1)>>>0;t[i]=c;}return t;})();
+  const OG_C=u=>{let c=0;for(let i=0;i<u.length;i++)c=((c<<8)^OG_T[((c>>>24)^u[i])&255])>>>0;return c;};
+  function OG_P(sr,sq,gr,ty,pks){
+    const lz=[];
+    for(const p of pks){let n=p.length;while(n>=255){lz.push(255);n-=255;}lz.push(n);}
+    const o=new Uint8Array(27+lz.length+pks.reduce((a,p)=>a+p.length,0)),dv=new DataView(o.buffer);
+    o.set([79,103,103,83,0,ty]);
+    dv.setUint32(6,gr%4294967296,true);dv.setUint32(10,Math.floor(gr/4294967296),true);dv.setUint32(14,sr,true);dv.setUint32(18,sq,true);
+    o[26]=lz.length;o.set(lz,27);
+    let q=27+lz.length;for(const p of pks){o.set(p,q);q+=p.length;}
+    dv.setUint32(22,OG_C(o),true);
+    return o;
+  }
+  function OG_M(pk,tot){
+    const sr=(Math.random()*4294967295)>>>0,h=new Uint8Array(19),t=new Uint8Array([79,112,117,115,84,97,103,115,2,0,0,0,115,107,0,0,0,0]),out=[];
+    h.set([79,112,117,115,72,101,97,100,1,1]);
+    new DataView(h.buffer).setUint16(10,312,true);new DataView(h.buffer).setUint32(12,48000,true);
+    out.push(OG_P(sr,0,0,2,[h]),OG_P(sr,1,0,0,[t]));
+    let sq=2,cur=[],sg=0,g=312,lg=0;
+    for(const p of pk){
+      const ns=Math.floor(p.d.length/255)+1;
+      if(sg+ns>255){out.push(OG_P(sr,sq++,g,0,cur));lg=g;cur=[];sg=0;}
+      cur.push(p.d);sg+=ns;g+=p.n;
+    }
+    out.push(OG_P(sr,sq,Math.max(lg,Math.min(g,312+tot)),4,cur));
+    return new Blob(out,{type:'audio/ogg'});
+  }
+  async function OG_S(b){
+    const OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    if(!OC)return true;
+    try{
+      const ab=await b.arrayBuffer(),c=new OC(1,1,48000),x=await new Promise((ok,no)=>{const q=c.decodeAudioData(ab,ok,no);q?.catch?.(no);}),d=x.getChannelData(0);
+      let m=0;for(let i=0;i<d.length;i+=3)m=Math.max(m,Math.abs(d[i]));
+      return m>.003;
+    }catch{return true;}
+  }
+  async function OG_Q(b,a){
+    const u=new Uint8Array(await b.arrayBuffer()),n=u.length,dv=new DataView(u.buffer);
+    if(n<64||u[0]!==79||u[1]!==103||u[2]!==103||u[3]!==83)return 0;
+    const h=27+u[26];
+    if(String.fromCharCode(...u.subarray(h,h+8))!=='OpusHead')return 0;
+    let i=n-27;
+    for(;i>=0;i--)if(u[i]===79&&u[i+1]===103&&u[i+2]===103&&u[i+3]===83){let L=27+u[i+26];for(let j=0;j<u[i+26];j++)L+=u[i+27+j];if(i+L===n)break;}
+    if(i<0||!(u[i+5]&4))return 0;
+    const p=u.slice(i),c=dv.getUint32(i+22,true);
+    p.fill(0,22,26);
+    if(OG_C(p)!==c)return 0;
+    const d=(dv.getUint32(i+6,true)+dv.getUint32(i+10,true)*4294967296-dv.getUint16(h+10,true))/48000;
+    const s0=Math.max(0,Number(a.s)||0),w=Math.min(AU_S,Math.max(.001,Number(a.d)||AU_S)),e=Number(a.du)>0?Math.min(w,Math.max(.05,a.du-s0)):w;
+    b.dg=+d.toFixed(2);
+    if(!(d>=.05)||d>e+1)return 0;
+    if(d<e*.5-.2)return 1;
+    return await OG_S(b)?2:1;
+  }
+  async function AU_N(pcm,sr){
+    if(sr!==48000||typeof AudioEncoder==='undefined'||typeof AudioData==='undefined')return null;
+    for(const rate of [48,32,24,16]){
+      const cfg={codec:'opus',sampleRate:48000,numberOfChannels:1,bitrate:rate*1000};
+      let ok=false;
+      try{ok=(await AudioEncoder.isConfigSupported(cfg)).supported;}catch{}
+      if(!ok)return null;
+      const pk=[];let er=null;
+      const en=new AudioEncoder({output:c=>{const d=new Uint8Array(c.byteLength);c.copyTo(d);pk.push({d,n:Math.round((c.duration||20000)*48/1000)});},error:e=>{er=e;}});
+      try{
+        en.configure(cfg);
+        for(let i=0;i<pcm.length&&!er;i+=4800){
+          if(GONE)throw new Error('salida');
+          while(en.encodeQueueSize>16)await new Promise(r=>setTimeout(r,5));
+          const ad=new AudioData({format:'s16',sampleRate:48000,numberOfFrames:Math.min(4800,pcm.length-i),numberOfChannels:1,timestamp:Math.round(i/48000*1e6),data:pcm.subarray(i,i+4800)});
+          en.encode(ad);ad.close();
+        }
+        if(!er)await en.flush();
+      }catch(e){er=er||e;}finally{try{en.close();}catch{}}
+      if(GONE)return null;
+      if(er||!pk.length)return null;
+      const o=OG_M(pk,pcm.length);
+      if(o.size<=AU_MX)return o;
+    }
+    return null;
+  }
+  async function AU_B(a,m){
     const OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
     if(!OC||!a?.f||a.f.size>64*1024*1024||Number(a.du)>240)return null;
-    let buf;
-    try{
-      const ab=await a.f.arrayBuffer(),ctx=new OC(1,1,48000);
-      buf=await new Promise((ok,no)=>{const q=ctx.decodeAudioData(ab,ok,no);q?.catch?.(no);});
-    }catch{return null;}
-    if(GONE)return null;
-    const sr=buf.sampleRate,s0=Math.max(0,Math.floor((Number(a.s)||0)*sr)),n=Math.min(buf.length-s0,Math.floor(Math.min(AU_S,Math.max(.001,Number(a.d)||AU_S))*sr));
-    if(n<=0)return null;
-    const chs=buf.numberOfChannels,data=[],pcm=new Int16Array(n);
-    for(let c=0;c<chs;c++)data.push(buf.getChannelData(c));
-    for(let i=0;i<n;i++){let v=0;for(let c=0;c<chs;c++)v+=data[c][s0+i];pcm[i]=Math.max(-32768,Math.min(32767,Math.round(v/chs*32767)));}
+    const key=(Number(a.s)||0)+'|'+(Number(a.d)||0);
+    if(a.pc?.k!==key){
+      let buf;
+      try{
+        const ab=await a.f.arrayBuffer(),ctx=new OC(1,1,48000);
+        buf=await new Promise((ok,no)=>{const q=ctx.decodeAudioData(ab,ok,no);q?.catch?.(no);});
+      }catch{return null;}
+      if(GONE)return null;
+      const sr=buf.sampleRate,s0=Math.max(0,Math.floor((Number(a.s)||0)*sr)),n=Math.min(buf.length-s0,Math.floor(Math.min(AU_S,Math.max(.001,Number(a.d)||AU_S))*sr));
+      if(n<=0)return null;
+      const chs=buf.numberOfChannels,data=[],pcm=new Int16Array(n);
+      for(let c=0;c<chs;c++)data.push(buf.getChannelData(c));
+      for(let i=0;i<n;i++){let v=0;for(let c=0;c<chs;c++)v+=data[c][s0+i];pcm[i]=Math.max(-32768,Math.min(32767,Math.round(v/chs*32767)));}
+      a.pc={k:key,pcm,sr};
+    }
+    const {pcm,sr}=a.pc;
+    if(m)return AU_N(pcm,sr);
     return FF_JOB(async()=>{
       const ff=await FF_L1();
       try{
-        await ff.writeFile('a.pcm',new Uint8Array(pcm.buffer));
+        await ff.writeFile('a.pcm',new Uint8Array(pcm.buffer,pcm.byteOffset,pcm.byteLength));
         for(const rate of [48,32,24,16]){
           if(GONE)throw new Error('salida');
           const r=await ff.exec(['-f','s16le','-ar',String(sr),'-ac','1','-i','a.pcm','-map_metadata','-1','-ar','48000','-c:a','libopus','-b:a',rate+'k','-f','ogg','-y','a.ogg']);
@@ -2149,18 +2294,32 @@
     });
   }
   async function AU_2(a,lg){
-    delete a.noTrack;
-    for(let k=1;k<3;k++){
-      try{const out=await AU_1(a);if(k>1)lg?.('audio:recuperado');return out;}
+    delete a.noTrack;let soft=null;
+    const ck=async(o,t)=>{
+      if(!o||GONE)return null;
+      const v=await OG_Q(o,a);
+      if(v===2){lg?.('au:'+o.size+'b/'+o.dg+'s');return o;}
+      lg?.(t+':'+(v?'dudoso':'invalido')+' '+o.size+'b');
+      if(v&&!soft)soft=o;
+      return null;
+    };
+    for(let k=1;k<3&&!JA&&!soft;k++){
+      try{const o=await ck(await AU_1(a),'a'+k);if(o){if(k>1)lg?.('audio:recuperado');return o;}}
       catch(e){
         if(GONE)return null;
         if(e?.noAudio){a.noTrack=true;if(k>1)lg?.('audio:sin pista');return null;}
         lg?.('a'+k+':'+DG_1(e));
         if(e?.audioSize){lg?.('audio:omitido');return null;}
-        FF_R1();
+        JL_1(e);
       }
+      FF_R1();
     }
-    try{const out=await AU_B(a);if(out){lg?.('audio:navegador');return out;}}catch(e){if(GONE)return null;lg?.('ab:'+DG_1(e));}
+    for(const m of JA?[1]:[1,0]){
+      if(soft&&m===0)break;
+      try{const o=await ck(await AU_B(a,m),m?'an':'ab');if(o){lg?.(m?'audio:nativo':'audio:navegador');return o;}}
+      catch(e){if(GONE)return null;lg?.((m?'an:':'ab:')+DG_1(e));JL_1(e);}
+    }
+    if(soft){lg?.('audio:dudoso');return soft;}
     lg?.('audio:omitido');return null;
   }
   async function DG_I(it,e){
@@ -2315,8 +2474,8 @@
       if(GONE)return;
       OK_1(jr);
       if(nF)ER_D1(nF+' no se pudieron convertir');
-      if(nA)ER_D1(nA+' sin sonido');
-      if(nX)ER_D1(nX+' salieron fijos');
+      if(nA)ER_D1(nA+' sin sonido'+(JA?JH_T:''));
+      if(nX)ER_D1(nX+' salieron fijos'+(JL?JH_T:''));
       if(nXO)ER_D1(nXO+' capas perdieron la animacion');
     }catch(e){if(GONE||e.sendCode==='cancel')return;if(SEND_REMOTE(e)){PD_C();SA_1();}else ER_D1(ER_1(e)||(e.message==='conversion'?'No se pudieron convertir los archivos. Tu pack se conserva.':'No se pudo completar el envio. Tu pack se conserva.'));}
     finally{form=null;SEND_DROP(op);if(!GONE)PD_C();}
